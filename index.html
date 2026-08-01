@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>青境智衡 · 高原幼畜圈舍环境监测与决策系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <style>
+    :root {
+      --bg-a: #0b1a2a;
+      --bg-b: #0f2838;
+      --panel: rgba(255, 255, 255, 0.06);
+      --panel-strong: rgba(255, 255, 255, 0.09);
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.16);
+      --text: #e8f0f8;
+      --muted: #7a9bb5;
+      --primary: #00d4aa;
+      --red: #ff4d5e;
+      --red-soft: rgba(255, 77, 94, 0.2);
+      --ammonia: #ff6b6b;
+      --temperature: #4a9eff;
+      --humidity: #00d4aa;
+      --light: #ffd93d;
+      --orange: #ff9f43;
+      --blue: #4a9eff;
+      --green: #00d4aa;
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(0, 212, 170, 0.18), transparent 30rem),
+        radial-gradient(circle at 82% 8%, rgba(74, 158, 255, 0.16), transparent 28rem),
+        radial-gradient(circle at 50% 100%, rgba(255, 107, 107, 0.08), transparent 28rem),
+        radial-gradient(circle at center, var(--bg-b), var(--bg-a));
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1540px, calc(100% - 32px));
+      margin: 18px auto 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .glass {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      backdrop-filter: blur(4px);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar {
+      min-height: 78px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 16px;
+    }
+
+    .title {
+      margin: 0;
+      color: var(--primary);
+      font-size: clamp(1.35rem, 2.4vw, 2.08rem);
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .status-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .pill,
+    .control,
+    .scenario-select {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.07);
+      font-size: 0.88rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .scenario-select {
+      appearance: none;
+      min-width: 160px;
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      background:
+        linear-gradient(45deg, transparent 50%, var(--primary) 50%) right 13px center / 7px 7px no-repeat,
+        linear-gradient(135deg, var(--primary) 50%, transparent 50%) right 8px center / 7px 7px no-repeat,
+        rgba(255, 255, 255, 0.07);
+      padding-right: 30px;
+    }
+
+    .scenario-select option {
+      color: #0b1a2a;
+      background: #e8f0f8;
+    }
+
+    .control {
+      cursor: pointer;
+      color: #06131f;
+      border-color: rgba(0, 212, 170, 0.65);
+      border-radius: 6px;
+      background: linear-gradient(180deg, #20f0ca, var(--primary));
+      box-shadow: 0 0 22px rgba(0, 212, 170, 0.18);
+    }
+
+    .control.secondary {
+      color: var(--text);
+      border-color: var(--line-strong);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 5px rgba(0, 212, 170, 0.15), 0 0 18px var(--primary);
+    }
+
+    .pipeline-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .pipeline-step {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pipeline-step::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--step-color, var(--primary)), transparent);
+      opacity: 0.85;
+    }
+
+    .pipeline-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      color: #06131f;
+      background: var(--step-color, var(--primary));
+      box-shadow: 0 0 18px color-mix(in srgb, var(--step-color, var(--primary)), transparent 62%);
+      font-weight: 900;
+    }
+
+    .pipeline-name {
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .pipeline-value {
+      margin-top: 2px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 382px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .left-col,
+    .right-col {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .decision-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 244px;
+      gap: 14px;
+      padding: 16px;
+      border-color: rgba(0, 212, 170, 0.28);
+      background:
+        radial-gradient(circle at 76% 16%, rgba(0, 212, 170, 0.14), transparent 12rem),
+        var(--panel);
+    }
+
+    .decision-card[data-level="critical"] {
+      border-color: rgba(255, 77, 94, 0.7);
+      box-shadow: 0 0 34px rgba(255, 77, 94, 0.16), var(--shadow);
+    }
+
+    .decision-card[data-level="warning"] {
+      border-color: rgba(255, 217, 61, 0.58);
+      box-shadow: 0 0 30px rgba(255, 217, 61, 0.12), var(--shadow);
+    }
+
+    .decision-card[data-level="alert"] {
+      border-color: rgba(255, 159, 67, 0.62);
+      box-shadow: 0 0 30px rgba(255, 159, 67, 0.13), var(--shadow);
+    }
+
+    .decision-card[data-level="caution"] {
+      border-color: rgba(74, 158, 255, 0.56);
+      box-shadow: 0 0 28px rgba(74, 158, 255, 0.12), var(--shadow);
+    }
+
+    .decision-main {
+      min-width: 0;
+    }
+
+    .decision-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .decision-icon {
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.04);
+      font-size: 2.2rem;
+    }
+
+    .decision-title {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(1.7rem, 3vw, 2.6rem);
+      line-height: 1.05;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .decision-engine {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .scenario-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 30px;
+      margin: 0 0 10px;
+      padding: 5px 10px;
+      border: 1px solid rgba(0, 212, 170, 0.3);
+      border-radius: 999px;
+      color: var(--primary);
+      background: rgba(0, 212, 170, 0.1);
+      font-size: 0.82rem;
+      font-weight: 900;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .scenario-hint.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .advice {
+      margin: 0;
+      color: #d5e2ed;
+      line-height: 1.72;
+      font-size: 1rem;
+    }
+
+    .action-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .action-step {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      padding: 9px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      color: #d5e2ed;
+      line-height: 1.45;
+      font-size: 0.93rem;
+    }
+
+    .step-index {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #06131f;
+      background: var(--primary);
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .step-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-right: 5px;
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    .trigger {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 13px;
+      padding: 11px;
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .trigger-chip {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      min-height: 30px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.07);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .trigger-chip strong {
+      color: var(--chip-color, var(--primary));
+      font-family: var(--mono);
+      font-size: 0.98rem;
+    }
+
+    .risk-wrap {
+      display: grid;
+      align-content: center;
+      gap: 12px;
+    }
+
+    .risk-ring {
+      width: 188px;
+      height: 188px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.03) 0 53%, transparent 54%),
+        conic-gradient(var(--ring-color, var(--green)) var(--risk, 0%), rgba(255, 255, 255, 0.1) 0);
+      position: relative;
+      box-shadow: 0 0 24px color-mix(in srgb, var(--ring-color, var(--green)), transparent 68%);
+    }
+
+    .risk-ring::before {
+      content: "";
+      position: absolute;
+      inset: 15px;
+      border-radius: inherit;
+      background: rgba(11, 26, 42, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .ring-content {
+      position: relative;
+      text-align: center;
+    }
+
+    .ring-content strong {
+      display: block;
+      color: var(--ring-color, var(--green));
+      font-family: var(--mono);
+      font-size: 2.72rem;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 20px color-mix(in srgb, var(--ring-color, var(--green)), transparent 55%);
+    }
+
+    .ring-content span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 900;
+    }
+
+    .risk-scale {
+      position: relative;
+      display: grid;
+      grid-template-columns: 10fr 5fr 5fr 10fr;
+      height: 12px;
+      border-radius: 999px;
+      overflow: visible;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .risk-scale span {
+      min-width: 0;
+    }
+
+    .risk-scale .safe { background: #00d4aa; border-radius: 999px 0 0 999px; }
+    .risk-scale .watch { background: #ffd93d; }
+    .risk-scale .over { background: #ff9f43; }
+    .risk-scale .danger { background: #ff4d5e; border-radius: 0 999px 999px 0; }
+
+    .risk-pointer {
+      position: absolute;
+      left: var(--pointer, 0%);
+      top: -5px;
+      width: 8px;
+      height: 22px;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.75);
+      transform: translateX(-50%);
+    }
+
+    .risk-labels {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .risk-labels span {
+      text-align: center;
+    }
+
+    .vent-card {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .actuator-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .actuator-row {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .actuator-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 1.24rem;
+    }
+
+    .actuator-icon.spin {
+      animation: fanSpin 1.1s linear infinite;
+    }
+
+    @keyframes fanSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .actuator-name {
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .actuator-desc {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 30px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .state-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--state-color, #7a9bb5);
+      box-shadow: 0 0 12px var(--state-color, rgba(122, 155, 181, 0.45));
+    }
+
+    .command-code {
+      display: block;
+      padding: 12px;
+      border: 1px solid rgba(0, 212, 170, 0.28);
+      border-radius: 8px;
+      color: var(--primary);
+      background: rgba(0, 212, 170, 0.08);
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      white-space: normal;
+    }
+
+    .vent-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .timeline {
+      height: 16px;
+      margin: 14px 0 8px;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 50%, rgba(0, 212, 170, 0.92) 50% 58.33%, rgba(255, 255, 255, 0.08) 58.33% 100%);
+      position: relative;
+      overflow: visible;
+    }
+
+    .timeline::after {
+      content: "";
+      position: absolute;
+      left: var(--now, 40%);
+      top: -5px;
+      width: 26px;
+      height: 26px;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 0 8px rgba(255, 159, 67, 0.12), 0 0 18px var(--orange);
+      transform: translateX(-50%);
+    }
+
+    .timeline-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 850;
+    }
+
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sensor-card {
+      min-height: 168px;
+      display: grid;
+      align-content: space-between;
+      padding: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sensor-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: var(--accent);
+      box-shadow: 0 0 16px var(--accent);
+    }
+
+    .sensor-card.ammonia { --accent: var(--ammonia); }
+    .sensor-card.temperature { --accent: var(--temperature); }
+    .sensor-card.humidity { --accent: var(--humidity); }
+    .sensor-card.light { --accent: var(--light); }
+
+    .sensor-card.alert {
+      border-color: rgba(255, 77, 94, 0.78);
+      animation: ammoniaGlow 1s infinite alternate;
+    }
+
+    @keyframes ammoniaGlow {
+      from {
+        box-shadow: var(--shadow);
+      }
+      to {
+        box-shadow: 0 0 0 4px rgba(255, 77, 94, 0.16), 0 0 30px rgba(255, 77, 94, 0.42), var(--shadow);
+      }
+    }
+
+    .sensor-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sensor-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .sensor-icon {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #06131f;
+      background: var(--accent);
+      font-size: 0.9rem;
+      box-shadow: 0 0 18px color-mix(in srgb, var(--accent), transparent 65%);
+    }
+
+    .badge {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .badge.normal { color: var(--green); background: rgba(0, 212, 170, 0.1); }
+    .badge.caution { color: var(--blue); background: rgba(74, 158, 255, 0.1); }
+    .badge.warning { color: var(--light); background: rgba(255, 217, 61, 0.12); }
+    .badge.critical { color: var(--red); background: rgba(255, 77, 94, 0.12); }
+
+    .sensor-value {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin: 18px 0 12px;
+      color: var(--accent);
+    }
+
+    .sensor-value strong {
+      font-family: var(--mono);
+      font-size: clamp(2.3rem, 3.4vw, 3.8rem);
+      line-height: 1;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+    }
+
+    .sensor-value span {
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .meter {
+      position: relative;
+      height: 8px;
+      border-radius: 999px;
+      overflow: visible;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .meter-fill {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--accent), transparent 35%), var(--accent));
+      box-shadow: 0 0 14px color-mix(in srgb, var(--accent), transparent 48%);
+      transition: width 0.32s ease;
+    }
+
+    .meter-point {
+      position: absolute;
+      top: -5px;
+      left: var(--x);
+      width: 4px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--marker-color, rgba(255, 255, 255, 0.62));
+      box-shadow: 0 0 10px var(--marker-color, rgba(255, 255, 255, 0.45));
+      transform: translateX(-50%);
+    }
+
+    .meter-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 7px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 1.12rem;
+      font-weight: 900;
+    }
+
+    .panel-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .chart-box {
+      height: 355px;
+    }
+
+    .trend-summary {
+      margin: 10px 0 0;
+      color: var(--primary);
+      font-weight: 850;
+    }
+
+    .chart-insights {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .insight-card {
+      min-height: 62px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .insight-card span {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 850;
+    }
+
+    .insight-card strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--primary);
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .table-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #d7e4ee;
+      font-size: 0.9rem;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      text-align: left;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .data-table th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .level-normal { color: var(--green); font-weight: 900; }
+    .level-caution { color: var(--blue); font-weight: 900; }
+    .level-alert { color: var(--orange); font-weight: 900; }
+    .level-warning { color: var(--light); font-weight: 900; }
+    .level-critical { color: var(--red); font-weight: 900; }
+
+    .snapshot-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .snapshot-item {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #d7e4ee;
+      font-size: 0.86rem;
+    }
+
+    .snapshot-item strong {
+      font-family: var(--mono);
+      color: var(--primary);
+    }
+
+    .calibration-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .alarm-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .alarm-item {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #d7e4ee;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .alarm-dot {
+      width: 12px;
+      height: 12px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: var(--alarm-color, var(--primary));
+      box-shadow: 0 0 12px var(--alarm-color, var(--primary));
+    }
+
+    .calibration-item {
+      min-height: 86px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .calibration-item span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 850;
+    }
+
+    .calibration-item strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--primary);
+      font-family: var(--mono);
+      font-size: 1.45rem;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      padding: 0 2px 4px;
+    }
+
+    @supports not (color: color-mix(in srgb, #000, #fff)) {
+      .risk-ring,
+      .sensor-icon,
+      .meter-fill {
+        box-shadow: none;
+      }
+    }
+
+    @media (max-width: 1220px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .right-col {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .topbar,
+      .decision-card {
+        grid-template-columns: 1fr;
+      }
+
+      .status-strip {
+        justify-content: flex-start;
+      }
+
+      .sensor-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .pipeline-strip,
+      .chart-insights {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .right-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .app {
+        width: calc(100% - 16px);
+        margin-top: 8px;
+      }
+
+      .sensor-grid,
+      .calibration-grid,
+      .pipeline-strip,
+      .chart-insights {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-box {
+        height: 320px;
+      }
+
+      .snapshot-item {
+        grid-template-columns: 1fr;
+      }
+
+      .data-table {
+        font-size: 0.8rem;
+      }
+
+      .footer {
+        display: grid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar glass">
+      <div>
+        <h1 class="title">青境智衡 · 高原幼畜圈舍环境监测与决策系统</h1>
+        <p class="subtitle">实时采集温度、湿度、氨气、光照数据，并通过本地规则库输出预警等级与通风建议。</p>
+      </div>
+      <div class="status-strip" aria-label="系统状态与演示控制">
+        <span class="pill"><span class="dot"></span><span id="streamStatus">采集中</span></span>
+        <select class="scenario-select" id="scenarioSelect" aria-label="场景模拟">
+          <option value="normal">正常环境</option>
+          <option value="ammonia">氨气缓慢超标</option>
+          <option value="cold">低温寒潮</option>
+          <option value="humidAmmonia">高湿高氨</option>
+        </select>
+        <span class="pill">最近 60 点</span>
+        <span class="pill" id="lastUpdate">最后更新：--</span>
+        <button class="control" id="toggleStream" type="button">暂停采集</button>
+      </div>
+    </header>
+
+    <section class="pipeline-strip glass" aria-label="数据采集到执行调控流程">
+      <article class="pipeline-step" style="--step-color: var(--temperature);">
+        <span class="pipeline-icon">01</span>
+        <div><div class="pipeline-name">数据采集</div><div class="pipeline-value" id="flowCollect">等待采样</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--humidity);">
+        <span class="pipeline-icon">02</span>
+        <div><div class="pipeline-name">高原补偿</div><div class="pipeline-value" id="flowCompensate">压力校准 --</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--light);">
+        <span class="pipeline-icon">03</span>
+        <div><div class="pipeline-name">本地决策</div><div class="pipeline-value" id="flowDecision">规则待命中</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--ammonia);">
+        <span class="pipeline-icon">04</span>
+        <div><div class="pipeline-name">执行调控</div><div class="pipeline-value" id="flowExecute">指令待下发</div></div>
+      </article>
+    </section>
+
+    <main class="main-grid">
+      <section class="left-col">
+        <section class="decision-card glass" id="decisionPanel" data-level="normal" aria-label="本地决策建议">
+          <div class="decision-main">
+            <p class="scenario-hint" id="scenarioHint">场景模拟中</p>
+            <div class="decision-head">
+              <div class="decision-icon" id="decisionIcon">🟢</div>
+              <div>
+                <h2 class="decision-title" id="decisionTitle">正常</h2>
+                <p class="decision-engine">本地知识库决策引擎 · 命中第一条规则即输出建议</p>
+              </div>
+            </div>
+            <div class="action-list" id="decisionAdvice">
+              <div class="action-step"><span class="step-index">1</span><span><span class="step-status">▶ 待执行</span>等待首次采样。</span></div>
+            </div>
+            <div class="trigger" id="decisionTrigger" aria-label="当前触发条件">
+              <span class="trigger-chip">触发条件：--</span>
+            </div>
+          </div>
+
+          <div class="risk-wrap">
+            <div class="risk-ring" id="riskRing">
+              <div class="ring-content">
+                <strong id="ringValue">--</strong>
+                <span>氨气风险指数 ppm</span>
+              </div>
+            </div>
+            <div class="risk-scale" id="riskScale" aria-label="氨气风险刻度">
+              <span class="safe"></span>
+              <span class="watch"></span>
+              <span class="over"></span>
+              <span class="danger"></span>
+              <i class="risk-pointer" id="riskPointer"></i>
+            </div>
+            <div class="risk-labels">
+              <span>安全 &lt;10</span>
+              <span>关注 10-15</span>
+              <span>超标 15-20</span>
+              <span>危险 &gt;20</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="sensor-grid" aria-label="实时传感器读数">
+          <article class="sensor-card ammonia glass" id="card-ammonia">
+            <div class="sensor-head">
+              <div class="sensor-name"><span class="sensor-icon">NH₃</span>氨气浓度</div>
+              <span class="badge normal" id="status-ammonia">正常</span>
+            </div>
+            <div class="sensor-value"><strong id="value-ammonia">--</strong><span>ppm</span></div>
+            <div>
+              <div class="meter"><span class="meter-fill" id="range-ammonia"></span></div>
+              <div class="meter-labels"><span>0</span><span>15ppm阈值</span><span>30</span></div>
+            </div>
+          </article>
+
+          <article class="sensor-card temperature glass">
+            <div class="sensor-head">
+              <div class="sensor-name"><span class="sensor-icon">℃</span>圈舍温度</div>
+              <span class="badge normal" id="status-temperature">正常</span>
+            </div>
+            <div class="sensor-value"><strong id="value-temperature">--</strong><span>℃</span></div>
+            <div>
+              <div class="meter">
+                <span class="meter-fill" id="range-temperature"></span>
+                <i class="meter-point" style="--x: 16.7%; --marker-color: var(--blue);" title="低温标记 0℃"></i>
+                <i class="meter-point" style="--x: 90%; --marker-color: var(--red);" title="高温标记 22℃"></i>
+              </div>
+              <div class="meter-labels"><span>-5</span><span>0℃ / 22℃</span><span>25</span></div>
+            </div>
+          </article>
+
+          <article class="sensor-card humidity glass">
+            <div class="sensor-head">
+              <div class="sensor-name"><span class="sensor-icon">RH</span>相对湿度</div>
+              <span class="badge normal" id="status-humidity">正常</span>
+            </div>
+            <div class="sensor-value"><strong id="value-humidity">--</strong><span>%</span></div>
+            <div>
+              <div class="meter"><span class="meter-fill" id="range-humidity"></span></div>
+              <div class="meter-labels"><span>40</span><span>80%高湿</span><span>90</span></div>
+            </div>
+          </article>
+
+          <article class="sensor-card light glass">
+            <div class="sensor-head">
+              <div class="sensor-name"><span class="sensor-icon">☼</span>光照强度</div>
+              <span class="badge normal" id="status-light">正常</span>
+            </div>
+            <div class="sensor-value"><strong id="value-light">--</strong><span>Lux</span></div>
+            <div>
+              <div class="meter"><span class="meter-fill" id="range-light"></span></div>
+              <div class="meter-labels"><span>0</span><span>补光参考</span><span>1000</span></div>
+            </div>
+          </article>
+        </div>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">实时趋势曲线</h2>
+              <p class="panel-note">红色虚线为 15ppm 氨气阈值；粗红线为补偿后氨气，灰色虚线为原始氨气。</p>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="trendChart"></canvas>
+          </div>
+          <p class="trend-summary panel-note" id="trendSummary">📊 等待更多采样点生成趋势简评。</p>
+          <div class="chart-insights" aria-label="最近60点统计">
+            <div class="insight-card"><span>NH₃ 均值</span><strong id="insightAvgNh3">--</strong></div>
+            <div class="insight-card"><span>NH₃ 峰值</span><strong id="insightMaxNh3">--</strong></div>
+            <div class="insight-card"><span>温度均值</span><strong id="insightAvgTemp">--</strong></div>
+            <div class="insight-card"><span>高湿点数</span><strong id="insightHumidCount">--</strong></div>
+          </div>
+        </section>
+
+        <section class="panel glass">
+          <div class="table-actions">
+            <div>
+              <h2 class="panel-title">采样记录</h2>
+              <p class="panel-note">保留最近 8 条采样数据；可手动保存数据快照用于回溯展示。</p>
+            </div>
+            <button class="control secondary" id="snapshotButton" type="button">保存数据快照</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>温度</th>
+                <th>湿度</th>
+                <th>原始NH₃</th>
+                <th>补偿NH₃</th>
+                <th>光照</th>
+                <th>等级</th>
+              </tr>
+            </thead>
+            <tbody id="recordRows">
+              <tr><td colspan="7">等待首次采样</td></tr>
+            </tbody>
+          </table>
+          <div class="snapshot-list" id="snapshotList" aria-label="快照列表"></div>
+        </section>
+      </section>
+
+      <aside class="right-col">
+        <section class="panel glass">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">采集与补偿状态</h2>
+              <p class="panel-note">模拟高海拔低压环境下的传感器补偿过程。</p>
+            </div>
+          </div>
+          <div class="calibration-grid">
+            <div class="calibration-item"><span>估算气压</span><strong id="pressureValue">--</strong></div>
+            <div class="calibration-item"><span>补偿系数</span><strong id="factorValue">--</strong></div>
+            <div class="calibration-item"><span>原始氨气</span><strong id="rawAmmoniaValue">--</strong></div>
+            <div class="calibration-item"><span>补偿后氨气</span><strong id="correctedAmmoniaValue">--</strong></div>
+          </div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">动态通风调控执行</h2>
+              <p class="panel-note">展示规则引擎下发后的模拟执行器状态，形成“决策 → 调控”闭环。</p>
+            </div>
+          </div>
+          <div class="actuator-panel">
+            <div class="actuator-row">
+              <div class="actuator-icon" id="fanIcon">✺</div>
+              <div>
+                <div class="actuator-name">通风扇状态</div>
+                <div class="actuator-desc">关闭 / 低速 / 中速 / 强排</div>
+              </div>
+              <span class="state-badge"><i class="state-dot" id="fanStatusDot"></i><span id="fanStatusText">关闭</span></span>
+            </div>
+
+            <div class="actuator-row">
+              <div class="actuator-icon">♨</div>
+              <div>
+                <div class="actuator-name">保温设备状态</div>
+                <div class="actuator-desc">低温时模拟开启补热</div>
+              </div>
+              <span class="state-badge"><i class="state-dot" id="heaterStatusDot"></i><span id="heaterStatusText">关闭</span></span>
+            </div>
+
+            <code class="command-code" id="commandText">指令：无操作</code>
+
+            <div class="alarm-list" id="alarmList" aria-label="执行告警队列">
+              <div class="alarm-item"><i class="alarm-dot" style="--alarm-color: var(--primary);"></i><span>等待规则引擎输出执行事件。</span></div>
+            </div>
+
+            <div class="vent-card">
+              <div class="vent-row">
+                <span>通风窗口 12:00-14:00</span>
+                <span id="ventStatus">等待判断</span>
+              </div>
+              <div class="timeline" id="ventTimeline"></div>
+              <div class="timeline-labels"><span>00:00</span><span>12:00</span><span>14:00</span><span>24:00</span></div>
+              <p class="panel-note" id="ventAdvice">可通风时段已用青绿色色块标出，当前时间由发光圆点指示。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">规则优先级</h2>
+              <p class="panel-note">每次采样后按顺序匹配，命中第一条即输出。</p>
+            </div>
+          </div>
+          <table class="data-table">
+            <tbody>
+              <tr><td class="level-critical">🔴 一级警报</td><td>氨气 &gt; 20ppm</td></tr>
+              <tr><td class="level-warning">🟡 警告</td><td>氨气 &gt; 15ppm</td></tr>
+              <tr><td class="level-alert">🟠 预警</td><td>湿度 &gt; 80% 且氨气 &gt; 10ppm</td></tr>
+              <tr><td class="level-caution">🔵 注意</td><td>温度 &lt; 0℃</td></tr>
+              <tr><td class="level-normal">🟢 正常</td><td>未触发异常阈值</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span>青境智衡 · 纯前端演示看板 · 模拟数据</span>
+      <span>青海大学农牧学院 · 中国国际大学生创新大赛（2026）</span>
+    </footer>
+  </div>
+
+  <script>
+    const MAX_POINTS = 60;
+    const MAX_RECORDS = 8;
+    const MAX_SNAPSHOTS = 5;
+    const SAMPLE_INTERVAL = 2000;
+
+    const state = {
+      sampleIndex: 0,
+      running: true,
+      timer: null,
+      labels: [],
+      temperature: [],
+      humidity: [],
+      ammonia: [],
+      rawAmmonia: [],
+      light: [],
+      records: [],
+      snapshots: [],
+      currentData: null,
+      currentResult: null,
+      scenario: {
+        type: "normal",
+        tick: 0,
+        duration: 0,
+        hold: 0
+      }
+    };
+
+    const els = {
+      streamStatus: document.getElementById("streamStatus"),
+      toggleStream: document.getElementById("toggleStream"),
+      scenarioSelect: document.getElementById("scenarioSelect"),
+      scenarioHint: document.getElementById("scenarioHint"),
+      snapshotButton: document.getElementById("snapshotButton"),
+      snapshotList: document.getElementById("snapshotList"),
+      lastUpdate: document.getElementById("lastUpdate"),
+      decisionPanel: document.getElementById("decisionPanel"),
+      decisionIcon: document.getElementById("decisionIcon"),
+      decisionTitle: document.getElementById("decisionTitle"),
+      decisionAdvice: document.getElementById("decisionAdvice"),
+      decisionTrigger: document.getElementById("decisionTrigger"),
+      riskRing: document.getElementById("riskRing"),
+      riskPointer: document.getElementById("riskPointer"),
+      ringValue: document.getElementById("ringValue"),
+      ventStatus: document.getElementById("ventStatus"),
+      ventTimeline: document.getElementById("ventTimeline"),
+      ventAdvice: document.getElementById("ventAdvice"),
+      fanIcon: document.getElementById("fanIcon"),
+      fanStatusDot: document.getElementById("fanStatusDot"),
+      fanStatusText: document.getElementById("fanStatusText"),
+      heaterStatusDot: document.getElementById("heaterStatusDot"),
+      heaterStatusText: document.getElementById("heaterStatusText"),
+      commandText: document.getElementById("commandText"),
+      trendSummary: document.getElementById("trendSummary"),
+      flowCollect: document.getElementById("flowCollect"),
+      flowCompensate: document.getElementById("flowCompensate"),
+      flowDecision: document.getElementById("flowDecision"),
+      flowExecute: document.getElementById("flowExecute"),
+      insightAvgNh3: document.getElementById("insightAvgNh3"),
+      insightMaxNh3: document.getElementById("insightMaxNh3"),
+      insightAvgTemp: document.getElementById("insightAvgTemp"),
+      insightHumidCount: document.getElementById("insightHumidCount"),
+      alarmList: document.getElementById("alarmList"),
+      pressureValue: document.getElementById("pressureValue"),
+      factorValue: document.getElementById("factorValue"),
+      rawAmmoniaValue: document.getElementById("rawAmmoniaValue"),
+      correctedAmmoniaValue: document.getElementById("correctedAmmoniaValue"),
+      recordRows: document.getElementById("recordRows")
+    };
+
+    const sensors = {
+      ammonia: {
+        value: document.getElementById("value-ammonia"),
+        status: document.getElementById("status-ammonia"),
+        range: document.getElementById("range-ammonia"),
+        card: document.getElementById("card-ammonia"),
+        min: 0,
+        max: 30,
+        decimals: 1
+      },
+      temperature: {
+        value: document.getElementById("value-temperature"),
+        status: document.getElementById("status-temperature"),
+        range: document.getElementById("range-temperature"),
+        min: -5,
+        max: 25,
+        decimals: 1
+      },
+      humidity: {
+        value: document.getElementById("value-humidity"),
+        status: document.getElementById("status-humidity"),
+        range: document.getElementById("range-humidity"),
+        min: 40,
+        max: 90,
+        decimals: 0
+      },
+      light: {
+        value: document.getElementById("value-light"),
+        status: document.getElementById("status-light"),
+        range: document.getElementById("range-light"),
+        min: 0,
+        max: 1000,
+        decimals: 0
+      }
+    };
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function randomNoise(scale) {
+      return (Math.random() - 0.5) * scale;
+    }
+
+    function formatClock(date = new Date()) {
+      return date.toLocaleTimeString("zh-CN", { hour12: false });
+    }
+
+    function percentInRange(value, min, max) {
+      return clamp(((value - min) / (max - min)) * 100, 0, 100);
+    }
+
+    function estimatePressureKpa(sampleIndex) {
+      const altitude = 3000 + 260 * Math.sin(sampleIndex / 55);
+      return 101.325 * Math.pow(1 - (0.0065 * altitude) / 288.15, 5.255);
+    }
+
+    function interpolateColor(start, end, ratio) {
+      const sr = parseInt(start.slice(1, 3), 16);
+      const sg = parseInt(start.slice(3, 5), 16);
+      const sb = parseInt(start.slice(5, 7), 16);
+      const er = parseInt(end.slice(1, 3), 16);
+      const eg = parseInt(end.slice(3, 5), 16);
+      const eb = parseInt(end.slice(5, 7), 16);
+      const r = Math.round(sr + (er - sr) * ratio);
+      const g = Math.round(sg + (eg - sg) * ratio);
+      const b = Math.round(sb + (eb - sb) * ratio);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // 根据氨气浓度动态生成从绿色到红色的风险颜色。
+    function getRiskColor(ammonia) {
+      const ratio = clamp(ammonia / 30, 0, 1);
+      if (ratio < 0.5) {
+        return interpolateColor("#00D4AA", "#FFD93D", ratio / 0.5);
+      }
+      return interpolateColor("#FFD93D", "#FF4D5E", (ratio - 0.5) / 0.5);
+    }
+
+    // 场景模拟会在 10-20 个采样点内逐步推向目标值，并短暂稳定，方便演示规则触发。
+    function startScenario(type) {
+      state.scenario = {
+        type,
+        tick: 0,
+        duration: type === "normal" ? 0 : 14,
+        hold: type === "normal" ? 0 : 6
+      };
+      els.scenarioHint.classList.toggle("show", type !== "normal");
+      els.scenarioHint.textContent = type === "normal" ? "" : `场景模拟中：${els.scenarioSelect.options[els.scenarioSelect.selectedIndex].text}`;
+    }
+
+    function scenarioBlendValue(base, target, min, max) {
+      if (state.scenario.type === "normal") return base;
+      const total = state.scenario.duration + state.scenario.hold;
+      const ramp = state.scenario.duration;
+      const tick = state.scenario.tick;
+      const ratio = tick <= ramp ? tick / ramp : 1;
+      const value = tick <= total ? base + (target - base) * ratio : base;
+      return clamp(value + randomNoise(0.4), min, max);
+    }
+
+    function applyScenario(data) {
+      if (state.scenario.type === "normal") return data;
+
+      const next = { ...data };
+      if (state.scenario.type === "ammonia") {
+        next.ammonia = scenarioBlendValue(data.ammonia, 18.8, 0, 30);
+        next.humidity = scenarioBlendValue(data.humidity, 66, 40, 90);
+      }
+
+      if (state.scenario.type === "cold") {
+        next.temperature = scenarioBlendValue(data.temperature, -3.2, -5, 25);
+        next.ammonia = scenarioBlendValue(data.ammonia, 8.5, 0, 30);
+      }
+
+      if (state.scenario.type === "humidAmmonia") {
+        next.humidity = scenarioBlendValue(data.humidity, 84, 40, 90);
+        next.ammonia = scenarioBlendValue(data.ammonia, 13.2, 0, 30);
+      }
+
+      const pressureFactor = next.pressure / 101.325;
+      next.rawAmmonia = clamp(next.ammonia * pressureFactor + randomNoise(0.5), 0, 30);
+      state.scenario.tick += 1;
+
+      if (state.scenario.tick > state.scenario.duration + state.scenario.hold + 4) {
+        els.scenarioHint.classList.remove("show");
+      }
+
+      return next;
+    }
+
+    // 使用正弦波叠加噪声，模拟自然波动、氨气积聚和通风后的下降。
+    function generateSensorData() {
+      const t = state.sampleIndex;
+      const pressure = estimatePressureKpa(t);
+      const pressureFactor = pressure / 101.325;
+      const ammoniaPhase = t % 46;
+      const spike = ammoniaPhase > 24 && ammoniaPhase < 36
+        ? Math.sin(((ammoniaPhase - 24) / 12) * Math.PI) * 10.5
+        : 0;
+      const ventilationDrop = ammoniaPhase > 37 ? -5.2 : 0;
+      const daylight = Math.max(0, Math.sin((t / 28) - Math.PI / 2));
+
+      const temperature = clamp(
+        8.5 + 13.8 * Math.sin(t / 25 - 1.35) + 2.3 * Math.sin(t / 8) + randomNoise(1.9),
+        -5,
+        25
+      );
+      const humidity = clamp(
+        64 + 16 * Math.sin(t / 18 + 1.1) - 6 * Math.sin(t / 7) + randomNoise(5.5),
+        40,
+        90
+      );
+      const ammonia = clamp(
+        8.6 + 5.8 * Math.sin(t / 14 - 0.4) + 2.2 * Math.sin(t / 5) + spike + ventilationDrop + randomNoise(2.2),
+        0,
+        30
+      );
+      const rawAmmonia = clamp(ammonia * pressureFactor + randomNoise(0.7), 0, 30);
+      const light = clamp(daylight * 930 + 45 * Math.sin(t / 3) + randomNoise(36), 0, 1000);
+
+      state.sampleIndex += 1;
+
+      return applyScenario({ time: formatClock(), temperature, humidity, ammonia, rawAmmonia, light, pressure });
+    }
+
+    function getSensorStatus(type, value) {
+      if (type === "temperature") {
+        if (value < 0) return { label: "低温", className: "caution" };
+        if (value < 4 || value > 22) return { label: "关注", className: "warning" };
+        return { label: "正常", className: "normal" };
+      }
+
+      if (type === "humidity") {
+        if (value > 80) return { label: "偏高", className: "warning" };
+        if (value < 45) return { label: "偏低", className: "caution" };
+        return { label: "正常", className: "normal" };
+      }
+
+      if (type === "ammonia") {
+        if (value > 20) return { label: "严重", className: "critical" };
+        if (value > 15) return { label: "超标", className: "warning" };
+        if (value > 10) return { label: "关注", className: "warning" };
+        return { label: "正常", className: "normal" };
+      }
+
+      if (value < 80) return { label: "夜间", className: "caution" };
+      return { label: "正常", className: "normal" };
+    }
+
+    function updateSensorCards(data) {
+      Object.keys(sensors).forEach((key) => {
+        const config = sensors[key];
+        const value = data[key];
+        const status = getSensorStatus(key, value);
+        config.value.textContent = value.toFixed(config.decimals);
+        config.range.style.width = `${percentInRange(value, config.min, config.max)}%`;
+        config.status.textContent = status.label;
+        config.status.className = `badge ${status.className}`;
+      });
+
+      sensors.ammonia.card.classList.toggle("alert", data.ammonia > 15);
+    }
+
+    // 本地专家规则库：按优先级命中第一条。
+    function decideByExpertRules(data) {
+      if (data.ammonia > 20) {
+        return {
+          levelClass: "critical",
+          icon: "🔴",
+          title: "一级警报",
+          advice: "氨气浓度严重超标！立即启动最大通风，疏散幼畜至安全区域。氨气浓度超过20ppm将严重损害幼畜呼吸道黏膜，持续30分钟以上可导致不可逆损伤。【参考国标NY/T 388-1999】"
+        };
+      }
+
+      if (data.ammonia > 15) {
+        return {
+          levelClass: "warning",
+          icon: "🟡",
+          title: "警告",
+          advice: "氨气浓度超标！建议在午间12:00-14:00气温峰值时段进行5-10分钟短时通风，单次通风温度波动控制在3℃以内。同时检查暖棚密封性，排查粪污堆积点。"
+        };
+      }
+
+      if (data.humidity > 80 && data.ammonia > 10) {
+        return {
+          levelClass: "alert",
+          icon: "🟠",
+          title: "复合预警",
+          advice: "高湿高氨环境！建议立即清理粪污、增加垫料更换频率，并在午间通风窗口延长通风至15分钟。"
+        };
+      }
+
+      if (data.temperature < 0) {
+        return {
+          levelClass: "caution",
+          icon: "🔵",
+          title: "低温注意",
+          advice: "低温环境！建议增加保温灯或加厚垫料，避免冷应激引发腹泻。通风时应缩短单次时长并观察温度波动。"
+        };
+      }
+
+      return {
+        levelClass: "normal",
+        icon: "🟢",
+        title: "正常",
+        advice: "当前圈舍环境适宜。温度、湿度、氨气均在舒适范围内，继续保持当前管理措施并定期巡查设备运行状态。"
+      };
+    }
+
+    // 将规则命中结果转换为结构化执行清单，便于演示“本地决策 → 执行动作”。
+    function getDecisionSteps(levelClass, inWindow) {
+      const stepIcon = inWindow ? "● 执行中" : "▶ 待执行";
+
+      if (levelClass === "critical") {
+        return [
+          { status: "● 执行中", text: "立即启动强排通风，疏散幼畜至安全区域。" },
+          { status: "▶ 待执行", text: "检查暖棚密封性，排查粪污堆积点。" },
+          { status: "▶ 待执行", text: "持续监测氨气下降趋势，每 2 分钟记录一次。" }
+        ];
+      }
+
+      if (levelClass === "warning") {
+        return [
+          { status: stepIcon, text: "在 12:00-14:00 午间窗口开启低速通风（5-10 分钟）。" },
+          { status: "▶ 待执行", text: "检查垫料潮湿情况，增加更换频率。" },
+          { status: "▶ 待执行", text: "监测温度波动，确保降幅不超过 3℃。" }
+        ];
+      }
+
+      if (levelClass === "alert") {
+        return [
+          { status: "● 执行中", text: "立即清理粪污，减少氨气源头。" },
+          { status: stepIcon, text: "延长午间通风至 15 分钟。" },
+          { status: "▶ 待执行", text: "增加干燥垫料，降低湿度。" }
+        ];
+      }
+
+      if (levelClass === "caution") {
+        return [
+          { status: "● 执行中", text: "增加保温灯或加厚垫料。" },
+          { status: "▶ 待执行", text: "缩短单次通风时长至 3-5 分钟。" },
+          { status: "▶ 待执行", text: "观察幼畜扎堆情况，必要时增加供暖。" }
+        ];
+      }
+
+      return [
+        { status: "✓ 已完成", text: "继续保持当前管理措施。" },
+        { status: "▶ 待执行", text: "定期巡查设备运行状态。" },
+        { status: inWindow ? "● 执行中" : "▶ 待执行", text: "关注午间窗口，可进行短时巡检通风。" }
+      ];
+    }
+
+    function renderDecisionSteps(levelClass, inWindow) {
+      const steps = getDecisionSteps(levelClass, inWindow);
+      els.decisionAdvice.innerHTML = steps.map((step, index) => `
+        <div class="action-step">
+          <span class="step-index">${index + 1}</span>
+          <span><span class="step-status">${step.status}</span>${step.text}</span>
+        </div>
+      `).join("");
+    }
+
+    // 根据规则结果模拟执行器状态，让右侧栏表达“执行调控”。
+    function updateActuators(levelClass, inWindow) {
+      let fan = { text: "关闭", color: "#7A9BB5", spin: false };
+      let heater = { text: "关闭", color: "#7A9BB5" };
+      let command = "指令：无操作";
+
+      if (levelClass === "critical") {
+        fan = { text: "强排", color: "#FF4D5E", spin: true };
+        command = "指令：立即强排通风 + 疏散幼畜 + 2分钟复测";
+      } else if (levelClass === "warning") {
+        fan = inWindow
+          ? { text: "低速", color: "#00D4AA", spin: false }
+          : { text: "关闭", color: "#7A9BB5", spin: false };
+        command = "指令：12:00-14:00 低速通风 8 分钟";
+      } else if (levelClass === "alert") {
+        fan = inWindow
+          ? { text: "中速", color: "#FF9F43", spin: true }
+          : { text: "关闭", color: "#7A9BB5", spin: false };
+        command = "指令：午间中速通风 15 分钟 + 清粪换垫料";
+      } else if (levelClass === "caution") {
+        heater = { text: "加热中", color: "#FF4D5E" };
+        command = "指令：启动保温设备，通风缩短至 3-5 分钟";
+      }
+
+      els.fanStatusText.textContent = fan.text;
+      els.fanStatusDot.style.setProperty("--state-color", fan.color);
+      els.fanIcon.classList.toggle("spin", fan.spin);
+      els.heaterStatusText.textContent = heater.text;
+      els.heaterStatusDot.style.setProperty("--state-color", heater.color);
+      els.commandText.textContent = command;
+      return { fan, heater, command };
+    }
+
+    // 告警队列借鉴 IoT 看板的事件流做法，保留最关键的执行提示。
+    function updateAlarmList(data, result, execution) {
+      const items = [];
+      if (result.levelClass === "critical") {
+        items.push({ color: "#FF4D5E", text: `NH₃ ${data.ammonia.toFixed(1)}ppm，已进入强排与疏散流程。` });
+      } else if (result.levelClass === "warning") {
+        items.push({ color: "#FFD93D", text: `NH₃ ${data.ammonia.toFixed(1)}ppm，等待或执行午间短时通风。` });
+      } else if (result.levelClass === "alert") {
+        items.push({ color: "#FF9F43", text: `湿度 ${data.humidity.toFixed(0)}% + NH₃ ${data.ammonia.toFixed(1)}ppm，优先清粪换垫料。` });
+      } else if (result.levelClass === "caution") {
+        items.push({ color: "#4A9EFF", text: `温度 ${data.temperature.toFixed(1)}℃，保温设备状态：${execution.heater.text}。` });
+      } else {
+        items.push({ color: "#00D4AA", text: "环境处于正常区间，执行器保持待命。" });
+      }
+
+      items.push({ color: execution.fan.color, text: `风扇：${execution.fan.text}；${execution.command}` });
+      els.alarmList.innerHTML = items.map((item) => `
+        <div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${item.color};"></i><span>${item.text}</span></div>
+      `).join("");
+    }
+
+    // 顶部流程条实时汇总采集、补偿、决策与执行状态。
+    function updatePipeline(data, result, execution) {
+      els.flowCollect.textContent = `${data.time} · 4路传感器在线`;
+      els.flowCompensate.textContent = `${data.pressure.toFixed(1)}kPa · NH₃ ${data.rawAmmonia.toFixed(1)}→${data.ammonia.toFixed(1)}`;
+      els.flowDecision.textContent = `${result.icon} ${result.title}`;
+      els.flowExecute.textContent = `${execution.fan.text} / ${execution.heater.text}`;
+    }
+
+    function updateDecision(data) {
+      const result = decideByExpertRules(data);
+      const risk = clamp((data.ammonia / 30) * 100, 3, 100);
+      const riskColor = getRiskColor(data.ammonia);
+      const now = new Date();
+      const hour = now.getHours() + now.getMinutes() / 60;
+      const inWindow = hour >= 12 && hour <= 14;
+
+      els.decisionPanel.dataset.level = result.levelClass;
+      els.decisionIcon.textContent = result.icon;
+      els.decisionTitle.textContent = result.title;
+      renderDecisionSteps(result.levelClass, inWindow);
+      els.decisionTrigger.innerHTML = `
+        <span class="trigger-chip">氨气：<strong style="--chip-color:${riskColor}">${data.ammonia.toFixed(1)}ppm</strong></span>
+        <span class="trigger-chip">湿度：<strong style="--chip-color:var(--humidity)">${data.humidity.toFixed(0)}%</strong></span>
+        <span class="trigger-chip">温度：<strong style="--chip-color:var(--temperature)">${data.temperature.toFixed(1)}℃</strong></span>
+        <span class="trigger-chip">光照：<strong style="--chip-color:var(--light)">${data.light.toFixed(0)}Lux</strong></span>
+      `;
+      els.riskRing.style.setProperty("--risk", `${risk}%`);
+      els.riskRing.style.setProperty("--ring-color", riskColor);
+      els.riskPointer.style.setProperty("--pointer", `${risk}%`);
+      els.ringValue.textContent = data.ammonia.toFixed(1);
+      els.ventTimeline.style.setProperty("--now", `${(hour / 24) * 100}%`);
+      els.ventStatus.textContent = inWindow ? "当前在窗口内" : "当前不在窗口内";
+      els.ventAdvice.textContent = data.ammonia > 15
+        ? "氨气已超阈值。建议在 12:00-14:00 进行 5-10 分钟短时通风，温度波动控制在 3℃以内。"
+        : "当前无需主动通风，继续监测氨气积聚趋势；若进入午间窗口可进行短时巡检通风。";
+      const execution = updateActuators(result.levelClass, inWindow);
+      updateAlarmList(data, result, execution);
+      updatePipeline(data, result, execution);
+
+      state.currentResult = result;
+      return result;
+    }
+
+    function updateCalibration(data) {
+      const factor = data.ammonia > 0 ? data.ammonia / Math.max(data.rawAmmonia, 0.1) : 1;
+      els.pressureValue.textContent = `${data.pressure.toFixed(1)} kPa`;
+      els.factorValue.textContent = `${factor.toFixed(2)}x`;
+      els.rawAmmoniaValue.textContent = `${data.rawAmmonia.toFixed(1)} ppm`;
+      els.correctedAmmoniaValue.textContent = `${data.ammonia.toFixed(1)} ppm`;
+    }
+
+    function pushRecord(data, result) {
+      state.records.unshift({ ...data, result });
+      state.records = state.records.slice(0, MAX_RECORDS);
+      els.recordRows.innerHTML = state.records.map((item) => `
+        <tr>
+          <td>${item.time}</td>
+          <td>${item.temperature.toFixed(1)}℃</td>
+          <td>${item.humidity.toFixed(0)}%</td>
+          <td>${item.rawAmmonia.toFixed(1)}</td>
+          <td>${item.ammonia.toFixed(1)}</td>
+          <td>${item.light.toFixed(0)}</td>
+          <td class="level-${item.result.levelClass}">${item.result.icon} ${item.result.title}</td>
+        </tr>
+      `).join("");
+    }
+
+    // 数据快照功能：手动保存当前时刻读数和决策结果，最多保留 5 条。
+    function saveSnapshot() {
+      if (!state.currentData || !state.currentResult) return;
+      state.snapshots.unshift({
+        ...state.currentData,
+        result: state.currentResult
+      });
+      state.snapshots = state.snapshots.slice(0, MAX_SNAPSHOTS);
+      renderSnapshots();
+    }
+
+    function renderSnapshots() {
+      if (state.snapshots.length === 0) {
+        els.snapshotList.innerHTML = "";
+        return;
+      }
+
+      els.snapshotList.innerHTML = state.snapshots.map((item) => `
+        <div class="snapshot-item">
+          <strong>${item.time}</strong>
+          <span>NH₃ ${item.ammonia.toFixed(1)}ppm · 温度 ${item.temperature.toFixed(1)}℃ · 湿度 ${item.humidity.toFixed(0)}% · 光照 ${item.light.toFixed(0)}Lux</span>
+          <span class="level-${item.result.levelClass}">${item.result.icon} ${item.result.title}</span>
+        </div>
+      `).join("");
+    }
+
+    // Chart.js 自定义插件：在图表区域手动绘制 15ppm 红色虚线阈值。
+    const thresholdLinePlugin = {
+      id: "ammoniaThresholdLine",
+      afterDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales.y) return;
+        const y = scales.y.getPixelForValue(15);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([7, 6]);
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = "rgba(255, 77, 94, 0.9)";
+        ctx.moveTo(chartArea.left, y);
+        ctx.lineTo(chartArea.right, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(255, 107, 107, 0.95)";
+        ctx.font = "12px ui-monospace, Menlo, Consolas, monospace";
+        ctx.fillText("NH₃ 15ppm 阈值", chartArea.left + 8, y - 8);
+        ctx.restore();
+      }
+    };
+
+    Chart.register(thresholdLinePlugin);
+
+    const trendChart = new Chart(document.getElementById("trendChart"), {
+      type: "line",
+      data: {
+        labels: state.labels,
+        datasets: [
+          {
+            label: "补偿NH₃ ppm",
+            data: state.ammonia,
+            borderColor: "#FF6B6B",
+            backgroundColor: "rgba(255, 107, 107, 0.12)",
+            tension: 0.36,
+            pointRadius: 0,
+            borderWidth: 3,
+            fill: true,
+            yAxisID: "y"
+          },
+          {
+            label: "原始NH₃ ppm",
+            data: state.rawAmmonia,
+            borderColor: "rgba(170, 170, 170, 0.5)",
+            borderDash: [6, 5],
+            tension: 0.36,
+            pointRadius: 0,
+            borderWidth: 2,
+            yAxisID: "y"
+          },
+          {
+            label: "温度 ℃",
+            data: state.temperature,
+            borderColor: "#4A9EFF",
+            tension: 0.36,
+            pointRadius: 0,
+            borderWidth: 2,
+            yAxisID: "y"
+          },
+          {
+            label: "湿度 %",
+            data: state.humidity,
+            borderColor: "#00D4AA",
+            tension: 0.36,
+            pointRadius: 0,
+            borderWidth: 2,
+            yAxisID: "y"
+          },
+          {
+            label: "光照 Lux",
+            data: state.light,
+            borderColor: "#FFD93D",
+            tension: 0.36,
+            pointRadius: 0,
+            borderWidth: 2,
+            yAxisID: "yLight"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 240 },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: "#7A9BB5",
+              usePointStyle: true,
+              boxWidth: 8,
+              font: { weight: "700" }
+            }
+          },
+          tooltip: {
+            backgroundColor: "rgba(11, 26, 42, 0.96)",
+            borderColor: "rgba(255, 255, 255, 0.12)",
+            borderWidth: 1,
+            titleColor: "#E8F0F8",
+            bodyColor: "#D7E4EE"
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: "#7A9BB5", maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+            grid: { color: "rgba(255, 255, 255, 0.07)" }
+          },
+          y: {
+            suggestedMin: -5,
+            suggestedMax: 90,
+            ticks: { color: "#7A9BB5" },
+            grid: { color: "rgba(255, 255, 255, 0.07)" }
+          },
+          yLight: {
+            position: "right",
+            beginAtZero: true,
+            suggestedMax: 1000,
+            ticks: { color: "#7A9BB5" },
+            grid: { drawOnChartArea: false }
+          }
+        }
+      }
+    });
+
+    function pushChartPoint(data) {
+      state.labels.push(data.time);
+      state.temperature.push(Number(data.temperature.toFixed(1)));
+      state.humidity.push(Number(data.humidity.toFixed(0)));
+      state.ammonia.push(Number(data.ammonia.toFixed(1)));
+      state.rawAmmonia.push(Number(data.rawAmmonia.toFixed(1)));
+      state.light.push(Number(data.light.toFixed(0)));
+
+      if (state.labels.length > MAX_POINTS) {
+        state.labels.shift();
+        state.temperature.shift();
+        state.humidity.shift();
+        state.ammonia.shift();
+        state.rawAmmonia.shift();
+        state.light.shift();
+      }
+
+      trendChart.update();
+      updateTrendSummary();
+      updateChartInsights();
+    }
+
+    // 根据最近 10 个氨气点生成趋势简评，强化数据洞察。
+    function updateTrendSummary() {
+      const recent = state.ammonia.slice(-10);
+      if (recent.length < 10) {
+        els.trendSummary.textContent = "📊 正在积累趋势数据，达到 10 个采样点后生成简评。";
+        return;
+      }
+
+      let rising = 0;
+      let falling = 0;
+      for (let i = 1; i < recent.length; i += 1) {
+        if (recent[i] > recent[i - 1]) rising += 1;
+        if (recent[i] < recent[i - 1]) falling += 1;
+      }
+
+      if (rising >= 7 && recent[recent.length - 1] > recent[0]) {
+        els.trendSummary.textContent = "📈 氨气呈持续上升趋势，建议关注午间通风窗口。";
+      } else if (falling >= 7 && recent[recent.length - 1] < recent[0]) {
+        els.trendSummary.textContent = "📉 氨气呈持续下降趋势，当前环境趋于稳定。";
+      } else {
+        els.trendSummary.textContent = "📊 氨气波动平稳，未出现明显累积趋势。";
+      }
+    }
+
+    // 汇总最近 60 个采样点，学习监测平台常见的 min/max/avg 辅助读数。
+    function updateChartInsights() {
+      if (state.ammonia.length === 0) return;
+      const avg = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
+      const maxNh3 = Math.max(...state.ammonia);
+      const humidCount = state.humidity.filter((value) => value > 80).length;
+
+      els.insightAvgNh3.textContent = `${avg(state.ammonia).toFixed(1)} ppm`;
+      els.insightMaxNh3.textContent = `${maxNh3.toFixed(1)} ppm`;
+      els.insightAvgTemp.textContent = `${avg(state.temperature).toFixed(1)} ℃`;
+      els.insightHumidCount.textContent = `${humidCount} 点`;
+    }
+
+    function tick() {
+      const data = generateSensorData();
+      state.currentData = data;
+      updateSensorCards(data);
+      const result = updateDecision(data);
+      updateCalibration(data);
+      pushRecord(data, result);
+      pushChartPoint(data);
+      els.lastUpdate.textContent = `最后更新：${data.time}`;
+    }
+
+    function setRunning(nextRunning) {
+      state.running = nextRunning;
+      els.streamStatus.textContent = nextRunning ? "采集中" : "已暂停";
+      els.toggleStream.textContent = nextRunning ? "暂停采集" : "继续采集";
+
+      if (nextRunning) {
+        tick();
+        state.timer = window.setInterval(tick, SAMPLE_INTERVAL);
+      } else {
+        window.clearInterval(state.timer);
+      }
+    }
+
+    els.toggleStream.addEventListener("click", () => setRunning(!state.running));
+    els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
+    els.snapshotButton.addEventListener("click", saveSnapshot);
+
+    tick();
+    state.timer = window.setInterval(tick, SAMPLE_INTERVAL);
+  </script>
+</body>
+</html>
