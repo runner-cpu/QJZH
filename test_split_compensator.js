@@ -20,8 +20,8 @@ assert.throws(() => missingWeights.compensate(2800, 10, 60, 30), /权重文件�
 
 const page = fs.readFileSync("index.html", "utf8");
 const weightsPosition = page.indexOf('model_weights.js?v=1.0.0');
-const enginePosition = page.indexOf('compensator_engine.js');
-const uiPosition = page.indexOf('ui_interactions.js');
+const enginePosition = page.indexOf('compensator_engine.js?v=1.0.0');
+const uiPosition = page.indexOf('ui_interactions.js?v=1.0.0');
 assert.ok(weightsPosition >= 0 && weightsPosition < enginePosition && enginePosition < uiPosition);
 assert.equal(page.includes("highland_compensator.js"), false);
 console.log("split compensator contract: PASS");
