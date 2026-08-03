@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>青境智衡 · 高原幼畜圈舍环境监测与决策系统</title>
+  <script src="model_weights.js?v=1.0.0"></script>
+  <script src="compensator_engine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="knowledgeBase.js"></script>
+  <script src="decisionEngine.js"></script>
+  <script src="simulator.js"></script>
+  <script src="ui_interactions.js" defer></script>
   <style>
     :root {
       --bg-a: #0b1a2a;
@@ -226,11 +232,16 @@
       min-width: 0;
     }
 
+    .left-col {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     .decision-card {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 244px;
       gap: 14px;
       padding: 16px;
+      min-width: 0;
       border-color: rgba(0, 212, 170, 0.28);
       background:
         radial-gradient(circle at 76% 16%, rgba(0, 212, 170, 0.14), transparent 12rem),
@@ -258,6 +269,11 @@
     }
 
     .decision-main {
+      min-width: 0;
+    }
+
+    .decision-card > *,
+    .risk-wrap {
       min-width: 0;
     }
 
@@ -903,6 +919,33 @@
       gap: 10px;
     }
 
+    .demo-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) 66px;
+      gap: 9px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .demo-row + .demo-row { margin-top: 10px; }
+
+    .demo-row input { width: 100%; accent-color: var(--primary); }
+
+    .demo-row output {
+      color: var(--text);
+      font-family: var(--mono);
+      text-align: right;
+    }
+
+    .model-version {
+      color: var(--primary);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 900;
+    }
+
     .alarm-list {
       display: grid;
       gap: 8px;
@@ -964,6 +1007,68 @@
       padding: 0 2px 4px;
     }
 
+    .knowledge-result {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 13px;
+      border: 1px solid rgba(0, 212, 170, 0.34);
+      border-radius: 8px;
+      background: rgba(0, 212, 170, 0.07);
+    }
+
+    .knowledge-result[data-action="ventilation"] {
+      border-color: rgba(0, 212, 170, 0.78);
+      background: rgba(0, 212, 170, 0.12);
+    }
+
+    .knowledge-result[data-action="alert_only"] {
+      border-color: rgba(255, 159, 67, 0.72);
+      background: rgba(255, 159, 67, 0.1);
+    }
+
+    .knowledge-result[data-action="stop"] {
+      border-color: rgba(74, 158, 255, 0.56);
+    }
+
+    .knowledge-result-label {
+      color: var(--primary);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .knowledge-result-copy {
+      color: #d7e4ee;
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .knowledge-result-copy strong {
+      color: var(--text);
+    }
+
+    .runtime-error {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 100;
+      width: min(440px, calc(100% - 36px));
+      padding: 14px;
+      border: 1px solid #ff4d5e;
+      border-radius: 8px;
+      color: #ffe8eb;
+      background: rgba(87, 13, 25, 0.97);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
     @supports not (color: color-mix(in srgb, #000, #fff)) {
       .risk-ring,
       .sensor-icon,
@@ -985,7 +1090,7 @@
     @media (max-width: 980px) {
       .topbar,
       .decision-card {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
 
       .status-strip {
@@ -1028,6 +1133,9 @@
       }
 
       .data-table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
         font-size: 0.8rem;
       }
 
@@ -1191,6 +1299,10 @@
             <div class="insight-card"><span>温度均值</span><strong id="insightAvgTemp">--</strong></div>
             <div class="insight-card"><span>高湿点数</span><strong id="insightHumidCount">--</strong></div>
           </div>
+          <section class="knowledge-result" id="decision-result" data-action="stop" aria-live="polite">
+            <span class="knowledge-result-label">LOCAL KB</span>
+            <div class="knowledge-result-copy">当前决策：<strong>等待模拟</strong> | 依据：计划书3.2节 | 触发规则ID：--</div>
+          </section>
         </section>
 
         <section class="panel glass">
@@ -1234,6 +1346,23 @@
             <div class="calibration-item"><span>补偿系数</span><strong id="factorValue">--</strong></div>
             <div class="calibration-item"><span>原始氨气</span><strong id="rawAmmoniaValue">--</strong></div>
             <div class="calibration-item"><span>补偿后氨气</span><strong id="correctedAmmoniaValue">--</strong></div>
+          </div>
+        </section>
+
+        <section class="panel glass" aria-label="算法演示面板">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">算法演示面板</h2>
+              <p class="panel-note">模型版本 <span class="model-version" id="modelVersion">--</span></p>
+            </div>
+          </div>
+          <label class="demo-row">海拔<input id="demoAltitude" type="range" min="2200" max="3500" value="2800"><output id="demoAltitudeOut">2800 m</output></label>
+          <label class="demo-row">温度<input id="demoTemp" type="range" min="-15" max="25" value="10"><output id="demoTempOut">10 C</output></label>
+          <label class="demo-row">湿度<input id="demoRh" type="range" min="20" max="85" value="60"><output id="demoRhOut">60 %RH</output></label>
+          <button class="control" id="demoSimulate" type="button" style="width:100%;justify-content:center;margin-top:14px">生成模拟原始读数</button>
+          <div class="calibration-grid" style="margin-top:12px">
+            <div class="calibration-item"><span>模拟原始值</span><strong id="demoRaw">--</strong></div>
+            <div class="calibration-item"><span>补偿结果</span><strong id="demoCorrected">--</strong></div>
           </div>
         </section>
 
@@ -1429,9 +1558,31 @@
       return clamp(((value - min) / (max - min)) * 100, 0, 100);
     }
 
+    function estimateAltitudeM(sampleIndex) {
+      return 2850 + 650 * Math.sin(sampleIndex / 55);
+    }
+
     function estimatePressureKpa(sampleIndex) {
-      const altitude = 3000 + 260 * Math.sin(sampleIndex / 55);
-      return 101.325 * Math.pow(1 - (0.0065 * altitude) / 288.15, 5.255);
+      return estimatePressureForAltitude(estimateAltitudeM(sampleIndex));
+    }
+
+    function estimatePressureForAltitude(altitude) {
+      return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);
+    }
+
+    function simulateHighlandRaw(truePpm, altitude, temperature, humidity) {
+      const pressure = estimatePressureForAltitude(altitude);
+      const lowPressure = (101.325 - pressure) / 101.325;
+      const nonlinearError = clamp(
+        0.29 + 0.21 * lowPressure + 0.025 * ((temperature - 5) / 20) ** 2
+          + 0.02 * ((humidity - 52.5) / 32.5) ** 2
+          + 0.018 * Math.sin((temperature + 15) * Math.PI / 40)
+          + 0.012 * (humidity - 52.5) * (temperature - 5) / (32.5 * 20),
+        0.35,
+        0.40
+      );
+      const zeroDrift = 0.1 + 0.06 * lowPressure + 0.035 * Math.max(0, -temperature) / 15;
+      return clamp(truePpm * (1 + nonlinearError) + zeroDrift + randomNoise(0.11), 0, 45);
     }
 
     function interpolateColor(start, end, ratio) {
@@ -1479,8 +1630,6 @@
     }
 
     function applyScenario(data) {
-      if (state.scenario.type === "normal") return data;
-
       const next = { ...data };
       if (state.scenario.type === "ammonia") {
         next.ammonia = scenarioBlendValue(data.ammonia, 18.8, 0, 30);
@@ -1497,8 +1646,11 @@
         next.ammonia = scenarioBlendValue(data.ammonia, 13.2, 0, 30);
       }
 
-      const pressureFactor = next.pressure / 101.325;
-      next.rawAmmonia = clamp(next.ammonia * pressureFactor + randomNoise(0.5), 0, 30);
+      next.rawAmmonia = simulateHighlandRaw(next.ammonia, next.altitude, next.temperature, next.humidity);
+      next.referenceAmmonia = next.ammonia;
+      next.ammonia = compensate(next.altitude, next.temperature, next.humidity, next.rawAmmonia);
+      if (state.scenario.type === "normal") return next;
+
       state.scenario.tick += 1;
 
       if (state.scenario.tick > state.scenario.duration + state.scenario.hold + 4) {
@@ -1511,8 +1663,8 @@
     // 使用正弦波叠加噪声，模拟自然波动、氨气积聚和通风后的下降。
     function generateSensorData() {
       const t = state.sampleIndex;
+      const altitude = estimateAltitudeM(t);
       const pressure = estimatePressureKpa(t);
-      const pressureFactor = pressure / 101.325;
       const ammoniaPhase = t % 46;
       const spike = ammoniaPhase > 24 && ammoniaPhase < 36
         ? Math.sin(((ammoniaPhase - 24) / 12) * Math.PI) * 10.5
@@ -1535,12 +1687,12 @@
         0,
         30
       );
-      const rawAmmonia = clamp(ammonia * pressureFactor + randomNoise(0.7), 0, 30);
+      const rawAmmonia = simulateHighlandRaw(ammonia, altitude, temperature, humidity);
       const light = clamp(daylight * 930 + 45 * Math.sin(t / 3) + randomNoise(36), 0, 1000);
 
       state.sampleIndex += 1;
 
-      return applyScenario({ time: formatClock(), temperature, humidity, ammonia, rawAmmonia, light, pressure });
+      return applyScenario({ time: formatClock(), altitude, temperature, humidity, ammonia, rawAmmonia, light, pressure });
     }
 
     function getSensorStatus(type, value) {
@@ -2037,9 +2189,201 @@
     els.toggleStream.addEventListener("click", () => setRunning(!state.running));
     els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
     els.snapshotButton.addEventListener("click", saveSnapshot);
-
     tick();
     state.timer = window.setInterval(tick, SAMPLE_INTERVAL);
+
+    // 本地知识库模拟接管原随机流：保留既有页面部件，只替换为可复现的24小时数据与决策。
+    (function startLocalKnowledgeBaseModel() {
+      let controller = null;
+      const modelErrors = [];
+
+      function showRuntimeError(error) {
+        const message = error && error.message ? error.message : String(error);
+        console.error("[本地知识库启动失败]", modelErrors, error);
+        let panel = document.getElementById("runtimeError");
+        if (!panel) {
+          panel = document.createElement("aside");
+          panel.id = "runtimeError";
+          panel.className = "runtime-error";
+          panel.setAttribute("role", "alert");
+          document.body.appendChild(panel);
+        }
+        panel.textContent = `本地知识库加载失败（已重试3次）：${message}。完整错误日志已输出至控制台。`;
+      }
+
+      function loadScript(url) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = `${url}?retry=${Date.now()}`;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error(`无法加载 ${url}`));
+          document.head.appendChild(script);
+        });
+      }
+
+      async function ensureDependency(globalName, url) {
+        if (window[globalName]) return;
+        for (let attempt = 1; attempt <= 3; attempt += 1) {
+          try {
+            await loadScript(url);
+            if (window[globalName]) return;
+            throw new Error(`${url} 已加载但未导出 ${globalName}`);
+          } catch (error) {
+            modelErrors.push({ dependency: globalName, attempt, message: error.message, timestamp: new Date().toISOString() });
+            console.warn(`[本地知识库] ${globalName} 第${attempt}次加载失败`, error);
+          }
+        }
+        throw new Error(`${globalName} 连续3次加载失败`);
+      }
+
+      function clearDashboardData() {
+        [state.labels, state.temperature, state.humidity, state.ammonia, state.rawAmmonia, state.light].forEach((list) => { list.length = 0; });
+        state.records.length = 0;
+        state.currentData = null;
+        state.currentResult = null;
+        els.recordRows.innerHTML = '<tr><td colspan="7">24小时本地模拟启动中</td></tr>';
+      }
+
+      function toLegacyResult(decision) {
+        if (decision.action === "ventilation") return { levelClass: "warning", icon: "🟢", title: `通风 ${decision.duration} 分钟` };
+        if (decision.action === "alert_only") return { levelClass: "alert", icon: "🟠", title: "只报警，不通风" };
+        if (decision.ruleId === "TEMP_DROP_LIMIT") return { levelClass: "critical", icon: "🔵", title: "停止通风" };
+        return { levelClass: "normal", icon: "⏹", title: "保持关闭" };
+      }
+
+      function updateKnowledgeUI(record) {
+        const data = record;
+        const decision = record.decision;
+        const result = toLegacyResult(decision);
+        const risk = clamp((data.ammonia / 30) * 100, 3, 100);
+        const riskColor = getRiskColor(data.ammonia);
+        const fanOn = decision.action === "ventilation";
+
+        state.currentData = data;
+        state.currentResult = result;
+        updateSensorCards(data);
+        updateCalibration(data);
+        els.decisionPanel.dataset.level = result.levelClass;
+        els.decisionIcon.textContent = result.icon;
+        els.decisionTitle.textContent = result.title;
+        els.decisionAdvice.innerHTML = `
+          <div class="action-step"><span class="step-index">1</span><span><span class="step-status">${fanOn ? "● 执行中" : "▶ 监测中"}</span>${decision.reason}</span></div>
+          <div class="action-step"><span class="step-index">2</span><span><span class="step-status">规则</span>${decision.ammoniaLevel}氨气阈值；通风窗口 12:00-14:00；最大温降 3℃。</span></div>
+          <div class="action-step"><span class="step-index">3</span><span><span class="step-status">依据</span>${decision.citation}</span></div>`;
+        els.decisionTrigger.innerHTML = `
+          <span class="trigger-chip">时刻：<strong>${data.time}</strong></span>
+          <span class="trigger-chip">氨气：<strong style="--chip-color:${riskColor}">${data.ammonia.toFixed(1)}ppm</strong></span>
+          <span class="trigger-chip">温降：<strong style="--chip-color:var(--temperature)">${data.tempDropRate.toFixed(1)}℃</strong></span>`;
+        els.riskRing.style.setProperty("--risk", `${risk}%`);
+        els.riskRing.style.setProperty("--ring-color", riskColor);
+        els.riskPointer.style.setProperty("--pointer", `${risk}%`);
+        els.ringValue.textContent = data.ammonia.toFixed(1);
+        els.ventTimeline.style.setProperty("--now", `${(data.hour / 24) * 100}%`);
+        els.ventStatus.textContent = decision.inWindow ? "当前在窗口内" : "当前不在窗口内";
+        els.ventAdvice.textContent = fanOn
+          ? `已启动 ${decision.duration} 分钟短时通风，持续监测温度降幅。`
+          : `${decision.reason}；${decision.action === "alert_only" ? "仅输出告警。" : "风机保持关闭。"}`;
+        els.fanStatusText.textContent = fanOn ? "低速" : "关闭";
+        els.fanStatusDot.style.setProperty("--state-color", fanOn ? "#00D4AA" : "#7A9BB5");
+        els.fanIcon.classList.toggle("spin", fanOn);
+        els.heaterStatusText.textContent = data.temperature < 0 ? "加热中" : "关闭";
+        els.heaterStatusDot.style.setProperty("--state-color", data.temperature < 0 ? "#FF4D5E" : "#7A9BB5");
+        els.commandText.textContent = fanOn ? `指令：通风 ${decision.duration} 分钟` : `指令：${decision.reason}`;
+        els.alarmList.innerHTML = `<div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${fanOn ? "#00D4AA" : "#FF9F43"};"></i><span>${decision.ruleId} · ${decision.citation}</span></div>`;
+        els.flowCollect.textContent = `${data.time} · 本地模拟数据`;
+        els.flowCompensate.textContent = `${data.pressure.toFixed(1)}kPa · NH₃ ${data.rawAmmonia.toFixed(1)}→${data.ammonia.toFixed(1)}`;
+        els.flowDecision.textContent = `${result.icon} ${result.title}`;
+        els.flowExecute.textContent = fanOn ? `低速 / ${decision.duration}分钟` : "关闭 / 待命";
+        const decisionResult = document.getElementById("decision-result");
+        decisionResult.dataset.action = decision.action;
+        decisionResult.innerHTML = `<span class="knowledge-result-label">LOCAL KB</span><div class="knowledge-result-copy">当前决策：<strong>${fanOn ? `通风${decision.duration}分钟` : result.title}</strong> | 依据：${decision.citation} | 触发规则ID：${decision.ruleId}</div>`;
+        pushRecord(data, result);
+        pushChartPoint(data, decision);
+        els.lastUpdate.textContent = `模拟时刻：${data.time}`;
+        console.log("[本地知识库决策]", data.time, decision);
+      }
+
+      pushChartPoint = function (data, decision) {
+        state.labels.push(data.time);
+        state.temperature.push(Number(data.temperature.toFixed(1)));
+        state.humidity.push(Number(data.humidity.toFixed(0)));
+        state.ammonia.push(Number(data.ammonia.toFixed(1)));
+        state.rawAmmonia.push(Number(data.rawAmmonia.toFixed(1)));
+        state.light.push(Number(data.light.toFixed(0)));
+        const marker = decision && decision.action === "ventilation" ? Number(data.ammonia.toFixed(1)) : null;
+        const markerSet = trendChart.data.datasets.find((dataset) => dataset.id === "ventilationMarkers");
+        if (markerSet) markerSet.data.push(marker);
+        if (state.labels.length > MAX_POINTS) {
+          [state.labels, state.temperature, state.humidity, state.ammonia, state.rawAmmonia, state.light].forEach((list) => list.shift());
+          if (markerSet) markerSet.data.shift();
+        }
+        trendChart.update();
+        updateTrendSummary();
+        updateChartInsights();
+      };
+
+      function configureDecisionMarkers() {
+        if (!trendChart.data.datasets.some((dataset) => dataset.id === "ventilationMarkers")) {
+          trendChart.data.datasets.push({
+            id: "ventilationMarkers",
+            label: "通风启动",
+            data: [],
+            showLine: false,
+            borderColor: "#00D4AA",
+            backgroundColor: "#00D4AA",
+            pointBackgroundColor: "#00D4AA",
+            pointBorderColor: "#E8F0F8",
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            yAxisID: "y"
+          });
+        }
+      }
+
+      function beginSimulation(engine) {
+        if (controller) controller.stop();
+        clearDashboardData();
+        configureDecisionMarkers();
+        state.running = true;
+        els.streamStatus.textContent = "24小时模拟中";
+        els.toggleStream.textContent = "暂停模拟";
+        controller = window.LocalSimulator.runSimulation(engine, updateKnowledgeUI);
+        controller.done.then(() => {
+          if (state.running) {
+            state.running = false;
+            els.streamStatus.textContent = "24小时模拟完成";
+            els.toggleStream.textContent = "重新运行模拟";
+          }
+        });
+      }
+
+      async function boot() {
+        try {
+          await ensureDependency("LocalKnowledgeBase", "knowledgeBase.js");
+          await ensureDependency("DecisionEngine", "decisionEngine.js");
+          await ensureDependency("LocalSimulator", "simulator.js");
+          window.clearInterval(state.timer);
+          state.timer = null;
+          const engine = new window.DecisionEngine("犊牦牛");
+          const report = window.LocalSimulator.runSelfCheck(engine);
+          if (!report.hysteresisStable || !report.temperaturePriority) throw new Error("自检未通过：滞回或温降优先级异常");
+          setRunning = function (nextRunning) {
+            if (nextRunning) beginSimulation(engine);
+            else if (controller) {
+              controller.stop();
+              state.running = false;
+              els.streamStatus.textContent = "模拟已暂停";
+              els.toggleStream.textContent = "继续模拟";
+            }
+          };
+          beginSimulation(engine);
+        } catch (error) {
+          showRuntimeError(error);
+        }
+      }
+
+      boot();
+    })();
   </script>
 </body>
 </html>
