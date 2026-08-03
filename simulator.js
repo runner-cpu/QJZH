@@ -7,17 +7,22 @@
     [1, 15], [-1, 17], [-2.5, 19], [-3.5, 21], [-4.2, 23], [-5, 25], [-5, 25], [-5, 25]
   ]);
 
+  /** Estimate standard atmospheric pressure in kPa from altitude in metres. @param {number} altitude Altitude in metres. @returns {number} Pressure in kPa. */
+  function estimatePressureKpa(altitude) {
+    return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);
+  }
+
   function createWinterDayData() {
     return WINTER_DAY.map(function (point, hour) {
       const temperature = point[0];
       const trueAmmonia = point[1];
       const altitude = 2850 + 650 * Math.sin(hour / 24 * Math.PI * 2);
-      const pressure = global.HighlandCompensator.estimatePressureKpa(altitude);
+      const pressure = estimatePressureKpa(altitude);
       const lowPressure = (101.325 - pressure) / 101.325;
       const humidity = Math.max(52, Math.min(82, Math.round(70 - temperature * 1.8)));
       const nonlinearError = Math.min(.40, Math.max(.35, .29 + .21 * lowPressure + .025 * ((temperature - 5) / 20) ** 2 + .02 * ((humidity - 52.5) / 32.5) ** 2));
       const rawAmmonia = trueAmmonia * (1 + nonlinearError) + .1 + .06 * lowPressure;
-      const ammonia = global.HighlandCompensator.compensate(altitude, temperature, humidity, rawAmmonia);
+      const ammonia = global.compensate(altitude, temperature, humidity, rawAmmonia);
       return {
         hour,
         time: String(hour).padStart(2, "0") + ":00",
@@ -94,24 +99,20 @@
     this.ctx = canvas.getContext("2d");
     this.data = config.data;
     this.options = config.options || {};
-    this.resize = this.update.bind(this);
-    global.addEventListener("resize", this.resize);
     this.update();
   }
   CanvasChartFallback.register = function () {};
   CanvasChartFallback.prototype.update = function () {
     const canvas = this.canvas;
-    const host = canvas.parentElement || canvas;
-    const rect = host.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
     const width = Math.max(320, Math.round(rect.width || 760));
     const height = Math.max(220, Math.round(rect.height || 355));
-    const pixelRatio = global.devicePixelRatio || 1;
-    canvas.width = width * pixelRatio;
-    canvas.height = height * pixelRatio;
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
+    canvas.width = width * (global.devicePixelRatio || 1);
+    canvas.height = height * (global.devicePixelRatio || 1);
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
     const ctx = this.ctx;
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.setTransform(global.devicePixelRatio || 1, 0, 0, global.devicePixelRatio || 1, 0, 0);
     ctx.clearRect(0, 0, width, height);
     const pad = { left: 42, right: 20, top: 24, bottom: 32 };
     const plotW = width - pad.left - pad.right;

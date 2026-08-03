@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>青境智衡部署验证</title>
+  <script src="model_weights.js?v=1.0.0"></script>
+  <script src="compensator_engine.js"></script>
+  <style>body{max-width:720px;margin:48px auto;padding:0 20px;background:#0b1a2a;color:#e8f0f8;font-family:system-ui}li{margin:10px 0;padding:10px;border-left:4px solid #7a9bb5;background:#10293a}.pass{border-color:#00d4aa}.fail{border-color:#ff4d5e}code{color:#00d4aa}</style>
+</head>
+<body>
+  <h1>青境智衡部署验证</h1>
+  <p>部署时间戳：<code id="deployedAt">2026-08-04T00:22:38+08:00</code></p>
+  <p>模型版本号：<code id="modelVersion">--</code></p>
+  <ol id="results"></ol>
+  <script>
+    /** Add one deployment verification result to the page. @param {boolean} passed Whether the check passed. @param {string} message Human-readable result. @returns {void} */
+    function report(passed, message) {
+      const item = document.createElement("li");
+      item.className = passed ? "pass" : "fail";
+      item.textContent = `${passed ? "PASS" : "FAIL"}: ${message}`;
+      document.getElementById("results").appendChild(item);
+    }
+
+    /** Execute model-file, inference-range, and metadata deployment checks. @returns {void} */
+    function runOnlineTests() {
+      const hasWeights = typeof MODEL_WEIGHTS !== "undefined";
+      report(hasWeights, hasWeights ? "MODEL_WEIGHTS 已定义" : "MODEL_WEIGHTS 未定义，请检查 model_weights.js 加载路径。");
+      document.getElementById("modelVersion").textContent = hasWeights ? MODEL_WEIGHTS.version : "未加载";
+      try {
+        const result = compensate(2800, 10, 60, 30);
+        report(result >= 15 && result <= 25, `compensate(2800, 10, 60, 30) = ${result.toFixed(2)} ppm（期望 15-25 ppm）`);
+      } catch (error) {
+        report(false, `补偿引擎执行失败：${error.message}`);
+      }
+      report(hasWeights && Boolean(MODEL_WEIGHTS.version), `部署时间戳与模型版本已显示：${hasWeights ? MODEL_WEIGHTS.version : "未加载"}`);
+    }
+
+    runOnlineTests();
+  </script>
+</body>
+</html>
