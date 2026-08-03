@@ -4,13 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>青境智衡 · 高原幼畜圈舍环境监测与决策系统</title>
-  <script src="model_weights.js?v=1.0.0"></script>
-  <script src="compensator_engine.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script src="knowledgeBase.js"></script>
   <script src="decisionEngine.js"></script>
+  <script src="highland_compensator.js"></script>
   <script src="simulator.js"></script>
-  <script src="ui_interactions.js" defer></script>
   <style>
     :root {
       --bg-a: #0b1a2a;
@@ -919,33 +916,6 @@
       gap: 10px;
     }
 
-    .demo-row {
-      display: grid;
-      grid-template-columns: 72px minmax(0, 1fr) 66px;
-      gap: 9px;
-      align-items: center;
-      color: var(--muted);
-      font-size: 0.84rem;
-      font-weight: 800;
-    }
-
-    .demo-row + .demo-row { margin-top: 10px; }
-
-    .demo-row input { width: 100%; accent-color: var(--primary); }
-
-    .demo-row output {
-      color: var(--text);
-      font-family: var(--mono);
-      text-align: right;
-    }
-
-    .model-version {
-      color: var(--primary);
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      font-weight: 900;
-    }
-
     .alarm-list {
       display: grid;
       gap: 8px;
@@ -1349,23 +1319,6 @@
           </div>
         </section>
 
-        <section class="panel glass" aria-label="算法演示面板">
-          <div class="panel-head">
-            <div>
-              <h2 class="panel-title">算法演示面板</h2>
-              <p class="panel-note">模型版本 <span class="model-version" id="modelVersion">--</span></p>
-            </div>
-          </div>
-          <label class="demo-row">海拔<input id="demoAltitude" type="range" min="2200" max="3500" value="2800"><output id="demoAltitudeOut">2800 m</output></label>
-          <label class="demo-row">温度<input id="demoTemp" type="range" min="-15" max="25" value="10"><output id="demoTempOut">10 C</output></label>
-          <label class="demo-row">湿度<input id="demoRh" type="range" min="20" max="85" value="60"><output id="demoRhOut">60 %RH</output></label>
-          <button class="control" id="demoSimulate" type="button" style="width:100%;justify-content:center;margin-top:14px">生成模拟原始读数</button>
-          <div class="calibration-grid" style="margin-top:12px">
-            <div class="calibration-item"><span>模拟原始值</span><strong id="demoRaw">--</strong></div>
-            <div class="calibration-item"><span>补偿结果</span><strong id="demoCorrected">--</strong></div>
-          </div>
-        </section>
-
         <section class="panel glass">
           <div class="panel-head">
             <div>
@@ -1563,15 +1516,11 @@
     }
 
     function estimatePressureKpa(sampleIndex) {
-      return estimatePressureForAltitude(estimateAltitudeM(sampleIndex));
-    }
-
-    function estimatePressureForAltitude(altitude) {
-      return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);
+      return HighlandCompensator.estimatePressureKpa(estimateAltitudeM(sampleIndex));
     }
 
     function simulateHighlandRaw(truePpm, altitude, temperature, humidity) {
-      const pressure = estimatePressureForAltitude(altitude);
+      const pressure = HighlandCompensator.estimatePressureKpa(altitude);
       const lowPressure = (101.325 - pressure) / 101.325;
       const nonlinearError = clamp(
         0.29 + 0.21 * lowPressure + 0.025 * ((temperature - 5) / 20) ** 2
@@ -1648,7 +1597,7 @@
 
       next.rawAmmonia = simulateHighlandRaw(next.ammonia, next.altitude, next.temperature, next.humidity);
       next.referenceAmmonia = next.ammonia;
-      next.ammonia = compensate(next.altitude, next.temperature, next.humidity, next.rawAmmonia);
+      next.ammonia = HighlandCompensator.compensate(next.altitude, next.temperature, next.humidity, next.rawAmmonia);
       if (state.scenario.type === "normal") return next;
 
       state.scenario.tick += 1;
@@ -2189,6 +2138,7 @@
     els.toggleStream.addEventListener("click", () => setRunning(!state.running));
     els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
     els.snapshotButton.addEventListener("click", saveSnapshot);
+
     tick();
     state.timer = window.setInterval(tick, SAMPLE_INTERVAL);
 
