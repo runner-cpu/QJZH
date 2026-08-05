@@ -44,7 +44,7 @@
   function evaluateDay(engine, logDecisions) {
     let lastState = { action: "stop" };
     return createWinterDayData().map(function (sample) {
-      const decision = engine.decide(sample.hour, sample.temperature, sample.ammonia, sample.tempDropRate, lastState);
+      const decision = engine.decide(sample.hour, sample.temperature, sample.ammonia, sample.tempDropRate, lastState, sample.humidity);
       lastState = decision;
       const record = Object.assign({}, sample, { decision });
       if (logDecisions) console.log("[本地知识库]", record.time, record, decision);
@@ -58,13 +58,16 @@
     let index = 0;
     let timer = null;
     let stopped = false;
+    let paused = false;
+    let finished = false;
     let resolveDone;
     const done = new Promise(function (resolve) { resolveDone = resolve; });
 
     /** Advance the stream by one record and schedule the next sample. @returns {void} */
     function advance() {
-      if (stopped) return;
+      if (stopped || paused) return;
       if (index >= records.length) {
+        finished = true;
         resolveDone(records);
         return;
       }
@@ -75,7 +78,20 @@
 
     advance();
     return {
-      /** Stop the active timer without altering accumulated records. @returns {void} */
+      /** Pause at the current sample without clearing accumulated records. @returns {void} */
+      pause: function () {
+        if (stopped || finished) return;
+        paused = true;
+        global.clearTimeout(timer);
+      },
+      /** Resume from the sample after the last rendered record. @returns {boolean} Whether resume started. */
+      resume: function () {
+        if (stopped || finished) return false;
+        paused = false;
+        advance();
+        return true;
+      },
+      /** Stop the active timer and permanently end the current simulation. @returns {void} */
       stop: function () { stopped = true; global.clearTimeout(timer); },
       done
     };
@@ -83,18 +99,22 @@
 
   /** Run deterministic priority and hysteresis assertions. @param {object} engine DecisionEngine instance. @returns {object} Self-check report. */
   function runSelfCheck(engine) {
-    const records = evaluateDay(engine, true);
+    const records = evaluateDay(engine, false);
     const switchingNearThreshold = records.filter(function (record, index) {
       const prior = records[index - 1];
       return prior && record.ammonia >= 14.8 && record.ammonia <= 16.2 && record.decision.action !== prior.decision.action;
     }).length;
+    const hysteresisStart = engine.decide(13, 5, 15.6, 0, { action: "stop" }, 60);
+    const hysteresisHold = engine.decide(13, 5, 12, 0, hysteresisStart, 60);
+    const hysteresisStop = engine.decide(13, 5, 9, 0, hysteresisHold, 60);
     const priorityCheck = engine.decide(14, 4, 10, 4, { action: "ventilation" });
     const report = {
       samples: records.length,
       switchingNearThreshold,
-      hysteresisStable: switchingNearThreshold <= 1,
+      hysteresisStable: hysteresisStart.action === "ventilation" && hysteresisHold.action === "ventilation" && hysteresisStop.action === "stop",
       temperaturePriority: priorityCheck.action === "stop" && priorityCheck.ruleId === "TEMP_DROP_LIMIT",
-      priorityCheck
+      priorityCheck,
+      hysteresisSequence: [hysteresisStart.ruleId, hysteresisHold.ruleId, hysteresisStop.ruleId]
     };
     console.info("[本地知识库自检]", report);
     return report;

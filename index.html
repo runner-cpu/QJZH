@@ -71,6 +71,13 @@
       box-shadow: var(--shadow);
     }
 
+    .panel,
+    .main-grid,
+    .left-col,
+    .right-col {
+      min-width: 0;
+    }
+
     .topbar {
       min-height: 78px;
       display: grid;
@@ -83,10 +90,11 @@
     .title {
       margin: 0;
       color: var(--primary);
-      font-size: clamp(1.35rem, 2.4vw, 2.08rem);
+      font-size: 1.84rem;
       line-height: 1.15;
       font-weight: 900;
       letter-spacing: 0;
+      text-wrap: balance;
     }
 
     .subtitle {
@@ -145,6 +153,22 @@
       border-radius: 6px;
       background: linear-gradient(180deg, #20f0ca, var(--primary));
       box-shadow: 0 0 22px rgba(0, 212, 170, 0.18);
+      transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    .control:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+      box-shadow: 0 0 28px rgba(0, 212, 170, 0.28);
+    }
+
+    .control:active { transform: translateY(1px) scale(0.985); }
+
+    .control:focus-visible,
+    .scenario-select:focus-visible,
+    input[type="range"]:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 3px;
     }
 
     .control.secondary {
@@ -666,6 +690,15 @@
     .sensor-card.humidity { --accent: var(--humidity); }
     .sensor-card.light { --accent: var(--light); }
 
+    .sensor-card {
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .sensor-card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent), white 18%);
+    }
+
     .sensor-card.alert {
       border-color: rgba(255, 77, 94, 0.78);
       animation: ammoniaGlow 1s infinite alternate;
@@ -866,6 +899,16 @@
       border-collapse: collapse;
       color: #d7e4ee;
       font-size: 0.9rem;
+    }
+
+    .table-wrap {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      scrollbar-color: rgba(0, 212, 170, 0.7) rgba(255, 255, 255, 0.08);
     }
 
     .data-table th,
@@ -1117,6 +1160,8 @@
         margin-top: 8px;
       }
 
+      .title { font-size: 1.35rem; }
+
       .sensor-grid,
       .calibration-grid,
       .pipeline-strip,
@@ -1132,15 +1177,37 @@
         grid-template-columns: 1fr;
       }
 
+      .table-wrap { overflow: hidden; }
+
       .data-table {
         display: block;
+        width: 100%;
         max-width: 100%;
+        min-width: 0;
         overflow-x: auto;
         font-size: 0.8rem;
       }
 
+      .data-table thead,
+      .data-table tbody {
+        display: table;
+        width: 620px;
+        min-width: 620px;
+      }
+
       .footer {
         display: grid;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
       }
     }
   </style>
@@ -1313,7 +1380,8 @@
             </div>
             <button class="control secondary" id="snapshotButton" type="button">保存数据快照</button>
           </div>
-          <table class="data-table">
+           <div class="table-wrap" aria-label="采样记录横向滚动区域">
+           <table class="data-table">
             <thead>
               <tr>
                 <th>时间</th>
@@ -1328,7 +1396,8 @@
             <tbody id="recordRows">
               <tr><td colspan="7">等待首次采样</td></tr>
             </tbody>
-          </table>
+           </table>
+           </div>
           <div class="snapshot-list" id="snapshotList" aria-label="快照列表"></div>
         </section>
       </section>
@@ -2238,6 +2307,8 @@
 
       function clearDashboardData() {
         [state.labels, state.temperature, state.humidity, state.ammonia, state.rawAmmonia, state.light].forEach((list) => { list.length = 0; });
+        const markerSet = trendChart.data.datasets.find((dataset) => dataset.id === "ventilationMarkers");
+        if (markerSet) markerSet.data.length = 0;
         state.records.length = 0;
         state.currentData = null;
         state.currentResult = null;
@@ -2245,6 +2316,10 @@
       }
 
       function toLegacyResult(decision) {
+        if (decision.ruleId === "NH3_OVER_20" || decision.ammoniaLevel === "一级") return { levelClass: "critical", icon: "🔴", title: "一级警报" };
+        if (decision.ruleId === "NH3_OVER_15" || decision.ammoniaLevel === "二级") return { levelClass: "warning", icon: "🟡", title: "警告" };
+        if (decision.ruleId === "HUMIDITY_AND_NH3") return { levelClass: "alert", icon: "🟠", title: "复合预警" };
+        if (decision.ruleId === "LOW_TEMPERATURE") return { levelClass: "caution", icon: "🔵", title: "低温注意" };
         if (decision.action === "ventilation") return { levelClass: "warning", icon: "🟢", title: `通风 ${decision.duration} 分钟` };
         if (decision.action === "alert_only") return { levelClass: "alert", icon: "🟠", title: "只报警，不通风" };
         if (decision.ruleId === "TEMP_DROP_LIMIT") return { levelClass: "critical", icon: "🔵", title: "停止通风" };
@@ -2290,10 +2365,11 @@
         els.heaterStatusDot.style.setProperty("--state-color", data.temperature < 0 ? "#FF4D5E" : "#7A9BB5");
         els.commandText.textContent = fanOn ? `指令：通风 ${decision.duration} 分钟` : `指令：${decision.reason}`;
         els.alarmList.innerHTML = `<div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${fanOn ? "#00D4AA" : "#FF9F43"};"></i><span>${decision.ruleId} · ${decision.citation}</span></div>`;
+        const execution = updateActuators(result.levelClass, decision.inWindow);
         els.flowCollect.textContent = `${data.time} · 本地模拟数据`;
         els.flowCompensate.textContent = `${data.pressure.toFixed(1)}kPa · NH₃ ${data.rawAmmonia.toFixed(1)}→${data.ammonia.toFixed(1)}`;
         els.flowDecision.textContent = `${result.icon} ${result.title}`;
-        els.flowExecute.textContent = fanOn ? `低速 / ${decision.duration}分钟` : "关闭 / 待命";
+        els.flowExecute.textContent = `${execution.fan.text} / ${execution.heater.text}`;
         const decisionResult = document.getElementById("decision-result");
         decisionResult.dataset.action = decision.action;
         decisionResult.innerHTML = `<span class="knowledge-result-label">LOCAL KB</span><div class="knowledge-result-copy">当前决策：<strong>${fanOn ? `通风${decision.duration}分钟` : result.title}</strong> | 依据：${decision.citation} | 触发规则ID：${decision.ruleId}</div>`;
@@ -2368,9 +2444,19 @@
           const report = window.LocalSimulator.runSelfCheck(engine);
           if (!report.hysteresisStable || !report.temperaturePriority) throw new Error("自检未通过：滞回或温降优先级异常");
           setRunning = function (nextRunning) {
-            if (nextRunning) beginSimulation(engine);
+            if (nextRunning) {
+              const resumed = controller && controller.resume && controller.resume();
+              if (resumed) {
+                state.running = true;
+                els.streamStatus.textContent = "\u6a21\u62df\u8fd0\u884c\u4e2d";
+                els.toggleStream.textContent = "\u6682\u505c\u6a21\u62df";
+              } else {
+                beginSimulation(engine);
+              }
+            }
             else if (controller) {
-              controller.stop();
+              if (controller.pause) controller.pause();
+              else controller.stop();
               state.running = false;
               els.streamStatus.textContent = "模拟已暂停";
               els.toggleStream.textContent = "继续模拟";
