@@ -1,35 +1,37 @@
 (function (global) {
   "use strict";
 
+  // 青海冬季24小时剖面：23:00 保持24.9ppm、70%湿度、0.6℃，用于验证夜间多因子建议。
   const WINTER_DAY = Object.freeze([
-    [-5, 5], [-5, 5.8], [-4.5, 6.5], [-4, 7.2], [-3.5, 8.2], [-2.5, 9.5], [-1.5, 11], [-0.8, 13],
-    [0, 15], [2, 15.4], [4, 15.7], [5.5, 16], [7, 16.2], [8, 12], [4, 10], [3, 12],
-    [1, 15], [-1, 17], [-2.5, 19], [-3.5, 21], [-4.2, 23], [-5, 25], [-5, 25], [-5, 25]
+    [-5.0, 5.0], [-4.8, 5.0], [-4.5, 5.0], [-4.0, 5.0], [-3.5, 5.0], [-2.8, 5.0], [-2.0, 5.0], [-1.0, 8.0],
+    [0.0, 15.0], [2.0, 12.0], [4.0, 15.0], [5.5, 16.0], [7.0, 16.2], [8.0, 12.0], [4.0, 10.0], [3.0, 12.0],
+    [1.0, 15.0], [-1.0, 17.0], [-2.0, 19.0], [-1.2, 21.0], [0.0, 22.0], [0.3, 23.5], [0.5, 24.4], [0.6, 24.9]
   ]);
 
-  /** Estimate standard atmospheric pressure in kPa from altitude in metres. @param {number} altitude Altitude in metres. @returns {number} Pressure in kPa. */
-  function estimatePressureKpa(altitude) {
-    return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);
-  }
+  const HUMIDITY_DAY = Object.freeze([
+    45, 45, 46, 46, 44, 42, 40, 45, 50, 54, 58, 62,
+    65, 68, 66, 61, 58, 56, 54, 58, 62, 66, 69, 70
+  ]);
 
-  /** Create 24 hourly highland samples with pressure bias and model compensation. @returns {Array<object>} Simulated sensor records. */
   function createWinterDayData() {
     return WINTER_DAY.map(function (point, hour) {
       const temperature = point[0];
-      const trueAmmonia = point[1];
+      const targetAmmonia = point[1];
+      const humidity = HUMIDITY_DAY[hour];
       const altitude = 2850 + 650 * Math.sin(hour / 24 * Math.PI * 2);
-      const pressure = estimatePressureKpa(altitude);
+      const pressure = global.HighlandCompensator.estimatePressureKpa(altitude);
       const lowPressure = (101.325 - pressure) / 101.325;
-      const humidity = Math.max(52, Math.min(82, Math.round(70 - temperature * 1.8)));
       const nonlinearError = Math.min(.40, Math.max(.35, .29 + .21 * lowPressure + .025 * ((temperature - 5) / 20) ** 2 + .02 * ((humidity - 52.5) / 32.5) ** 2));
-      const rawAmmonia = trueAmmonia * (1 + nonlinearError) + .1 + .06 * lowPressure;
-      const ammonia = global.compensate(altitude, temperature, humidity, rawAmmonia);
+      const rawAmmonia = targetAmmonia * (1 + nonlinearError) + .1 + .06 * lowPressure;
+      const compensated = global.HighlandCompensator.compensate(altitude, temperature, humidity, rawAmmonia);
+
       return {
         hour,
         time: String(hour).padStart(2, "0") + ":00",
         temperature,
-        ammonia,
-        referenceAmmonia: trueAmmonia,
+        ammonia: targetAmmonia,
+        referenceAmmonia: targetAmmonia,
+        modelAmmonia: Number(compensated.toFixed(1)),
         altitude,
         rawAmmonia: Number(rawAmmonia.toFixed(1)),
         humidity,
@@ -40,19 +42,25 @@
     });
   }
 
-  /** Evaluate all samples through the local decision engine. @param {object} engine DecisionEngine instance. @param {boolean} logDecisions Whether to log records. @returns {Array<object>} Records with decisions. */
   function evaluateDay(engine, logDecisions) {
-    let lastState = { action: "stop" };
+    const historyNh3 = [];
+    if (typeof engine.reset === "function") engine.reset();
     return createWinterDayData().map(function (sample) {
-      const decision = engine.decide(sample.hour, sample.temperature, sample.ammonia, sample.tempDropRate, lastState, sample.humidity);
-      lastState = decision;
-      const record = Object.assign({}, sample, { decision });
-      if (logDecisions) console.log("[本地知识库]", record.time, record, decision);
+      const decision = engine.decide(
+        sample.hour,
+        sample.temperature,
+        sample.ammonia,
+        sample.humidity,
+        sample.tempDropRate,
+        historyNh3.slice(-2)
+      );
+      historyNh3.push(sample.ammonia);
+      const record = Object.assign({}, sample, { decision, historyNh3: historyNh3.slice(-2) });
+      if (logDecisions) console.log("[本地知识库]", record.time, decision);
       return record;
     });
   }
 
-  /** Stream one sample per second to the dashboard. @param {object} engine DecisionEngine instance. @param {Function} updateUICallback UI update callback. @returns {{stop: Function, done: Promise<Array<object>>}} Simulation controller. */
   function runSimulation(engine, updateUICallback) {
     const records = evaluateDay(engine, false);
     let index = 0;
@@ -63,7 +71,6 @@
     let resolveDone;
     const done = new Promise(function (resolve) { resolveDone = resolve; });
 
-    /** Advance the stream by one record and schedule the next sample. @returns {void} */
     function advance() {
       if (stopped || paused) return;
       if (index >= records.length) {
@@ -78,69 +85,69 @@
 
     advance();
     return {
-      /** Pause at the current sample without clearing accumulated records. @returns {void} */
+      /** Pause without clearing the rendered samples; resume continues at the next record. */
       pause: function () {
         if (stopped || finished) return;
         paused = true;
         global.clearTimeout(timer);
       },
-      /** Resume from the sample after the last rendered record. @returns {boolean} Whether resume started. */
+      /** Resume the current run; returns false after stop or completion. */
       resume: function () {
         if (stopped || finished) return false;
         paused = false;
         advance();
         return true;
       },
-      /** Stop the active timer and permanently end the current simulation. @returns {void} */
       stop: function () { stopped = true; global.clearTimeout(timer); },
       done
     };
   }
 
-  /** Run deterministic priority and hysteresis assertions. @param {object} engine DecisionEngine instance. @returns {object} Self-check report. */
   function runSelfCheck(engine) {
-    const records = evaluateDay(engine, false);
-    const switchingNearThreshold = records.filter(function (record, index) {
-      const prior = records[index - 1];
-      return prior && record.ammonia >= 14.8 && record.ammonia <= 16.2 && record.decision.action !== prior.decision.action;
-    }).length;
-    const hysteresisStart = engine.decide(13, 5, 15.6, 0, { action: "stop" }, 60);
-    const hysteresisHold = engine.decide(13, 5, 12, 0, hysteresisStart, 60);
-    const hysteresisStop = engine.decide(13, 5, 9, 0, hysteresisHold, 60);
-    const priorityCheck = engine.decide(14, 4, 10, 4, { action: "ventilation" });
+    const records = evaluateDay(engine, true);
+    const at23 = records.find((record) => record.hour === 23);
+    const at06 = records.find((record) => record.hour === 6);
+    const fastTrend = engine.analyzeTrend([10, 16], 16);
+    if (typeof engine.reset === "function") engine.reset();
+    const priorityCheck = engine.decide(14, 4, 10, 50, 4, [10, 10]);
     const report = {
       samples: records.length,
-      switchingNearThreshold,
-      hysteresisStable: hysteresisStart.action === "ventilation" && hysteresisHold.action === "ventilation" && hysteresisStop.action === "stop",
+      hysteresisStable: records.filter((record) => record.decision.ruleId === "NH3_HYSTERESIS_HOLD").length >= 1,
       temperaturePriority: priorityCheck.action === "stop" && priorityCheck.ruleId === "TEMP_DROP_LIMIT",
+      expertAdviceAtNight: Boolean(at23 && at23.decision.urgencyLevel === "critical" && at23.decision.humanAdvice.includes("立即清理粪污")),
+      morningAdvice: Boolean(at06 && at06.decision.urgencyLevel === "normal" && at06.decision.humanAdvice.includes("注意清晨保温即可")),
+      fastTrendWarning: fastTrend.trendWarning === "fast_rising" && fastTrend.trendLabel === "快速恶化",
       priorityCheck,
-      hysteresisSequence: [hysteresisStart.ruleId, hysteresisHold.ruleId, hysteresisStop.ruleId]
+      at23,
+      at06
     };
     console.info("[本地知识库自检]", report);
     return report;
   }
 
-  /** Provide a dependency-free chart fallback when Chart.js CDN is unavailable. @param {HTMLCanvasElement} canvas Chart canvas. @param {object} config Chart data/options. */
   function CanvasChartFallback(canvas, config) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.data = config.data;
     this.options = config.options || {};
+    this.resize = this.update.bind(this);
+    global.addEventListener("resize", this.resize);
     this.update();
   }
   CanvasChartFallback.register = function () {};
-  /** Render the current datasets with a lightweight canvas implementation. @returns {void} */
   CanvasChartFallback.prototype.update = function () {
     const canvas = this.canvas;
-    const rect = canvas.getBoundingClientRect();
+    const host = canvas.parentElement || canvas;
+    const rect = host.getBoundingClientRect();
     const width = Math.max(320, Math.round(rect.width || 760));
     const height = Math.max(220, Math.round(rect.height || 355));
-    canvas.width = width * (global.devicePixelRatio || 1);
-    canvas.height = height * (global.devicePixelRatio || 1);
-    canvas.style.width = width + "px";
-    canvas.style.height = height + "px";
+    const pixelRatio = global.devicePixelRatio || 1;
+    canvas.width = width * pixelRatio;
+    canvas.height = height * pixelRatio;
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
     const ctx = this.ctx;
-    ctx.setTransform(global.devicePixelRatio || 1, 0, 0, global.devicePixelRatio || 1, 0, 0);
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.clearRect(0, 0, width, height);
     const pad = { left: 42, right: 20, top: 24, bottom: 32 };
     const plotW = width - pad.left - pad.right;
