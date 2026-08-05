@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>青境智衡 · 高原幼畜圈舍环境监测与决策系统</title>
+  <meta name="description" content="青境智衡高原幼畜圈舍环境监测与本地规则决策演示系统。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1a2a'/%3E%3Cpath d='M16 38h32M22 28h20M32 14v34' stroke='%2300d4aa' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='44' r='6' fill='%23ffd93d'/%3E%3C/svg%3E">
   <script src="model_weights.js?v=1.0.0"></script>
   <script src="compensator_engine.js?v=1.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
@@ -1132,15 +1134,498 @@
         grid-template-columns: 1fr;
       }
 
-      .data-table {
-        display: block;
+      .data-table-scroll {
+        width: 100%;
         max-width: 100%;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-color: rgba(22, 214, 176, 0.65) rgba(255, 255, 255, 0.06);
+      }
+
+      /* 采样表保留完整字段，在自身容器内横向查看，不撑破页面宽度。 */
+      .data-table-scroll .data-table {
+        width: max-content;
+        min-width: 700px;
+        max-width: none;
         font-size: 0.8rem;
       }
 
       .footer {
         display: grid;
+      }
+    }
+    /* 产品级视觉覆盖：让监测、决策和执行形成清晰的扫描层级。 */
+    :root {
+      --bg-a: #07141f;
+      --bg-b: #0c2532;
+      --panel: rgba(15, 38, 51, 0.82);
+      --panel-strong: rgba(20, 49, 64, 0.92);
+      --line: rgba(174, 220, 235, 0.14);
+      --line-strong: rgba(174, 220, 235, 0.26);
+      --text: #f2f7fa;
+      --muted: #8ca8ba;
+      --primary: #16d6b0;
+      --shadow: 0 18px 50px rgba(1, 12, 20, 0.38);
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg-a);
+    }
+
+    body {
+      position: relative;
+      isolation: isolate;
+      font-family: "Aptos", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+      background-color: var(--bg-a);
+      background-image:
+        linear-gradient(rgba(103, 174, 193, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(103, 174, 193, 0.035) 1px, transparent 1px),
+        radial-gradient(circle at 74% 0%, rgba(0, 212, 170, 0.13), transparent 34rem),
+        linear-gradient(135deg, var(--bg-a), var(--bg-b));
+      background-size: 32px 32px, 32px 32px, auto, auto;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(4, 16, 24, 0.02), rgba(4, 16, 24, 0.34));
+    }
+
+    ::selection {
+      color: #06131f;
+      background: var(--primary);
+    }
+
+    .app {
+      width: min(1480px, calc(100% - 36px));
+      margin: 20px auto 28px;
+      gap: 16px;
+    }
+
+    .glass {
+      border-color: var(--line);
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(21, 54, 69, 0.86), rgba(10, 29, 40, 0.86));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow);
+    }
+
+    .topbar {
+      min-height: 90px;
+      padding: 18px 20px;
+      border-color: rgba(0, 212, 170, 0.22);
+      background:
+        linear-gradient(90deg, rgba(0, 212, 170, 0.08), transparent 42%),
+        linear-gradient(145deg, rgba(21, 54, 69, 0.96), rgba(10, 29, 40, 0.9));
+    }
+
+    .title {
+      font-family: "Aptos Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+      font-size: clamp(1.45rem, 2.5vw, 2.18rem);
+      line-height: 1.12;
+      text-wrap: balance;
+    }
+
+    .subtitle {
+      max-width: 66ch;
+      color: #91adbd;
+      line-height: 1.5;
+    }
+
+    .status-strip {
+      gap: 8px;
+    }
+
+    .pill,
+    .control,
+    .scenario-select {
+      min-height: 36px;
+      border-radius: 7px;
+      border-color: var(--line);
+      background: rgba(7, 22, 30, 0.48);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pill {
+      color: #dbe9ef;
+    }
+
+    .control {
+      border-color: rgba(22, 214, 176, 0.6);
+      background: linear-gradient(180deg, #23e4c0, #0bbd9b);
+      box-shadow: 0 8px 22px rgba(0, 212, 170, 0.16);
+      transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    .control:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(0, 212, 170, 0.24);
+    }
+
+    .control:active {
+      transform: translateY(1px) scale(0.985);
+    }
+
+    .control.secondary {
+      background: rgba(255, 255, 255, 0.055);
+      border-color: var(--line-strong);
+    }
+
+    .pipeline-strip {
+      padding: 10px;
+      gap: 8px;
+      background: rgba(10, 28, 39, 0.72);
+    }
+
+    .pipeline-step {
+      min-height: 64px;
+      padding: 9px 10px;
+      border-color: rgba(174, 220, 235, 0.12);
+      background: rgba(255, 255, 255, 0.035);
+      transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+    }
+
+    .pipeline-step:hover {
+      border-color: color-mix(in srgb, var(--step-color, var(--primary)), transparent 35%);
+      background: rgba(255, 255, 255, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .pipeline-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      box-shadow: 0 0 16px color-mix(in srgb, var(--step-color, var(--primary)), transparent 72%);
+    }
+
+    .main-grid {
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 16px;
+    }
+
+    .left-col,
+    .right-col {
+      gap: 16px;
+    }
+
+    /* 允许网格子项收缩，避免长表格等内容把移动端页面撑宽。 */
+    .main-grid,
+    .left-col,
+    .right-col,
+    .panel {
+      min-width: 0;
+    }
+
+    .right-col {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      padding-right: 3px;
+      scrollbar-color: rgba(22, 214, 176, 0.65) rgba(255, 255, 255, 0.06);
+    }
+
+    .decision-card {
+      grid-template-columns: minmax(0, 1.12fr) minmax(220px, 0.88fr);
+      gap: 18px;
+      padding: 18px;
+      border-radius: 12px;
+      background:
+        linear-gradient(90deg, rgba(0, 212, 170, 0.07), transparent 56%),
+        rgba(15, 38, 51, 0.92);
+    }
+
+    .decision-head {
+      gap: 12px;
+      margin-bottom: 13px;
+    }
+
+    .decision-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      font-size: 2rem;
+    }
+
+    .decision-title {
+      font-size: clamp(1.75rem, 3vw, 2.45rem);
+    }
+
+    .risk-wrap {
+      padding: 8px 12px 6px;
+      border-left: 1px solid rgba(174, 220, 235, 0.12);
+    }
+
+    .risk-ring {
+      width: 176px;
+      height: 176px;
+    }
+
+    .sensor-grid {
+      gap: 10px;
+    }
+
+    .sensor-card {
+      min-height: 154px;
+      padding: 14px;
+      border-radius: 10px;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .sensor-card:hover {
+      border-color: color-mix(in srgb, var(--accent), transparent 34%);
+      transform: translateY(-2px);
+    }
+
+    .sensor-value {
+      margin: 14px 0 11px;
+    }
+
+    .sensor-value strong {
+      font-size: clamp(2.15rem, 3.1vw, 3.3rem);
+    }
+
+    .panel {
+      padding: 18px;
+      border-radius: 12px;
+    }
+
+    .panel-head {
+      margin-bottom: 15px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 1.08rem;
+      letter-spacing: 0.01em;
+    }
+
+    .panel-title::before {
+      content: "";
+      width: 18px;
+      height: 3px;
+      flex: 0 0 auto;
+      border-radius: 3px;
+      background: var(--primary);
+      box-shadow: 0 0 12px rgba(22, 214, 176, 0.55);
+    }
+
+    .panel-note {
+      max-width: 68ch;
+      line-height: 1.55;
+    }
+
+    .chart-box {
+      height: 370px;
+      padding: 8px;
+      border: 1px solid rgba(174, 220, 235, 0.1);
+      border-radius: 10px;
+      background: rgba(4, 18, 26, 0.35);
+    }
+
+    .trend-summary {
+      margin-top: 12px;
+      padding: 9px 11px;
+      border-left: 2px solid var(--primary);
+      background: rgba(0, 212, 170, 0.055);
+      border-radius: 0 6px 6px 0;
+    }
+
+    .insight-card,
+    .calibration-item,
+    .actuator-row,
+    .alarm-item,
+    .snapshot-item,
+    .vent-card {
+      border-color: rgba(174, 220, 235, 0.12);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .insight-card {
+      min-height: 66px;
+      border-radius: 9px;
+    }
+
+    .data-table tbody tr {
+      transition: background 160ms ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: rgba(22, 214, 176, 0.065);
+    }
+
+    .data-table th {
+      background: rgba(9, 27, 37, 0.92);
+    }
+
+    .calibration-item {
+      min-height: 80px;
+      border-radius: 9px;
+    }
+
+    .calibration-item strong {
+      font-size: 1.32rem;
+    }
+
+    .command-code {
+      border-radius: 7px;
+      background: rgba(0, 212, 170, 0.07);
+      box-shadow: inset 3px 0 0 rgba(22, 214, 176, 0.55);
+    }
+
+    .knowledge-result {
+      border-radius: 9px;
+      background: rgba(0, 212, 170, 0.055);
+    }
+
+    input[type="range"] {
+      height: 4px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(174, 220, 235, 0.22);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      width: 15px;
+      height: 15px;
+      margin-top: -5px;
+      border: 2px solid #07202a;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 4px rgba(22, 214, 176, 0.12), 0 0 12px rgba(22, 214, 176, 0.62);
+      appearance: none;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(174, 220, 235, 0.22);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #07202a;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 4px rgba(22, 214, 176, 0.12), 0 0 12px rgba(22, 214, 176, 0.62);
+    }
+
+    @media (max-width: 1220px) {
+      /* 覆盖桌面端双列基线，避免移动端左主列被右侧栏挤成 0px。 */
+      .main-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .right-col {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+      }
+    }
+
+    @media (max-width: 980px) {
+      /* 决策卡在窄屏改为上下结构，风险圆环不再挤压建议清单。 */
+      .decision-card {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .decision-card {
+        gap: 16px;
+      }
+
+      .risk-wrap {
+        padding: 12px 0 2px;
+        border-top: 1px solid rgba(174, 220, 235, 0.12);
+        border-left: 0;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .app {
+        width: calc(100% - 20px);
+        margin: 10px auto 20px;
+        gap: 12px;
+      }
+
+      .topbar {
+        gap: 14px;
+        padding: 15px;
+      }
+
+      .title {
+        font-size: 1.45rem;
+      }
+
+      .subtitle {
+        font-size: 0.84rem;
+      }
+
+      .status-strip {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: stretch;
+      }
+
+      .status-strip > * {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .status-strip .scenario-select {
+        min-width: 0;
+      }
+
+      .pipeline-strip {
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .pipeline-step {
+        min-height: 58px;
+        padding: 8px;
+      }
+
+      .pipeline-icon {
+        width: 32px;
+        height: 32px;
+      }
+
+      .decision-card {
+        padding: 14px;
+      }
+
+      .decision-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        font-size: 1.7rem;
+      }
+
+      .decision-title {
+        font-size: 1.8rem;
+      }
+
+      .chart-box {
+        height: 310px;
+        padding: 3px;
+      }
+
+      .footer {
+        gap: 6px;
+        line-height: 1.45;
       }
     }
   </style>
@@ -1313,22 +1798,24 @@
             </div>
             <button class="control secondary" id="snapshotButton" type="button">保存数据快照</button>
           </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>时间</th>
-                <th>温度</th>
-                <th>湿度</th>
-                <th>原始NH₃</th>
-                <th>补偿NH₃</th>
-                <th>光照</th>
-                <th>等级</th>
-              </tr>
-            </thead>
-            <tbody id="recordRows">
-              <tr><td colspan="7">等待首次采样</td></tr>
-            </tbody>
-          </table>
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>温度</th>
+                  <th>湿度</th>
+                  <th>原始NH₃</th>
+                  <th>补偿NH₃</th>
+                  <th>光照</th>
+                  <th>等级</th>
+                </tr>
+              </thead>
+              <tbody id="recordRows">
+                <tr><td colspan="7">等待首次采样</td></tr>
+              </tbody>
+            </table>
+          </div>
           <div class="snapshot-list" id="snapshotList" aria-label="快照列表"></div>
         </section>
       </section>
@@ -1417,15 +1904,17 @@
               <p class="panel-note">每次采样后按顺序匹配，命中第一条即输出。</p>
             </div>
           </div>
-          <table class="data-table">
-            <tbody>
-              <tr><td class="level-critical">🔴 一级警报</td><td>氨气 &gt; 20ppm</td></tr>
-              <tr><td class="level-warning">🟡 警告</td><td>氨气 &gt; 15ppm</td></tr>
-              <tr><td class="level-alert">🟠 预警</td><td>湿度 &gt; 80% 且氨气 &gt; 10ppm</td></tr>
-              <tr><td class="level-caution">🔵 注意</td><td>温度 &lt; 0℃</td></tr>
-              <tr><td class="level-normal">🟢 正常</td><td>未触发异常阈值</td></tr>
-            </tbody>
-          </table>
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <tbody>
+                <tr><td class="level-critical">🔴 一级警报</td><td>氨气 &gt; 20ppm</td></tr>
+                <tr><td class="level-warning">🟡 警告</td><td>氨气 &gt; 15ppm</td></tr>
+                <tr><td class="level-alert">🟠 预警</td><td>湿度 &gt; 80% 且氨气 &gt; 10ppm</td></tr>
+                <tr><td class="level-caution">🔵 注意</td><td>温度 &lt; 0℃</td></tr>
+                <tr><td class="level-normal">🟢 正常</td><td>未触发异常阈值</td></tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       </aside>
     </main>
