@@ -1,0 +1,4 @@
+[2026-08-05] 检查 gh-pages：远端与本地均指向 79ae4fb。
+[2026-08-05] 发现 model_weights.js、compensator_engine.js、online_test.html 在线 404，恢复独立文件架构。
+[2026-08-05] node --check 通过：model_weights.js compensator_engine.js simulator.js ui_interactions.js knowledgeBase.js decisionEngine.js。
+[2026-08-05] compensate(2800,10,60,30) = 21.787617 ppm。
