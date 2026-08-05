@@ -149,41 +149,148 @@
     const ctx = this.ctx;
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.clearRect(0, 0, width, height);
-    const pad = { left: 42, right: 20, top: 24, bottom: 32 };
+    // 使用独立的主轴和光照右轴，避免 Lux 的大范围把温湿度与氨气压成直线。
+    const pad = { left: 52, right: 52, top: 48, bottom: 34 };
     const plotW = width - pad.left - pad.right;
     const plotH = height - pad.top - pad.bottom;
-    const allValues = this.data.datasets.flatMap(function (dataset) { return dataset.data.filter(Number.isFinite); });
-    const min = Math.min(-5, ...allValues);
-    const max = Math.max(30, ...allValues);
+    const datasets = this.data.datasets || [];
+    const mainDatasets = datasets.filter(function (dataset) { return dataset.yAxisID !== "yLight"; });
+    const lightDatasets = datasets.filter(function (dataset) { return dataset.yAxisID === "yLight"; });
+    const valuesOf = function (items) {
+      return items.flatMap(function (dataset) { return dataset.data.filter(Number.isFinite); });
+    };
+    const mainValues = valuesOf(mainDatasets);
+    const lightValues = valuesOf(lightDatasets);
+    const scaleOptions = this.options.scales || {};
+    const mainOptions = scaleOptions.y || {};
+    const lightOptions = scaleOptions.yLight || {};
+    const min = Number.isFinite(mainOptions.suggestedMin) ? mainOptions.suggestedMin : Math.min(-5, ...mainValues);
+    const max = Math.max(
+      Number.isFinite(mainOptions.suggestedMax) ? mainOptions.suggestedMax : 30,
+      ...mainValues
+    );
+    const lightMin = Number.isFinite(lightOptions.suggestedMin) ? lightOptions.suggestedMin : 0;
+    const lightMax = Math.max(
+      Number.isFinite(lightOptions.suggestedMax) ? lightOptions.suggestedMax : 1000,
+      ...lightValues
+    );
+    const yFor = function (value, axis) {
+      const axisMin = axis === "light" ? lightMin : min;
+      const axisMax = axis === "light" ? lightMax : max;
+      return pad.top + (axisMax - value) / Math.max(1, axisMax - axisMin) * plotH;
+    };
+    const xFor = function (index, length) {
+      return pad.left + (length < 2 ? 0 : index / (length - 1) * plotW);
+    };
+
+    // 绘制图例，让无 Chart.js 时的本地降级模式仍然具备可读的图例。
+    ctx.font = "11px system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    let legendX = pad.left;
+    let legendY = 15;
+    datasets.filter(function (dataset) { return dataset.id !== "ventilationMarkers"; }).forEach(function (dataset) {
+      const label = String(dataset.label || "");
+      const itemWidth = ctx.measureText(label).width + 34;
+      if (legendX > pad.left && legendX + itemWidth > width - pad.right) {
+        legendX = pad.left;
+        legendY += 18;
+      }
+      ctx.save();
+      ctx.strokeStyle = dataset.borderColor || "#00d4aa";
+      ctx.lineWidth = dataset.borderWidth || 2;
+      ctx.setLineDash(dataset.borderDash || []);
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY);
+      ctx.lineTo(legendX + 16, legendY);
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = "#b9cbd8";
+      ctx.fillText(label, legendX + 22, legendY);
+      legendX += itemWidth;
+    });
+
     ctx.strokeStyle = "rgba(255,255,255,0.13)";
     ctx.lineWidth = 1;
     for (let i = 0; i < 5; i += 1) {
       const y = pad.top + plotH * i / 4;
       ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke();
     }
-    const yFor = function (value) { return pad.top + (max - value) / (max - min) * plotH; };
-    ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = "#ff4d5e"; ctx.beginPath(); ctx.moveTo(pad.left, yFor(15)); ctx.lineTo(width - pad.right, yFor(15)); ctx.stroke(); ctx.restore();
-    this.data.datasets.forEach(function (dataset) {
+    ctx.font = "10px ui-monospace, Menlo, Consolas, monospace";
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#7a9bb5";
+    for (let i = 0; i < 5; i += 1) {
+      const value = min + (max - min) * (4 - i) / 4;
+      ctx.fillText(value.toFixed(value % 1 ? 1 : 0), pad.left - 8, pad.top + plotH * i / 4);
+    }
+    ctx.textAlign = "left";
+    for (let i = 0; i < 5; i += 1) {
+      const value = lightMin + (lightMax - lightMin) * (4 - i) / 4;
+      ctx.fillText(`${Math.round(value)} Lux`, width - pad.right + 8, pad.top + plotH * i / 4);
+    }
+
+    // 氨气 15ppm 阈值使用主轴绘制，和真实 Chart.js 插件保持一致。
+    const thresholdY = yFor(15, "main");
+    ctx.save();
+    ctx.setLineDash([7, 6]);
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = "rgba(255, 77, 94, 0.9)";
+    ctx.beginPath();
+    ctx.moveTo(pad.left, thresholdY);
+    ctx.lineTo(width - pad.right, thresholdY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#ff6b6b";
+    ctx.textAlign = "left";
+    ctx.fillText("NH₃ 15ppm 阈值", pad.left + 8, thresholdY - 8);
+    ctx.restore();
+
+    datasets.forEach(function (dataset) {
       const values = dataset.data;
+      const axis = dataset.yAxisID === "yLight" ? "light" : "main";
       ctx.strokeStyle = dataset.borderColor || "#00d4aa";
       ctx.fillStyle = dataset.pointBackgroundColor || dataset.borderColor || "#00d4aa";
       ctx.lineWidth = dataset.borderWidth || 2;
-      let active = false;
+      ctx.setLineDash(dataset.borderDash || []);
+      let lastPoint = null;
       values.forEach(function (value, index) {
-        if (!Number.isFinite(value)) { active = false; return; }
-        const x = pad.left + (values.length < 2 ? 0 : index / (values.length - 1) * plotW);
-        const y = yFor(value);
-        if (!active) { ctx.beginPath(); ctx.moveTo(x, y); active = true; } else { ctx.lineTo(x, y); }
+        if (!Number.isFinite(value)) {
+          if (lastPoint) ctx.stroke();
+          lastPoint = null;
+          return;
+        }
+        const point = { x: xFor(index, values.length), y: yFor(value, axis) };
+        if (!lastPoint) {
+          ctx.beginPath();
+          ctx.moveTo(point.x, point.y);
+        } else {
+          const middleX = (lastPoint.x + point.x) / 2;
+          const middleY = (lastPoint.y + point.y) / 2;
+          ctx.quadraticCurveTo(lastPoint.x, lastPoint.y, middleX, middleY);
+          ctx.quadraticCurveTo(point.x, point.y, point.x, point.y);
+        }
+        lastPoint = point;
       });
-      ctx.stroke();
+      if (lastPoint) ctx.stroke();
+      ctx.setLineDash([]);
       if (dataset.pointRadius) values.forEach(function (value, index) {
         if (!Number.isFinite(value)) return;
-        const x = pad.left + (values.length < 2 ? 0 : index / (values.length - 1) * plotW);
-        ctx.beginPath(); ctx.arc(x, yFor(value), typeof dataset.pointRadius === "number" ? dataset.pointRadius : 4, 0, Math.PI * 2); ctx.fill();
+        const x = xFor(index, values.length);
+        ctx.beginPath(); ctx.arc(x, yFor(value, axis), typeof dataset.pointRadius === "number" ? dataset.pointRadius : 4, 0, Math.PI * 2); ctx.fill();
       });
     });
-    ctx.fillStyle = "#7a9bb5"; ctx.font = "12px system-ui";
-    ctx.fillText("Canvas 图表降级模式", pad.left, 15);
+
+    // 绘制少量时间刻度，保证长标签不会挤在一起。
+    ctx.fillStyle = "#7a9bb5";
+    ctx.font = "10px ui-monospace, Menlo, Consolas, monospace";
+    ctx.textAlign = "center";
+    const labels = this.data.labels || [];
+    const tickStep = Math.max(1, Math.ceil(Math.max(0, labels.length - 1) / 6));
+    labels.forEach(function (label, index) {
+      if (index !== 0 && index !== labels.length - 1 && index % tickStep !== 0) return;
+      ctx.fillText(String(label), xFor(index, labels.length), height - 12);
+    });
+    ctx.textAlign = "left";
+    ctx.fillText("本地多轴图表模式", pad.left, height - 2);
   };
 
   if (!global.Chart) global.Chart = CanvasChartFallback;
