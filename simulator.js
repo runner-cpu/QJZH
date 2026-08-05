@@ -12,6 +12,7 @@
     return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);
   }
 
+  /** Create 24 hourly highland samples with pressure bias and model compensation. @returns {Array<object>} Simulated sensor records. */
   function createWinterDayData() {
     return WINTER_DAY.map(function (point, hour) {
       const temperature = point[0];
@@ -39,6 +40,7 @@
     });
   }
 
+  /** Evaluate all samples through the local decision engine. @param {object} engine DecisionEngine instance. @param {boolean} logDecisions Whether to log records. @returns {Array<object>} Records with decisions. */
   function evaluateDay(engine, logDecisions) {
     let lastState = { action: "stop" };
     return createWinterDayData().map(function (sample) {
@@ -50,6 +52,7 @@
     });
   }
 
+  /** Stream one sample per second to the dashboard. @param {object} engine DecisionEngine instance. @param {Function} updateUICallback UI update callback. @returns {{stop: Function, done: Promise<Array<object>>}} Simulation controller. */
   function runSimulation(engine, updateUICallback) {
     const records = evaluateDay(engine, false);
     let index = 0;
@@ -58,6 +61,7 @@
     let resolveDone;
     const done = new Promise(function (resolve) { resolveDone = resolve; });
 
+    /** Advance the stream by one record and schedule the next sample. @returns {void} */
     function advance() {
       if (stopped) return;
       if (index >= records.length) {
@@ -71,11 +75,13 @@
 
     advance();
     return {
+      /** Stop the active timer without altering accumulated records. @returns {void} */
       stop: function () { stopped = true; global.clearTimeout(timer); },
       done
     };
   }
 
+  /** Run deterministic priority and hysteresis assertions. @param {object} engine DecisionEngine instance. @returns {object} Self-check report. */
   function runSelfCheck(engine) {
     const records = evaluateDay(engine, true);
     const switchingNearThreshold = records.filter(function (record, index) {
@@ -94,6 +100,7 @@
     return report;
   }
 
+  /** Provide a dependency-free chart fallback when Chart.js CDN is unavailable. @param {HTMLCanvasElement} canvas Chart canvas. @param {object} config Chart data/options. */
   function CanvasChartFallback(canvas, config) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
@@ -102,6 +109,7 @@
     this.update();
   }
   CanvasChartFallback.register = function () {};
+  /** Render the current datasets with a lightweight canvas implementation. @returns {void} */
   CanvasChartFallback.prototype.update = function () {
     const canvas = this.canvas;
     const rect = canvas.getBoundingClientRect();

@@ -13,7 +13,7 @@
  * b1=[-0.0026319093,-0.0224828461,-0.0239705613,0.0176982501,0.0191934675,-0.0201079754,0.0133954497,-0.1484092542,-0.0088740181,-0.0574000383,0.0209531613,-0.0101309149,0.1417391650,0.0219345928,0.0567407903,0.0491283403]
  * w2=[-0.0206684104,-0.2961469553,-0.0136460636,-0.0068100828,0.1337586781,-0.1726701133,0.0062862789,-0.1928710461,-0.0003094054,-0.0082776037,0.0042186727,-0.0028491537,0.0023614849,0.4337427767,0.5473998199,-0.0062377460]; b2=-0.0223540062
  */
-var MODEL_WEIGHTS = Object.freeze({
+var MODEL_WEIGHTS = {
   version: "1.0.0",
   fixedPointScale: 65536,
   featureOrder: ["altitude_m", "temperature_c", "relative_humidity_percent", "raw_ppm"],
@@ -30,6 +30,15 @@ var MODEL_WEIGHTS = Object.freeze({
   b1Q: [-172, -1473, -1571, 1160, 1258, -1318, 878, -9726, -582, -3762, 1373, -664, 9289, 1438, 3719, 3220],
   w2Q: [-1355, -19408, -894, -446, 8766, -11316, 412, -12640, -20, -542, 276, -187, 155, 28426, 35874, -409],
   b2Q: -1465
-});
+};
+
+// 兼容传统演示接口：保留训练结果的标准字段名称，同时继续使用量化字段计算。
+MODEL_WEIGHTS.W1 = MODEL_WEIGHTS.w1Q.map((row) => row.map((value) => value / MODEL_WEIGHTS.fixedPointScale));
+MODEL_WEIGHTS.b1 = MODEL_WEIGHTS.b1Q.map((value) => value / MODEL_WEIGHTS.fixedPointScale);
+MODEL_WEIGHTS.W2 = MODEL_WEIGHTS.w2Q.map((value) => value / MODEL_WEIGHTS.fixedPointScale);
+MODEL_WEIGHTS.b2 = MODEL_WEIGHTS.b2Q / MODEL_WEIGHTS.fixedPointScale;
+MODEL_WEIGHTS.mean = MODEL_WEIGHTS.featureMeanQ.map((value) => value / MODEL_WEIGHTS.fixedPointScale);
+MODEL_WEIGHTS.std = MODEL_WEIGHTS.featureStdQ.map((value) => value / MODEL_WEIGHTS.fixedPointScale);
+Object.freeze(MODEL_WEIGHTS);
 
 globalThis.MODEL_WEIGHTS = MODEL_WEIGHTS;
