@@ -1,13 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>青境智衡 · 高原幼畜圈舍环境监测与决策系统</title>
-  <script src="knowledgeBase.js"></script>
-  <script src="decisionEngine.js"></script>
-  <script src="highland_compensator.js"></script>
-  <script src="simulator.js"></script>
+  <script src="model_weights.js?v=1.0.0"></script>
+  <script src="compensator_engine.js?v=1.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="knowledgeBase.js?v=1.0.0"></script>
+  <script src="decisionEngine.js?v=1.0.0"></script>
+  <script src="simulator.js?v=1.0.0"></script>
+  <script src="ui_interactions.js?v=1.0.0" defer></script>
   <style>
     :root {
       --bg-a: #0b1a2a;
@@ -68,14 +71,6 @@
       box-shadow: var(--shadow);
     }
 
-    /* 让网格子项允许收缩，避免窄屏下长文本把整页撑出横向滚动。 */
-    .panel,
-    .main-grid,
-    .left-col,
-    .right-col {
-      min-width: 0;
-    }
-
     .topbar {
       min-height: 78px;
       display: grid;
@@ -88,11 +83,10 @@
     .title {
       margin: 0;
       color: var(--primary);
-      font-size: 1.84rem;
+      font-size: clamp(1.35rem, 2.4vw, 2.08rem);
       line-height: 1.15;
       font-weight: 900;
       letter-spacing: 0;
-      text-wrap: balance;
     }
 
     .subtitle {
@@ -151,13 +145,7 @@
       border-radius: 6px;
       background: linear-gradient(180deg, #20f0ca, var(--primary));
       box-shadow: 0 0 22px rgba(0, 212, 170, 0.18);
-      transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
     }
-
-    .control:hover { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 0 28px rgba(0, 212, 170, 0.28); }
-    .control:active { transform: translateY(1px) scale(0.985); }
-    .control:focus-visible,
-    .scenario-select:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 
     .control.secondary {
       color: var(--text);
@@ -880,16 +868,6 @@
       font-size: 0.9rem;
     }
 
-    .table-wrap {
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
-      overflow-x: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      scrollbar-color: rgba(0, 212, 170, 0.7) rgba(255, 255, 255, 0.08);
-    }
-
     .data-table th,
     .data-table td {
       padding: 10px 8px;
@@ -941,17 +919,31 @@
       gap: 10px;
     }
 
-    .model-meta {
-      grid-column: 1 / -1;
+    .demo-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) 66px;
+      gap: 9px;
+      align-items: center;
       color: var(--muted);
-      font-size: 0.78rem;
-      line-height: 1.45;
+      font-size: 0.84rem;
+      font-weight: 800;
     }
 
-    .model-meta strong {
+    .demo-row + .demo-row { margin-top: 10px; }
+
+    .demo-row input { width: 100%; accent-color: var(--primary); }
+
+    .demo-row output {
+      color: var(--text);
+      font-family: var(--mono);
+      text-align: right;
+    }
+
+    .model-version {
       color: var(--primary);
       font-family: var(--mono);
-      font-variant-numeric: tabular-nums;
+      font-size: 0.8rem;
+      font-weight: 900;
     }
 
     .alarm-list {
@@ -1016,168 +1008,48 @@
     }
 
     .knowledge-result {
-      --urgency-color: var(--primary);
       display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 12px;
+      align-items: center;
       margin-top: 14px;
-      padding: 15px;
-      border: 1px solid color-mix(in srgb, var(--urgency-color), transparent 28%);
-      border-left: 4px solid var(--urgency-color);
+      padding: 13px;
+      border: 1px solid rgba(0, 212, 170, 0.34);
       border-radius: 8px;
-      background: color-mix(in srgb, var(--urgency-color), transparent 91%);
+      background: rgba(0, 212, 170, 0.07);
     }
 
-    .expert-advice-head {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+    .knowledge-result[data-action="ventilation"] {
+      border-color: rgba(0, 212, 170, 0.78);
+      background: rgba(0, 212, 170, 0.12);
+    }
+
+    .knowledge-result[data-action="alert_only"] {
+      border-color: rgba(255, 159, 67, 0.72);
+      background: rgba(255, 159, 67, 0.1);
+    }
+
+    .knowledge-result[data-action="stop"] {
+      border-color: rgba(74, 158, 255, 0.56);
     }
 
     .knowledge-result-label {
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 0.76rem;
-      font-weight: 900;
-    }
-
-    .urgency-badge {
-      display: inline-flex;
-      align-items: center;
-      min-height: 30px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      color: #fff;
-      background: var(--urgency-color);
-      box-shadow: 0 0 18px color-mix(in srgb, var(--urgency-color), transparent 65%);
-      font-size: 0.82rem;
-      font-weight: 900;
-    }
-
-    .expert-advice-body {
-      margin: 0;
-      color: #e7f0f6;
-      font-size: 1.02rem;
-      font-weight: 650;
-      line-height: 1.75;
-    }
-
-    .expert-advice-body strong {
-      color: var(--text);
-      font-weight: 900;
-    }
-
-    .trend-status {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      min-height: 36px;
-      padding: 8px 10px;
-      border: 1px solid color-mix(in srgb, var(--urgency-color), transparent 62%);
-      border-radius: 6px;
-      color: #d7e4ee;
-      background: rgba(255, 255, 255, 0.045);
-      font-size: 0.9rem;
-      font-weight: 800;
-    }
-
-    .trend-status-indicator {
-      width: 9px;
-      height: 9px;
-      flex: 0 0 auto;
-      border-radius: 50%;
-      background: var(--urgency-color);
-      box-shadow: 0 0 12px var(--urgency-color);
-    }
-
-    .expert-advice-footer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 14px;
-      color: var(--muted);
-      font-size: 0.8rem;
-      font-weight: 750;
-    }
-
-    .advice-history {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--line);
-    }
-
-    .advice-history-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 9px;
-    }
-
-    .advice-history-title {
-      margin: 0;
-      color: var(--text);
-      font-size: 0.94rem;
-      font-weight: 900;
-    }
-
-    .advice-history-count {
-      color: var(--muted);
+      color: var(--primary);
       font-family: var(--mono);
       font-size: 0.78rem;
-      font-weight: 800;
+      font-weight: 900;
+      letter-spacing: 0;
     }
 
-    .advice-history-log {
-      display: grid;
-      gap: 7px;
-      max-height: 238px;
-      overflow-y: auto;
-      padding-right: 4px;
-      scrollbar-color: rgba(122, 155, 181, 0.55) transparent;
-    }
-
-    .advice-log-item {
-      display: grid;
-      grid-template-columns: 5px 58px minmax(0, 1fr);
-      gap: 9px;
-      align-items: start;
-      padding: 9px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.035);
-    }
-
-    .advice-log-accent {
-      align-self: stretch;
-      border-radius: 999px;
-      background: var(--log-color, var(--primary));
-    }
-
-    .advice-log-time {
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 0.78rem;
-      font-weight: 850;
-    }
-
-    .advice-log-copy {
-      min-width: 0;
+    .knowledge-result-copy {
       color: #d7e4ee;
-      font-size: 0.84rem;
-      line-height: 1.5;
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.55;
     }
 
-    .advice-log-copy strong {
+    .knowledge-result-copy strong {
       color: var(--text);
-    }
-
-    .advice-history-empty {
-      padding: 13px;
-      border: 1px dashed rgba(255, 255, 255, 0.15);
-      border-radius: 6px;
-      color: var(--muted);
-      font-size: 0.86rem;
     }
 
     .runtime-error {
@@ -1256,30 +1128,19 @@
         height: 320px;
       }
 
-      .title { font-size: 1.35rem; }
-
       .snapshot-item {
         grid-template-columns: 1fr;
       }
 
-      .table-wrap { overflow-x: auto; }
-
       .data-table {
-        width: 620px;
-        min-width: 620px;
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
         font-size: 0.8rem;
       }
 
       .footer {
         display: grid;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
       }
     }
   </style>
@@ -1438,30 +1299,9 @@
             <div class="insight-card"><span>温度均值</span><strong id="insightAvgTemp">--</strong></div>
             <div class="insight-card"><span>高湿点数</span><strong id="insightHumidCount">--</strong></div>
           </div>
-          <section class="knowledge-result" id="decision-result" data-action="stop" data-urgency="normal" aria-live="polite">
-            <div class="expert-advice-head">
-              <span class="knowledge-result-label">LOCAL EXPERT KB</span>
-              <span class="urgency-badge" id="adviceUrgencyBadge">常规状态</span>
-            </div>
-            <p class="expert-advice-body" id="expertAdviceText">等待 24 小时本地模拟开始。</p>
-            <div class="trend-status" id="adviceTrendStatus">
-              <i class="trend-status-indicator"></i>
-              <span>趋势平稳</span>
-            </div>
-            <div class="expert-advice-footer">
-              <span id="adviceCitation">依据：计划书 3.2 节</span>
-              <span id="adviceRuleId">触发规则 ID：-</span>
-              <span id="adviceScenarioKey">场景：-</span>
-            </div>
-          </section>
-          <section class="advice-history" aria-labelledby="adviceHistoryTitle">
-            <div class="advice-history-head">
-              <h3 class="advice-history-title" id="adviceHistoryTitle">历史建议日志</h3>
-              <span class="advice-history-count" id="adviceHistoryCount">0 / 24</span>
-            </div>
-            <div class="advice-history-log" id="adviceHistoryLog" role="log" aria-live="polite">
-              <div class="advice-history-empty">重要建议将在模拟推进后记录。</div>
-            </div>
+          <section class="knowledge-result" id="decision-result" data-action="stop" aria-live="polite">
+            <span class="knowledge-result-label">LOCAL KB</span>
+            <div class="knowledge-result-copy">当前决策：<strong>等待模拟</strong> | 依据：计划书3.2节 | 触发规则ID：--</div>
           </section>
         </section>
 
@@ -1473,7 +1313,6 @@
             </div>
             <button class="control secondary" id="snapshotButton" type="button">保存数据快照</button>
           </div>
-          <div class="table-wrap" aria-label="采样记录横向滚动区域">
           <table class="data-table">
             <thead>
               <tr>
@@ -1490,7 +1329,6 @@
               <tr><td colspan="7">等待首次采样</td></tr>
             </tbody>
           </table>
-          </div>
           <div class="snapshot-list" id="snapshotList" aria-label="快照列表"></div>
         </section>
       </section>
@@ -1508,7 +1346,23 @@
             <div class="calibration-item"><span>补偿系数</span><strong id="factorValue">--</strong></div>
             <div class="calibration-item"><span>原始氨气</span><strong id="rawAmmoniaValue">--</strong></div>
             <div class="calibration-item"><span>补偿后氨气</span><strong id="correctedAmmoniaValue">--</strong></div>
-            <div class="model-meta">本地补偿模型 <strong id="modelVersion">v--</strong> · 测试误差 0.71% · MAE 0.0505 ppm</div>
+          </div>
+        </section>
+
+        <section class="panel glass" aria-label="算法演示面板">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">算法演示面板</h2>
+              <p class="panel-note">模型版本 <span class="model-version" id="modelVersion">--</span></p>
+            </div>
+          </div>
+          <label class="demo-row">海拔<input id="demoAltitude" type="range" min="2200" max="3500" value="2800"><output id="demoAltitudeOut">2800 m</output></label>
+          <label class="demo-row">温度<input id="demoTemp" type="range" min="-15" max="25" value="10"><output id="demoTempOut">10 C</output></label>
+          <label class="demo-row">湿度<input id="demoRh" type="range" min="20" max="85" value="60"><output id="demoRhOut">60 %RH</output></label>
+          <button class="control" id="demoSimulate" type="button" style="width:100%;justify-content:center;margin-top:14px">生成模拟原始读数</button>
+          <div class="calibration-grid" style="margin-top:12px">
+            <div class="calibration-item"><span>模拟原始值</span><strong id="demoRaw">--</strong></div>
+            <div class="calibration-item"><span>补偿结果</span><strong id="demoCorrected">--</strong></div>
           </div>
         </section>
 
@@ -1586,7 +1440,6 @@
     const MAX_POINTS = 60;
     const MAX_RECORDS = 8;
     const MAX_SNAPSHOTS = 5;
-    const MAX_ADVICE_LOG = 24;
     const SAMPLE_INTERVAL = 2000;
 
     const state = {
@@ -1601,7 +1454,6 @@
       light: [],
       records: [],
       snapshots: [],
-      adviceHistory: [],
       currentData: null,
       currentResult: null,
       scenario: {
@@ -1646,21 +1498,11 @@
       insightMaxNh3: document.getElementById("insightMaxNh3"),
       insightAvgTemp: document.getElementById("insightAvgTemp"),
       insightHumidCount: document.getElementById("insightHumidCount"),
-      decisionResult: document.getElementById("decision-result"),
-      adviceUrgencyBadge: document.getElementById("adviceUrgencyBadge"),
-      expertAdviceText: document.getElementById("expertAdviceText"),
-      adviceTrendStatus: document.getElementById("adviceTrendStatus"),
-      adviceCitation: document.getElementById("adviceCitation"),
-      adviceRuleId: document.getElementById("adviceRuleId"),
-      adviceScenarioKey: document.getElementById("adviceScenarioKey"),
-      adviceHistoryLog: document.getElementById("adviceHistoryLog"),
-      adviceHistoryCount: document.getElementById("adviceHistoryCount"),
       alarmList: document.getElementById("alarmList"),
       pressureValue: document.getElementById("pressureValue"),
       factorValue: document.getElementById("factorValue"),
       rawAmmoniaValue: document.getElementById("rawAmmoniaValue"),
       correctedAmmoniaValue: document.getElementById("correctedAmmoniaValue"),
-      modelVersion: document.getElementById("modelVersion"),
       recordRows: document.getElementById("recordRows")
     };
 
@@ -1721,11 +1563,15 @@
     }
 
     function estimatePressureKpa(sampleIndex) {
-      return HighlandCompensator.estimatePressureKpa(estimateAltitudeM(sampleIndex));
+      return estimatePressureForAltitude(estimateAltitudeM(sampleIndex));
+    }
+
+    function estimatePressureForAltitude(altitude) {
+      return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);
     }
 
     function simulateHighlandRaw(truePpm, altitude, temperature, humidity) {
-      const pressure = HighlandCompensator.estimatePressureKpa(altitude);
+      const pressure = estimatePressureForAltitude(altitude);
       const lowPressure = (101.325 - pressure) / 101.325;
       const nonlinearError = clamp(
         0.29 + 0.21 * lowPressure + 0.025 * ((temperature - 5) / 20) ** 2
@@ -1771,8 +1617,6 @@
       };
       els.scenarioHint.classList.toggle("show", type !== "normal");
       els.scenarioHint.textContent = type === "normal" ? "" : `场景模拟中：${els.scenarioSelect.options[els.scenarioSelect.selectedIndex].text}`;
-      // 24 小时模拟结束后再次选择场景时，自动开启新一轮演示。
-      if (!state.running && typeof setRunning === "function") setRunning(true);
     }
 
     function scenarioBlendValue(base, target, min, max) {
@@ -1804,7 +1648,7 @@
 
       next.rawAmmonia = simulateHighlandRaw(next.ammonia, next.altitude, next.temperature, next.humidity);
       next.referenceAmmonia = next.ammonia;
-      next.ammonia = HighlandCompensator.compensate(next.altitude, next.temperature, next.humidity, next.rawAmmonia);
+      next.ammonia = compensate(next.altitude, next.temperature, next.humidity, next.rawAmmonia);
       if (state.scenario.type === "normal") return next;
 
       state.scenario.tick += 1;
@@ -2091,7 +1935,6 @@
       els.factorValue.textContent = `${factor.toFixed(2)}x`;
       els.rawAmmoniaValue.textContent = `${data.rawAmmonia.toFixed(1)} ppm`;
       els.correctedAmmoniaValue.textContent = `${data.ammonia.toFixed(1)} ppm`;
-      els.modelVersion.textContent = `v${window.MODEL_WEIGHTS?.version || HighlandCompensator.modelVersion}`;
     }
 
     function pushRecord(data, result) {
@@ -2346,14 +2189,12 @@
     els.toggleStream.addEventListener("click", () => setRunning(!state.running));
     els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
     els.snapshotButton.addEventListener("click", saveSnapshot);
-
     tick();
     state.timer = window.setInterval(tick, SAMPLE_INTERVAL);
 
     // 本地知识库模拟接管原随机流：保留既有页面部件，只替换为可复现的24小时数据与决策。
     (function startLocalKnowledgeBaseModel() {
       let controller = null;
-      let uiEngine = null;
       const modelErrors = [];
 
       function showRuntimeError(error) {
@@ -2397,98 +2238,22 @@
 
       function clearDashboardData() {
         [state.labels, state.temperature, state.humidity, state.ammonia, state.rawAmmonia, state.light].forEach((list) => { list.length = 0; });
-        const markerSet = trendChart.data.datasets.find((dataset) => dataset.id === "ventilationMarkers");
-        if (markerSet) markerSet.data.length = 0;
         state.records.length = 0;
-        state.adviceHistory.length = 0;
         state.currentData = null;
         state.currentResult = null;
         els.recordRows.innerHTML = '<tr><td colspan="7">24小时本地模拟启动中</td></tr>';
-        renderAdviceHistory();
       }
 
       function toLegacyResult(decision) {
-        const urgency = decision.urgencyLevel || (decision.action === "ventilation" ? "warning" : "normal");
-        const levelClass = urgency === "info" ? "caution" : urgency;
-        const icons = { critical: "🔴", warning: "🟡", alert: "🟠", info: "🔵", normal: "🟢" };
-        return {
-          levelClass,
-          icon: icons[urgency] || "🟢",
-          title: decision.urgencyLabel || (decision.action === "ventilation" ? `通风 ${decision.duration} 分钟` : "保持关闭"),
-          urgency
-        };
-      }
-
-      function escapeHtml(value) {
-        return String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        }[character]));
-      }
-
-      function formatAdvice(value) {
-        const safe = escapeHtml(value || "暂无专家建议。");
-        return safe.replace(/(建议：|建议：[^。；]*|立即[^。；]*|清理粪污|检查北侧风口|保持圈舍密闭|启动保温设备)/g, "<strong>$1</strong>");
-      }
-
-      function adviceForDisplay(decision) {
-        const advice = String(decision.humanAdvice || decision.reason || "暂无专家建议。");
-        const labels = { critical: "紧急行动", warning: "待办提醒", info: "关注提示", normal: "常规状态" };
-        const label = labels[decision.urgencyLevel];
-        const normalized = label ? advice.replace(/^【(?:紧急|建议|关注|常规状态)】/, `【${label}】`) : advice;
-        const trendPrefix = normalized.match(/^(?:预警|提示)：[^。]*。/);
-        return trendPrefix ? `${normalized.slice(trendPrefix[0].length).trim()} ${trendPrefix[0]}` : normalized;
-      }
-
-      function trendText(decision) {
-        if (decision.trendWarning === "fast_rising") return `氨气正在快速上升 ↑ · 斜率 +${Number(decision.trendSlope || 0).toFixed(1)} ppm/h`;
-        if (decision.trendLabel === "缓慢上升") return `氨气缓慢上升 ↗ · 斜率 +${Number(decision.trendSlope || 0).toFixed(1)} ppm/h`;
-        if (decision.trendLabel === "下降") return `氨气趋势下降 ↓ · 斜率 ${Number(decision.trendSlope || 0).toFixed(1)} ppm/h`;
-        return "趋势平稳 · 暂无明显恶化迹象";
-      }
-
-      function renderAdviceHistory() {
-        els.adviceHistoryCount.textContent = `${state.adviceHistory.length} / ${MAX_ADVICE_LOG}`;
-        if (state.adviceHistory.length === 0) {
-          els.adviceHistoryLog.innerHTML = '<div class="advice-history-empty">重要建议将在模拟推进后记录。</div>';
-          return;
-        }
-        els.adviceHistoryLog.innerHTML = state.adviceHistory.map((item) => `
-          <article class="advice-log-item" style="--log-color:${escapeHtml(item.color)}">
-            <i class="advice-log-accent"></i>
-            <time class="advice-log-time">${escapeHtml(item.time)}</time>
-            <div class="advice-log-copy"><strong>${escapeHtml(item.label)}</strong> · ${formatAdvice(item.advice)}<br><span>依据：${escapeHtml(item.citation)} · ${escapeHtml(item.ruleId)}</span></div>
-          </article>
-        `).join("");
-      }
-
-      function appendAdviceHistory(data, decision) {
-        const important = decision.urgencyLevel !== "normal" || decision.trendWarning || decision.action === "ventilation";
-        if (!important) return;
-        state.adviceHistory.unshift({
-          time: data.time,
-          label: decision.urgencyLabel || "关注提示",
-          advice: adviceForDisplay(decision),
-          citation: decision.citation || "本地规则",
-          ruleId: decision.ruleId || "LOCAL_RULE",
-          color: decision.urgencyColor || "#1976D2"
-        });
-        state.adviceHistory = state.adviceHistory.slice(0, MAX_ADVICE_LOG);
-        renderAdviceHistory();
+        if (decision.action === "ventilation") return { levelClass: "warning", icon: "🟢", title: `通风 ${decision.duration} 分钟` };
+        if (decision.action === "alert_only") return { levelClass: "alert", icon: "🟠", title: "只报警，不通风" };
+        if (decision.ruleId === "TEMP_DROP_LIMIT") return { levelClass: "critical", icon: "🔵", title: "停止通风" };
+        return { levelClass: "normal", icon: "⏹", title: "保持关闭" };
       }
 
       function updateKnowledgeUI(record) {
-        // 场景模拟覆盖本地24小时基线，并重新走一遍决策引擎，确保曲线、表格和执行器使用同一份数据。
-        const data = applyScenario({ ...record });
-        if (state.currentData) {
-          data.tempDropRate = Number(Math.max(0, state.currentData.temperature - data.temperature).toFixed(1));
-        }
-        const decision = uiEngine
-          ? uiEngine.decide(data.hour, data.temperature, data.ammonia, data.humidity, data.tempDropRate, state.ammonia.slice(-2))
-          : record.decision;
+        const data = record;
+        const decision = record.decision;
         const result = toLegacyResult(decision);
         const risk = clamp((data.ammonia / 30) * 100, 3, 100);
         const riskColor = getRiskColor(data.ammonia);
@@ -2502,9 +2267,9 @@
         els.decisionIcon.textContent = result.icon;
         els.decisionTitle.textContent = result.title;
         els.decisionAdvice.innerHTML = `
-          <div class="action-step"><span class="step-index">1</span><span><span class="step-status">${fanOn ? "● 执行中" : "▶ 监测中"}</span>${formatAdvice(adviceForDisplay(decision))}</span></div>
-          <div class="action-step"><span class="step-index">2</span><span><span class="step-status">趋势</span>${escapeHtml(trendText(decision))}</span></div>
-          <div class="action-step"><span class="step-index">3</span><span><span class="step-status">依据</span>${escapeHtml(decision.citation || "本地知识库规则")}</span></div>`;
+          <div class="action-step"><span class="step-index">1</span><span><span class="step-status">${fanOn ? "● 执行中" : "▶ 监测中"}</span>${decision.reason}</span></div>
+          <div class="action-step"><span class="step-index">2</span><span><span class="step-status">规则</span>${decision.ammoniaLevel || "当前"}氨气阈值；通风窗口 12:00-14:00；最大温降 3℃。</span></div>
+          <div class="action-step"><span class="step-index">3</span><span><span class="step-status">依据</span>${decision.citation}</span></div>`;
         els.decisionTrigger.innerHTML = `
           <span class="trigger-chip">时刻：<strong>${data.time}</strong></span>
           <span class="trigger-chip">氨气：<strong style="--chip-color:${riskColor}">${data.ammonia.toFixed(1)}ppm</strong></span>
@@ -2529,17 +2294,9 @@
         els.flowCompensate.textContent = `${data.pressure.toFixed(1)}kPa · NH₃ ${data.rawAmmonia.toFixed(1)}→${data.ammonia.toFixed(1)}`;
         els.flowDecision.textContent = `${result.icon} ${result.title}`;
         els.flowExecute.textContent = fanOn ? `低速 / ${decision.duration}分钟` : "关闭 / 待命";
-        els.decisionResult.dataset.action = decision.action;
-        els.decisionResult.dataset.urgency = result.urgency;
-        els.decisionResult.style.setProperty("--urgency-color", decision.urgencyColor || "#388E3C");
-        els.adviceUrgencyBadge.textContent = decision.urgencyLabel || result.title;
-        els.adviceUrgencyBadge.style.background = decision.urgencyColor || "#388E3C";
-        els.expertAdviceText.innerHTML = formatAdvice(adviceForDisplay(decision));
-        els.adviceTrendStatus.innerHTML = `<i class="trend-status-indicator"></i><span>${escapeHtml(trendText(decision))}</span>`;
-        els.adviceCitation.textContent = `依据：${decision.citation || "本地知识库规则"}`;
-        els.adviceRuleId.textContent = `触发规则 ID：${decision.ruleId || "LOCAL_RULE"}`;
-        els.adviceScenarioKey.textContent = `场景：${decision.adviceKey || "默认降级"}`;
-        appendAdviceHistory(data, decision);
+        const decisionResult = document.getElementById("decision-result");
+        decisionResult.dataset.action = decision.action;
+        decisionResult.innerHTML = `<span class="knowledge-result-label">LOCAL KB</span><div class="knowledge-result-copy">当前决策：<strong>${fanOn ? `通风${decision.duration}分钟` : result.title}</strong> | 依据：${decision.citation} | 触发规则ID：${decision.ruleId}</div>`;
         pushRecord(data, result);
         pushChartPoint(data, decision);
         els.lastUpdate.textContent = `模拟时刻：${data.time}`;
@@ -2587,7 +2344,6 @@
         if (controller) controller.stop();
         clearDashboardData();
         configureDecisionMarkers();
-        if (uiEngine && typeof uiEngine.reset === "function") uiEngine.reset();
         state.running = true;
         els.streamStatus.textContent = "24小时模拟中";
         els.toggleStream.textContent = "暂停模拟";
@@ -2598,9 +2354,6 @@
             els.streamStatus.textContent = "24小时模拟完成";
             els.toggleStream.textContent = "重新运行模拟";
           }
-          // 避免模拟完成后仍显示“场景模拟中”，让状态栏与场景提示保持一致。
-          els.scenarioHint.classList.remove("show");
-          els.scenarioHint.textContent = "";
         });
       }
 
@@ -2612,24 +2365,12 @@
           window.clearInterval(state.timer);
           state.timer = null;
           const engine = new window.DecisionEngine("犊牦牛");
-          uiEngine = new window.DecisionEngine("犊牦牛");
           const report = window.LocalSimulator.runSelfCheck(engine);
-          if (!report.hysteresisStable || !report.temperaturePriority || !report.expertAdviceAtNight || !report.morningAdvice || !report.fastTrendWarning) {
-            throw new Error("自检未通过：滞回、温降优先级或专家建议字段异常");
-          }
+          if (!report.hysteresisStable || !report.temperaturePriority) throw new Error("自检未通过：滞回或温降优先级异常");
           setRunning = function (nextRunning) {
-            if (nextRunning) {
-              const resumed = controller && controller.resume && controller.resume();
-              if (resumed) {
-                state.running = true;
-                els.streamStatus.textContent = "模拟运行中";
-                els.toggleStream.textContent = "暂停模拟";
-              } else {
-                beginSimulation(engine);
-              }
-            } else if (controller) {
-              if (controller.pause) controller.pause();
-              else controller.stop();
+            if (nextRunning) beginSimulation(engine);
+            else if (controller) {
+              controller.stop();
               state.running = false;
               els.streamStatus.textContent = "模拟已暂停";
               els.toggleStream.textContent = "继续模拟";

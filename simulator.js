@@ -1,7 +1,15 @@
-(function (global) {
+﻿(function (global) {
   "use strict";
 
-  // 青海冬季24小时剖面：23:00 保持24.9ppm、70%湿度、0.6℃，用于验证夜间多因子建议。
+  // 闈掓捣鍐24灏忔椂鍓栭潰锛?3:00 淇濇寔24.9ppm銆?0%婀垮害銆?.6鈩冿紝鐢ㄤ簬楠岃瘉澶滈棿澶氬洜瀛愬缓璁€?
+  /**
+   * @param {number} altitude Altitude in metres.
+   * @returns {number} Estimated atmospheric pressure in kPa.
+   */
+  function estimatePressureKpa(altitude) {
+    return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);
+  }
+
   const WINTER_DAY = Object.freeze([
     [-5.0, 5.0], [-4.8, 5.0], [-4.5, 5.0], [-4.0, 5.0], [-3.5, 5.0], [-2.8, 5.0], [-2.0, 5.0], [-1.0, 8.0],
     [0.0, 15.0], [2.0, 12.0], [4.0, 15.0], [5.5, 16.0], [7.0, 16.2], [8.0, 12.0], [4.0, 10.0], [3.0, 12.0],
@@ -19,11 +27,11 @@
       const targetAmmonia = point[1];
       const humidity = HUMIDITY_DAY[hour];
       const altitude = 2850 + 650 * Math.sin(hour / 24 * Math.PI * 2);
-      const pressure = global.HighlandCompensator.estimatePressureKpa(altitude);
+      const pressure = estimatePressureKpa(altitude);
       const lowPressure = (101.325 - pressure) / 101.325;
       const nonlinearError = Math.min(.40, Math.max(.35, .29 + .21 * lowPressure + .025 * ((temperature - 5) / 20) ** 2 + .02 * ((humidity - 52.5) / 32.5) ** 2));
       const rawAmmonia = targetAmmonia * (1 + nonlinearError) + .1 + .06 * lowPressure;
-      const compensated = global.HighlandCompensator.compensate(altitude, temperature, humidity, rawAmmonia);
+      const compensated = global.compensate(altitude, temperature, humidity, rawAmmonia);
 
       return {
         hour,
@@ -56,7 +64,7 @@
       );
       historyNh3.push(sample.ammonia);
       const record = Object.assign({}, sample, { decision, historyNh3: historyNh3.slice(-2) });
-      if (logDecisions) console.log("[本地知识库]", record.time, decision);
+      if (logDecisions) console.log("[鏈湴鐭ヨ瘑搴揮", record.time, decision);
       return record;
     });
   }
@@ -114,14 +122,14 @@
       samples: records.length,
       hysteresisStable: records.filter((record) => record.decision.ruleId === "NH3_HYSTERESIS_HOLD").length >= 1,
       temperaturePriority: priorityCheck.action === "stop" && priorityCheck.ruleId === "TEMP_DROP_LIMIT",
-      expertAdviceAtNight: Boolean(at23 && at23.decision.urgencyLevel === "critical" && at23.decision.humanAdvice.includes("立即清理粪污")),
-      morningAdvice: Boolean(at06 && at06.decision.urgencyLevel === "normal" && at06.decision.humanAdvice.includes("注意清晨保温即可")),
-      fastTrendWarning: fastTrend.trendWarning === "fast_rising" && fastTrend.trendLabel === "快速恶化",
+      expertAdviceAtNight: Boolean(at23 && at23.decision.urgencyLevel === "critical" && at23.decision.humanAdvice.includes("绔嬪嵆娓呯悊绮薄")),
+      morningAdvice: Boolean(at06 && at06.decision.urgencyLevel === "normal" && at06.decision.humanAdvice.includes("娉ㄦ剰娓呮櫒淇濇俯鍗冲彲")),
+      fastTrendWarning: fastTrend.trendWarning === "fast_rising",
       priorityCheck,
       at23,
       at06
     };
-    console.info("[本地知识库自检]", report);
+    console.info("[鏈湴鐭ヨ瘑搴撹嚜妫€]", report);
     return report;
   }
 
@@ -149,8 +157,7 @@
     const ctx = this.ctx;
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.clearRect(0, 0, width, height);
-    // 使用独立的主轴和光照右轴，避免 Lux 的大范围把温湿度与氨气压成直线。
-    const pad = { left: 52, right: 52, top: 48, bottom: 34 };
+    // 浣跨敤鐙珛鐨勪富杞村拰鍏夌収鍙宠酱锛岄伩鍏?Lux 鐨勫ぇ鑼冨洿鎶婃俯婀垮害涓庢皑姘斿帇鎴愮洿绾裤€?    const pad = { left: 52, right: 52, top: 48, bottom: 34 };
     const plotW = width - pad.left - pad.right;
     const plotH = height - pad.top - pad.bottom;
     const datasets = this.data.datasets || [];
@@ -183,8 +190,7 @@
       return pad.left + (length < 2 ? 0 : index / (length - 1) * plotW);
     };
 
-    // 绘制图例，让无 Chart.js 时的本地降级模式仍然具备可读的图例。
-    ctx.font = "11px system-ui, sans-serif";
+    // 缁樺埗鍥句緥锛岃鏃?Chart.js 鏃剁殑鏈湴闄嶇骇妯″紡浠嶇劧鍏峰鍙鐨勫浘渚嬨€?    ctx.font = "11px system-ui, sans-serif";
     ctx.textBaseline = "middle";
     let legendX = pad.left;
     let legendY = 15;
@@ -228,8 +234,7 @@
       ctx.fillText(`${Math.round(value)} Lux`, width - pad.right + 8, pad.top + plotH * i / 4);
     }
 
-    // 氨气 15ppm 阈值使用主轴绘制，和真实 Chart.js 插件保持一致。
-    const thresholdY = yFor(15, "main");
+    // 姘ㄦ皵 15ppm 闃堝€间娇鐢ㄤ富杞寸粯鍒讹紝鍜岀湡瀹?Chart.js 鎻掍欢淇濇寔涓€鑷淬€?    const thresholdY = yFor(15, "main");
     ctx.save();
     ctx.setLineDash([7, 6]);
     ctx.lineWidth = 1.4;
@@ -241,7 +246,7 @@
     ctx.setLineDash([]);
     ctx.fillStyle = "#ff6b6b";
     ctx.textAlign = "left";
-    ctx.fillText("NH₃ 15ppm 阈值", pad.left + 8, thresholdY - 8);
+    ctx.fillText("NH3 15ppm threshold", pad.left + 8, thresholdY - 8);
     ctx.restore();
 
     datasets.forEach(function (dataset) {
@@ -279,8 +284,7 @@
       });
     });
 
-    // 绘制少量时间刻度，保证长标签不会挤在一起。
-    ctx.fillStyle = "#7a9bb5";
+    // 缁樺埗灏戦噺鏃堕棿鍒诲害锛屼繚璇侀暱鏍囩涓嶄細鎸ゅ湪涓€璧枫€?    ctx.fillStyle = "#7a9bb5";
     ctx.font = "10px ui-monospace, Menlo, Consolas, monospace";
     ctx.textAlign = "center";
     const labels = this.data.labels || [];
@@ -290,9 +294,9 @@
       ctx.fillText(String(label), xFor(index, labels.length), height - 12);
     });
     ctx.textAlign = "left";
-    ctx.fillText("本地多轴图表模式", pad.left, height - 2);
+    ctx.fillText("鏈湴澶氳酱鍥捐〃妯″紡", pad.left, height - 2);
   };
 
   if (!global.Chart) global.Chart = CanvasChartFallback;
-  global.LocalSimulator = Object.freeze({ createWinterDayData, runSimulation, runSelfCheck });
+  global.LocalSimulator = Object.freeze({ createWinterDayData, runSimulation, runSelfCheck, estimatePressureKpa });
 })(window);
