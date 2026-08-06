@@ -13,6 +13,18 @@
   <script src="knowledgeBase.js?v=1.0.0"></script>
   <script src="decisionEngine.js?v=1.0.0"></script>
   <script src="simulator.js?v=1.0.0"></script>
+  <script>
+    // 首屏先恢复主题，避免页面加载时先闪过另一套配色。
+    (function restoreThemePreference() {
+      let savedTheme = "dark";
+      try {
+        savedTheme = localStorage.getItem("qjzh-theme") || "dark";
+      } catch (error) {
+        savedTheme = "dark";
+      }
+      document.documentElement.dataset.theme = savedTheme === "light" ? "light" : "dark";
+    })();
+  </script>
   <style>
     :root {
       --bg-a: #0b1a2a;
@@ -1928,6 +1940,171 @@
         gap: 3px;
       }
     }
+    /* 显式主题覆盖系统偏好，确保演示者可以随时切换且所有面板保持可读。 */
+    html[data-theme="light"] {
+      --bg-a: #edf5f7;
+      --bg-b: #d9e9ee;
+      --panel: rgba(255, 255, 255, 0.84);
+      --panel-strong: rgba(255, 255, 255, 0.96);
+      --line: rgba(35, 77, 98, 0.2);
+      --line-strong: rgba(35, 77, 98, 0.36);
+      --text: #173345;
+      --muted: #557184;
+      --shadow: 0 18px 48px rgba(38, 76, 93, 0.14);
+    }
+
+    html[data-theme="light"] body {
+      background:
+        radial-gradient(circle at 15% 0%, rgba(0, 170, 139, 0.12), transparent 30rem),
+        radial-gradient(circle at 86% 7%, rgba(74, 158, 255, 0.12), transparent 28rem),
+        linear-gradient(145deg, var(--bg-a), var(--bg-b));
+    }
+
+    html[data-theme="light"] .glass {
+      border-color: var(--line);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(243, 250, 251, 0.78));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), var(--shadow);
+    }
+
+    html[data-theme="light"] .topbar {
+      border-color: rgba(0, 170, 139, 0.26);
+      background: linear-gradient(90deg, rgba(0, 212, 170, 0.1), transparent 42%), linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(232, 245, 247, 0.86));
+    }
+
+    html[data-theme="light"] .subtitle,
+    html[data-theme="light"] .panel-note {
+      color: var(--muted);
+    }
+
+    html[data-theme="light"] .pill,
+    html[data-theme="light"] .scenario-select,
+    html[data-theme="light"] .control.secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    html[data-theme="light"] .scenario-select option {
+      color: #173345;
+      background: #ffffff;
+    }
+
+    html[data-theme="light"] .pipeline-strip {
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    html[data-theme="light"] .pipeline-step,
+    html[data-theme="light"] .chart-box,
+    html[data-theme="light"] .insight-card,
+    html[data-theme="light"] .calibration-item,
+    html[data-theme="light"] .snapshot-item,
+    html[data-theme="light"] .actuator-item,
+    html[data-theme="light"] .alarm-item,
+    html[data-theme="light"] .advice-log-item,
+    html[data-theme="light"] .rule-state-list > div,
+    html[data-theme="light"] .demo-output {
+      border-color: rgba(35, 77, 98, 0.14);
+      background: rgba(255, 255, 255, 0.56);
+    }
+
+    html[data-theme="light"] .chart-box {
+      background: rgba(244, 250, 251, 0.76);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    }
+
+    html[data-theme="light"] .decision-card {
+      background: linear-gradient(90deg, rgba(0, 212, 170, 0.1), transparent 56%), rgba(255, 255, 255, 0.84);
+    }
+
+    html[data-theme="light"] .knowledge-result,
+    html[data-theme="light"] .advice-history,
+    html[data-theme="light"] .trend-summary {
+      border-color: rgba(35, 77, 98, 0.16);
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    html[data-theme="light"] .data-table {
+      color: #254354;
+    }
+
+    html[data-theme="light"] .data-table th {
+      color: #557184;
+      background: rgba(224, 239, 242, 0.86);
+    }
+
+    html[data-theme="light"] .data-table th,
+    html[data-theme="light"] .data-table td {
+      border-bottom-color: rgba(35, 77, 98, 0.12);
+    }
+
+    html[data-theme="light"] .data-table tbody tr:hover {
+      background: rgba(0, 170, 139, 0.08);
+    }
+
+    html[data-theme="light"] .expert-advice-body,
+    html[data-theme="light"] .advice-log-copy,
+    html[data-theme="light"] .trend-status,
+    html[data-theme="light"] .rule-state-list dd,
+    html[data-theme="light"] .alarm-item,
+    html[data-theme="light"] .snapshot-item {
+      color: #254354;
+    }
+
+    /* 主题按钮使用紧凑分段控件，避免占用状态栏过多空间。 */
+    .theme-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      min-height: 36px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .theme-option {
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 0;
+      border-radius: 5px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 850;
+      transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    .theme-option:hover,
+    .theme-option:focus-visible {
+      color: var(--text);
+      outline: 2px solid rgba(0, 212, 170, 0.4);
+      outline-offset: 1px;
+    }
+
+    .theme-option.active {
+      color: #06131f;
+      background: var(--primary);
+      box-shadow: 0 0 14px rgba(0, 212, 170, 0.24);
+    }
+
+    html[data-theme="light"] .theme-switch {
+      background: rgba(226, 240, 243, 0.72);
+    }
+
+    html[data-theme="light"] .theme-option.active {
+      color: #ffffff;
+      background: #009f84;
+    }
+
+    @media (max-width: 650px) {
+      .theme-switch {
+        width: 100%;
+      }
+
+      .theme-option {
+        flex: 1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1948,6 +2125,10 @@
         <span class="pill">最近 60 点</span>
         <span class="pill" id="lastUpdate">最后更新：--</span>
         <button class="control" id="toggleStream" type="button">暂停采集</button>
+        <div class="theme-switch" role="group" aria-label="显示主题">
+          <button type="button" class="theme-option" data-theme-value="light" aria-pressed="false">浅色</button>
+          <button type="button" class="theme-option active" data-theme-value="dark" aria-pressed="true">深色</button>
+        </div>
       </div>
     </header>
 
@@ -2294,6 +2475,7 @@
       streamStatus: document.getElementById("streamStatus"),
       toggleStream: document.getElementById("toggleStream"),
       scenarioSelect: document.getElementById("scenarioSelect"),
+      themeOptions: document.querySelectorAll("[data-theme-value]"),
       scenarioHint: document.getElementById("scenarioHint"),
       snapshotButton: document.getElementById("snapshotButton"),
       snapshotList: document.getElementById("snapshotList"),
@@ -2995,6 +3177,42 @@
       }
     });
 
+    // 切换主题时同步 Chart.js 文本、网格与提示框，保证数据曲线在两种背景下都清晰。
+    function applyTheme(theme) {
+      const nextTheme = theme === "light" ? "light" : "dark";
+      document.documentElement.dataset.theme = nextTheme;
+      els.themeOptions.forEach((button) => {
+        const active = button.dataset.themeValue === nextTheme;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+
+      try {
+        localStorage.setItem("qjzh-theme", nextTheme);
+      } catch (error) {
+        console.warn("[主题切换] 无法保存主题偏好", error);
+      }
+
+      if (typeof trendChart === "undefined") return;
+      const palette = nextTheme === "light"
+        ? { axis: "#557184", grid: "rgba(35, 77, 98, 0.14)", tooltipBg: "rgba(255, 255, 255, 0.97)", tooltipBorder: "rgba(35, 77, 98, 0.18)", tooltipTitle: "#173345", tooltipBody: "#254354", markerBorder: "#173345" }
+        : { axis: "#7A9BB5", grid: "rgba(255, 255, 255, 0.07)", tooltipBg: "rgba(11, 26, 42, 0.96)", tooltipBorder: "rgba(255, 255, 255, 0.12)", tooltipTitle: "#E8F0F8", tooltipBody: "#D7E4EE", markerBorder: "#E8F0F8" };
+      const options = trendChart.options;
+      options.plugins.legend.labels.color = palette.axis;
+      options.plugins.tooltip.backgroundColor = palette.tooltipBg;
+      options.plugins.tooltip.borderColor = palette.tooltipBorder;
+      options.plugins.tooltip.titleColor = palette.tooltipTitle;
+      options.plugins.tooltip.bodyColor = palette.tooltipBody;
+      options.scales.x.ticks.color = palette.axis;
+      options.scales.x.grid.color = palette.grid;
+      options.scales.yAmmonia.grid.color = palette.grid;
+      options.scales.yTemperature.ticks.color = nextTheme === "light" ? "#317ecf" : "#78B8FF";
+      options.scales.yHumidity.ticks.color = nextTheme === "light" ? "#008f78" : "#39E0BE";
+      const markerSet = trendChart.data.datasets.find((dataset) => dataset.id === "ventilationMarkers");
+      if (markerSet) markerSet.pointBorderColor = palette.markerBorder;
+      trendChart.update("none");
+    }
+
     function pushChartPoint(data) {
       state.labels.push(data.time);
       state.temperature.push(Number(data.temperature.toFixed(1)));
@@ -3077,6 +3295,11 @@
         window.clearInterval(state.timer);
       }
     }
+
+    els.themeOptions.forEach((button) => {
+      button.addEventListener("click", () => applyTheme(button.dataset.themeValue));
+    });
+    applyTheme(document.documentElement.dataset.theme || "dark");
 
     els.toggleStream.addEventListener("click", () => setRunning(!state.running));
     els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
