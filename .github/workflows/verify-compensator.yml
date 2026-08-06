@@ -15,3 +15,4 @@ jobs:
         with:
           node-version: 20
       - run: node verify_compensator.js
+      - run: node verify-deployment.js .

@@ -14,6 +14,7 @@ Before publishing any UI change, run:
 
 ```powershell
 node verify_compensator.js
+node verify-deployment.js .
 ```
 
 The GitHub Actions workflow runs the same check for pushes and pull requests.

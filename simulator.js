@@ -2,8 +2,8 @@
   "use strict";
 
   /**
-   * @param {number} altitude Altitude in metres.
-   * @returns {number} Estimated atmospheric pressure in kPa.
+   * Standard-atmosphere approximation used only to generate local test data.
+   * The learned compensation itself remains in compensator_engine.js.
    */
   function estimatePressureKpa(altitude) {
     return 101.325 * Math.pow(1 - 2.25577e-5 * altitude, 5.25588);

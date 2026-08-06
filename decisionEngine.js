@@ -16,12 +16,18 @@
       this.profile = knowledgeBase.SPECIES[this.species];
       this.windowRule = knowledgeBase.WINDOW_RULE;
       this.hysteresis = knowledgeBase.HYSTERESIS;
+      this.ruleCatalog = knowledgeBase.RULE_CATALOG || {};
       this.adviceTemplates = knowledgeBase.ADVICE_TEMPLATES;
       this.lastState = { action: "stop" };
     }
 
     reset() {
       this.lastState = { action: "stop" };
+    }
+
+    cite(ruleId) {
+      const rule = this.ruleCatalog[ruleId];
+      return rule ? `${ruleId} · ${rule.source}` : `本地知识库规则 ${ruleId}`;
     }
 
     analyzeTrend(historyNh3Array, currentNh3) {
@@ -141,9 +147,9 @@
           action: "stop",
           duration: 0,
           reason: "温度降幅超限，停止通风",
-          citation: "计划书3.2节",
+          citation: this.cite("KB-TEMP-DROP-3C"),
           ruleId: "TEMP_DROP_LIMIT",
-          humanAdvice: "【紧急】温度在短时间内下降超过3℃。建议：立即停止通风，启动保温设备并观察幼畜状态。依据：计划书3.2节"
+          humanAdvice: "【紧急】温度在短时间内下降超过3℃。建议：立即停止通风，启动保温设备并观察幼畜状态。依据：KB-TEMP-DROP-3C"
         });
       }
 
@@ -152,7 +158,7 @@
           action: "alert_only",
           duration: 0,
           reason: "非通风窗口，执行现场处置建议",
-          citation: nh3Level === "HIGH" ? "NY/T 388-1999" : "计划书3.2节",
+          citation: nh3Level === "HIGH" ? this.cite("KB-NH3-START") : this.cite("KB-WINTER-VENT-WINDOW"),
           ruleId: nh3Level === "HIGH" ? "NH3_WINDOW_LOCK" : "WINDOW_LOCK"
         });
       }
@@ -162,7 +168,7 @@
           action: "stop",
           duration: 0,
           reason: "氨气已降至停止滞回阈值",
-          citation: "计划书3.2节",
+          citation: this.cite("KB-NH3-HYSTERESIS"),
           ruleId: "NH3_HYSTERESIS_STOP"
         });
       }
@@ -172,7 +178,7 @@
           action: "ventilation",
           duration: ammonia >= this.profile.ammonia.levelOne ? 10 : 5,
           reason: "氨气达到启动滞回阈值",
-          citation: "NY/T 388-1999",
+          citation: this.cite("KB-NH3-START"),
           ruleId: "NH3_HIGH"
         });
       }
@@ -182,7 +188,7 @@
           action: "ventilation",
           duration: 5,
           reason: "滞回区间内保持通风",
-          citation: "计划书3.2节",
+          citation: this.cite("KB-NH3-HYSTERESIS"),
           ruleId: "NH3_HYSTERESIS_HOLD"
         });
       }
@@ -191,7 +197,7 @@
         action: "stop",
         duration: 0,
         reason: nh3Level === "MEDIUM" ? "氨气中等，执行清粪与巡检建议" : "环境处于可控区间",
-        citation: nh3Level === "LOW" ? "GB/T 17824.3-2022" : "NY/T 388-1999",
+        citation: nh3Level === "LOW" ? this.cite("KB-NH3-COMFORT") : this.cite("KB-NH3-START"),
         ruleId: nh3Level === "LOW" ? "NH3_NORMAL" : "NH3_LEVEL_TWO"
       });
     }
