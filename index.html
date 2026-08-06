@@ -13,6 +13,144 @@
   <script src="knowledgeBase.js?v=1.0.0"></script>
   <script src="decisionEngine.js?v=1.0.0"></script>
   <script src="simulator.js?v=1.0.0"></script>
+  <!-- Chart.js 负责绘制五条实时数据曲线与多量纲坐标轴。 -->
+  <script async src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    // CDN 不可用时启用轻量 Canvas 回退，保证离线演示仍有曲线、坐标和点位 Tooltip。
+    (function installChartFallback() {
+      // simulator.js 已提供基础降级图表；这里用多坐标增强版替换它，若 CDN 真正加载则保留 Chart.js。
+      if (window.Chart?.version || window.Chart?.__qjzhEnhanced) return;
+      const plugins = [];
+      const instances = new WeakMap();
+      const colors = { yAmmonia: "#FF6B6B", yTemperature: "#4A9EFF", yHumidity: "#00D4AA", yLight: "#FFD93D" };
+
+      class FallbackChart {
+        constructor(canvas, config) {
+          this.canvas = canvas;
+          this.data = config.data;
+          this.options = config.options || {};
+          this.scales = {};
+          this.hoverIndex = -1;
+          this.ctx = canvas.getContext("2d");
+          instances.set(canvas, this);
+          canvas.addEventListener("mousemove", (event) => this.setHover(event));
+          canvas.addEventListener("mouseleave", () => { this.hoverIndex = -1; this.draw(); });
+          window.addEventListener("resize", () => this.draw());
+          this.draw();
+        }
+
+        update() { this.draw(); }
+
+        setHover(event) {
+          const rect = (this.canvas.parentElement || this.canvas).getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          if (!this.chartArea || x < this.chartArea.left || x > this.chartArea.right) return;
+          const length = this.data.labels.length;
+          this.hoverIndex = length < 2 ? 0 : Math.max(0, Math.min(length - 1, Math.round((x - this.chartArea.left) / (this.chartArea.right - this.chartArea.left) * (length - 1))));
+          this.draw();
+        }
+
+        scaleValue(scale, value) {
+          const min = Number.isFinite(scale.min) ? scale.min : 0;
+          const max = Number.isFinite(scale.max) ? scale.max : 1;
+          const safe = Math.max(min, Math.min(max, Number(value) || 0));
+          return this.chartArea.bottom - ((safe - min) / Math.max(1, max - min)) * (this.chartArea.bottom - this.chartArea.top);
+        }
+
+        draw() {
+          const rect = this.canvas.getBoundingClientRect();
+          const width = Math.max(320, Math.floor(rect.width || 800));
+          const height = Math.max(240, Math.floor(rect.height || 355));
+          const dpr = window.devicePixelRatio || 1;
+          this.canvas.width = width * dpr;
+          this.canvas.height = height * dpr;
+          this.canvas.style.width = "100%";
+          this.canvas.style.height = "100%";
+          this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          const ctx = this.ctx;
+          ctx.clearRect(0, 0, width, height);
+          this.chartArea = { left: 58, right: width - 106, top: 42, bottom: height - 42 };
+          const scales = this.options.scales || {};
+          Object.keys(scales).filter((key) => key !== "x").forEach((key) => { this.scales[key] = scales[key]; });
+          Object.keys(this.scales).forEach((key) => {
+            const scale = this.scales[key];
+            scale.getPixelForValue = (value) => this.scaleValue(scale, value);
+          });
+          ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(126, 163, 181, 0.18)";
+          ctx.fillStyle = "#7A9BB5";
+          for (let tick = 0; tick <= 5; tick += 1) {
+            const y = this.chartArea.bottom - (tick / 5) * (this.chartArea.bottom - this.chartArea.top);
+            ctx.beginPath(); ctx.moveTo(this.chartArea.left, y); ctx.lineTo(this.chartArea.right, y); ctx.stroke();
+            const ammoniaScale = scales.yAmmonia || { min: 0, max: 30 };
+            const value = ammoniaScale.min + (tick / 5) * (ammoniaScale.max - ammoniaScale.min);
+            ctx.fillText(`${value.toFixed(0)} ppm`, 4, y + 4);
+          }
+          const labels = this.data.labels || [];
+          const lastIndex = Math.max(0, labels.length - 1);
+          for (let tick = 0; tick <= 5; tick += 1) {
+            const index = Math.round((tick / 5) * lastIndex);
+            const x = this.chartArea.left + (tick / 5) * (this.chartArea.right - this.chartArea.left);
+            ctx.beginPath(); ctx.moveTo(x, this.chartArea.bottom); ctx.lineTo(x, this.chartArea.top); ctx.stroke();
+            if (labels[index]) { ctx.fillStyle = "#7A9BB5"; ctx.textAlign = tick === 0 ? "left" : tick === 5 ? "right" : "center"; ctx.fillText(labels[index], x, height - 14); }
+          }
+          ctx.textAlign = "left";
+          (this.data.datasets || []).forEach((dataset) => {
+            if (dataset.hidden || !dataset.data?.length) return;
+            const color = dataset.borderColor || colors[dataset.yAxisID] || "#00D4AA";
+            const scale = scales[dataset.yAxisID] || { min: 0, max: 1 };
+            ctx.beginPath();
+            dataset.data.forEach((value, index) => {
+              const x = this.chartArea.left + (index / Math.max(1, dataset.data.length - 1)) * (this.chartArea.right - this.chartArea.left);
+              const y = this.scaleValue(scale, value);
+              if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = color; ctx.lineWidth = dataset.borderWidth || 2; ctx.setLineDash(dataset.borderDash || []); ctx.stroke(); ctx.setLineDash([]);
+            dataset.data.forEach((value, index) => {
+              const x = this.chartArea.left + (index / Math.max(1, dataset.data.length - 1)) * (this.chartArea.right - this.chartArea.left);
+              const y = this.scaleValue(scale, value);
+              ctx.beginPath(); ctx.arc(x, y, dataset.pointRadius || 2, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+            });
+          });
+          this.drawLegend(width);
+          plugins.forEach((plugin) => plugin.afterDraw?.(this));
+          if (this.hoverIndex >= 0) this.drawTooltip(width, height);
+        }
+
+        drawLegend(width) {
+          const ctx = this.ctx;
+          let x = this.chartArea.left;
+          ctx.font = "700 11px system-ui, sans-serif";
+          (this.data.datasets || []).forEach((dataset) => {
+            if (!dataset.label || dataset.id === "ventilationMarkers") return;
+            const color = dataset.borderColor || colors[dataset.yAxisID] || "#00D4AA";
+            ctx.fillStyle = color; ctx.fillRect(x, 17, 18, 3); ctx.fillStyle = "#7A9BB5"; ctx.fillText(dataset.label, x + 23, 21); x += Math.min(160, ctx.measureText(dataset.label).width + 42);
+          });
+        }
+
+        drawTooltip(width, height) {
+          const ctx = this.ctx;
+          const labels = this.data.labels || [];
+          const rows = (this.data.datasets || []).filter((dataset) => dataset.data?.[this.hoverIndex] !== undefined && dataset.id !== "ventilationMarkers");
+          const lines = [labels[this.hoverIndex] || "--", ...rows.map((dataset) => `${dataset.label}: ${Number(dataset.data[this.hoverIndex]).toFixed(dataset.yAxisID === "yLight" || dataset.yAxisID === "yHumidity" ? 0 : 1)} ${dataset.yAxisID === "yLight" ? "Lux" : dataset.yAxisID === "yHumidity" ? "%" : dataset.yAxisID === "yTemperature" ? "℃" : "ppm"}`)];
+          ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+          const boxWidth = Math.min(300, Math.max(180, ...lines.map((line) => ctx.measureText(line).width + 22)));
+          const boxHeight = lines.length * 18 + 14;
+          const x = Math.min(width - boxWidth - 8, Math.max(8, this.chartArea.left + (this.hoverIndex / Math.max(1, labels.length - 1)) * (this.chartArea.right - this.chartArea.left) + 12));
+          const y = Math.max(8, this.chartArea.top + 8);
+          ctx.fillStyle = "rgba(8, 22, 32, 0.94)"; ctx.strokeStyle = "rgba(0, 212, 170, 0.5)"; ctx.lineWidth = 1; ctx.fillRect(x, y, boxWidth, boxHeight); ctx.strokeRect(x, y, boxWidth, boxHeight);
+          lines.forEach((line, index) => { ctx.fillStyle = index === 0 ? "#E8F0F8" : "#D7E4EE"; ctx.fillText(line, x + 10, y + 20 + index * 18); });
+        }
+      }
+
+      FallbackChart.instances = instances;
+      FallbackChart.register = (...items) => plugins.push(...items);
+      FallbackChart.getChart = (canvas) => instances.get(canvas);
+      FallbackChart.__qjzhEnhanced = true;
+      window.Chart = FallbackChart;
+    })();
+  </script>
   <script>
     // 首屏先恢复主题，避免页面加载时先闪过另一套配色。
     (function restoreThemePreference() {
@@ -23,6 +161,20 @@
         savedTheme = "dark";
       }
       document.documentElement.dataset.theme = savedTheme === "light" ? "light" : "dark";
+    })();
+  </script>
+  <script>
+    // 首屏恢复语言偏好；没有保存过时默认使用中文。
+    (function restoreLanguagePreference() {
+      let savedLanguage = "zh";
+      try {
+        savedLanguage = localStorage.getItem("qjzh-language") || "zh";
+      } catch (error) {
+        savedLanguage = "zh";
+      }
+      const language = ["zh", "en", "bo"].includes(savedLanguage) ? savedLanguage : "zh";
+      document.documentElement.dataset.language = language;
+      document.documentElement.lang = language === "bo" ? "bo" : language === "en" ? "en" : "zh-CN";
     })();
   </script>
   <style>
@@ -2105,6 +2257,55 @@
         flex: 1;
       }
     }
+
+    /* 语言下拉控件与主题切换并列，移动端自动占满一列。 */
+    .language-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 36px;
+      padding: 3px 5px 3px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.055);
+      font-size: 0.78rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .language-switch select {
+      min-height: 28px;
+      padding: 4px 22px 4px 7px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 850;
+    }
+
+    html[data-theme="light"] .language-switch {
+      background: rgba(226, 240, 243, 0.72);
+    }
+
+    html[data-theme="light"] .language-switch select {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    @media (max-width: 650px) {
+      .status-strip > .language-switch {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .language-switch select {
+        flex: 1;
+        min-width: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2129,6 +2330,14 @@
           <button type="button" class="theme-option" data-theme-value="light" aria-pressed="false">浅色</button>
           <button type="button" class="theme-option active" data-theme-value="dark" aria-pressed="true">深色</button>
         </div>
+        <label class="language-switch" for="languageSelect">
+          <span class="language-label">语言</span>
+          <select id="languageSelect" aria-label="语言切换">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="bo">བོད་ཡིག</option>
+          </select>
+        </label>
       </div>
     </header>
 
@@ -2278,7 +2487,7 @@
           <div class="panel-head">
             <div>
               <h2 class="panel-title">实时趋势曲线</h2>
-              <p class="panel-note">氨气使用左侧 ppm 轴，温度与湿度使用独立右侧坐标轴；红色虚线为 15ppm 风险阈值。</p>
+              <p class="panel-note">氨气使用左侧 ppm 轴，温度、湿度与光照使用独立坐标轴；红色虚线为 15ppm 风险阈值，悬停任意点可查看该时刻的真实数据。</p>
             </div>
           </div>
           <div class="chart-box">
@@ -2475,6 +2684,7 @@
       streamStatus: document.getElementById("streamStatus"),
       toggleStream: document.getElementById("toggleStream"),
       scenarioSelect: document.getElementById("scenarioSelect"),
+      languageSelect: document.getElementById("languageSelect"),
       themeOptions: document.querySelectorAll("[data-theme-value]"),
       scenarioHint: document.getElementById("scenarioHint"),
       snapshotButton: document.getElementById("snapshotButton"),
@@ -3088,7 +3298,9 @@
             borderColor: "#FF6B6B",
             backgroundColor: "rgba(255, 107, 107, 0.12)",
             tension: 0.36,
-            pointRadius: 0,
+            pointRadius: 2.5,
+            pointHoverRadius: 7,
+            pointHitRadius: 14,
             borderWidth: 3,
             fill: true,
             yAxisID: "yAmmonia"
@@ -3099,7 +3311,9 @@
             borderColor: "rgba(170, 170, 170, 0.5)",
             borderDash: [6, 5],
             tension: 0.36,
-            pointRadius: 0,
+            pointRadius: 2,
+            pointHoverRadius: 6,
+            pointHitRadius: 14,
             borderWidth: 2,
             yAxisID: "yAmmonia"
           },
@@ -3108,7 +3322,9 @@
             data: state.temperature,
             borderColor: "#4A9EFF",
             tension: 0.36,
-            pointRadius: 0,
+            pointRadius: 2,
+            pointHoverRadius: 6,
+            pointHitRadius: 14,
             borderWidth: 2,
             yAxisID: "yTemperature"
           },
@@ -3117,10 +3333,24 @@
             data: state.humidity,
             borderColor: "#00D4AA",
             tension: 0.36,
-            pointRadius: 0,
+            pointRadius: 2,
+            pointHoverRadius: 6,
+            pointHitRadius: 14,
             borderWidth: 2,
             yAxisID: "yHumidity",
             borderDash: [5, 4]
+          },
+          {
+            label: "光照 Lux",
+            data: state.light,
+            borderColor: "#FFD93D",
+            backgroundColor: "rgba(255, 217, 61, 0.08)",
+            tension: 0.36,
+            pointRadius: 2,
+            pointHoverRadius: 6,
+            pointHitRadius: 14,
+            borderWidth: 2,
+            yAxisID: "yLight"
           }
         ]
       },
@@ -3143,7 +3373,15 @@
             borderColor: "rgba(255, 255, 255, 0.12)",
             borderWidth: 1,
             titleColor: "#E8F0F8",
-            bodyColor: "#D7E4EE"
+            bodyColor: "#D7E4EE",
+            callbacks: {
+              // Tooltip 按数据集的量纲显示每个采样点的真实值。
+              label(context) {
+                const unit = context.dataset.unit || ({ yAmmonia: "ppm", yTemperature: "℃", yHumidity: "%", yLight: "Lux" }[context.dataset.yAxisID] || "");
+                const value = Number(context.parsed.y);
+                return `${context.dataset.label}: ${Number.isFinite(value) ? value.toFixed(unit === "Lux" ? 0 : unit === "%" ? 0 : 1) : "--"} ${unit}`.trim();
+              }
+            }
           }
         },
         scales: {
@@ -3161,7 +3399,7 @@
           yTemperature: {
             position: "right",
             min: -8,
-            max: 12,
+            max: 30,
             ticks: { color: "#78B8FF", callback: (value) => `${value}℃` },
             grid: { drawOnChartArea: false }
           },
@@ -3172,10 +3410,191 @@
             max: 90,
             ticks: { color: "#39E0BE", callback: (value) => `${value}%` },
             grid: { drawOnChartArea: false }
+          },
+          yLight: {
+            position: "right",
+            offset: true,
+            min: 0,
+            max: 1000,
+            ticks: { color: "#D3A900", callback: (value) => `${value} Lux` },
+            grid: { drawOnChartArea: false }
           }
         }
       }
     });
+
+    // 语言包只负责界面文案，不参与采集、补偿和知识库决策。
+    const languageState = { current: "zh" };
+    const languageCopy = {
+      en: {
+        title: "Qingjing Zhiheng · Highland Young Livestock Barn Monitoring & Decision System",
+        subtitle: "Live temperature, humidity, ammonia and light monitoring with a traceable local expert knowledge base.",
+        stream: "Collecting",
+        scenario: ["Normal environment", "Slow ammonia rise", "Cold wave", "High humidity + ammonia"],
+        recent: "Last 60 points",
+        lastUpdate: "Last update: ",
+        pause: "Pause collection",
+        resume: "Resume collection",
+        lightTheme: "Light",
+        darkTheme: "Dark",
+        language: "Language",
+        pipelineNames: ["Data collection", "Highland compensation", "Local decision", "Execution control"],
+        pipelineValues: ["Waiting for sample", "Pressure calibration --", "Rules awaiting input", "Command pending"],
+        decisionEngine: "Local knowledge-base engine · first matched rule returns the action",
+        riskIndex: "NH₃ risk index ppm",
+        riskLabels: ["Safe <10", "Watch 10-15", "Above 15-20", "Danger >20"],
+        localKb: "LOCAL EXPERT KB",
+        history: "Advice history",
+        historyEmpty: "Important advice will be recorded as the simulation progresses.",
+        trendTitle: "Real-time trend",
+        trendNote: "NH₃ uses the left ppm axis; temperature, humidity and light use independent axes. Red dashed line: 15ppm risk threshold.",
+        chartStats: ["NH₃ average", "NH₃ peak", "Temperature average", "High-humidity points"],
+        records: "Sampling records",
+        recordsNote: "Keep the latest 8 samples; save snapshots for traceable review.",
+        snapshot: "Save snapshot",
+        tableHeaders: ["Time", "Temperature", "Humidity", "Raw NH₃", "Compensated NH₃", "Light", "Level"],
+        collection: "Collection & compensation",
+        algorithm: "Algorithm demonstration",
+        vent: "Dynamic ventilation control",
+        ruleState: "Current inference",
+        knowledgeCatalog: "Knowledge-base rule catalog",
+        altitude: "Altitude",
+        temperature: "Temperature",
+        humidity: "Humidity",
+        rawNh3: "Raw NH₃",
+        applyParams: "Apply parameters",
+        waitingInput: "Waiting for input",
+        rawReading: "Before compensation",
+        correctedReading: "After compensation",
+        fan: "Ventilation fan",
+        heater: "Insulation equipment",
+        fanDesc: "Off / Low / Medium / Exhaust",
+        heaterDesc: "Heating is simulated below 0℃",
+        noCommand: "Command: no operation",
+        timeline: ["00:00", "12:00", "14:00", "24:00"]
+      },
+      bo: {
+        title: "མཐོ་སའི་ཕྲུ་གུའི་ཕྱུགས་རིགས་གསོ་ཁང་གི་ཁོར་ཡུག་ལྟ་ཞིབ་དང་ཐག་གཅོད་མ་ལག",
+        subtitle: "དྲོད་ཚད། རློན་ཚད། ཨམ་མོ་ནི་ཡ་དང་འོད་ཀྱི་གཞི་གྲངས་དངོས་དུས་ལྟ་ཞིབ།",
+        stream: "བསྡུ་ལེན་བྱེད་བཞིན་པ",
+        scenario: ["ཁོར་ཡུག་རྒྱུན་ལྡན", "ཨམ་མོ་ནི་ཡ་འཕར་བ", "གྲང་ངར་རླུང", "རློན་ཚད་མཐོ་བ་དང་ཨམ་མོ་ནི་ཡ་མཐོ་བ"],
+        recent: "གནས་ཚད་ 60 མཐའ་མ",
+        lastUpdate: "མཇུག་མཐུད་དུས་ཚོད། ",
+        pause: "བསྡུ་ལེན་སྐབས་སྐབས་འཇོག",
+        resume: "བསྡུ་ལེན་མུ་མཐུད",
+        lightTheme: "འོད་མདངས",
+        darkTheme: "མུན་ནག",
+        language: "སྐད་ཡིག",
+        pipelineNames: ["གཞི་གྲངས་བསྡུ་ལེན", "མཐོ་སའི་ཁ་གསབ", "ས་གནས་ཐག་གཅོད", "ལག་བསྟར་ཚོད་འཛིན"],
+        pipelineValues: ["དཔེ་འཇལ་སྒུག་བཞིན་པ", "གནོན་ཤུགས་སྙོམས་སྒྲིག --", "ཁྲིམས་འཛིན་སྒུག་བཞིན་པ", "བཀའ་བརྡ་སྤྲོད་སྒུག"],
+        decisionEngine: "ས་གནས་ཤེས་བྱའི་མ་དཔེ། སྒྲིག་གཞི་དང་པོ་མཐུན་ན་བཀའ་བརྡ་སྤྲོད།",
+        riskIndex: "NH₃ ཉེན་ཁའི་ཟུར་ཚད ppm",
+        riskLabels: ["བདེ་འཇགས <10", "དོ་སྣང་ 10-15", "ཚད་ལས་བརྒལ 15-20", "ཉེན་ཁ >20"],
+        localKb: "ས་གནས་ཆེད་མཁས་ཤེས་བྱ",
+        history: "བསླབ་བྱའི་ཟིན་ཐོ",
+        historyEmpty: "གལ་ཆེའི་བསླབ་བྱ་དེ་དཔེ་མཚོན་མུ་མཐུད་ན་ཟིན་ཐོར་འགོད།",
+        trendTitle: "དངོས་དུས་འཕེལ་ཕྱོགས",
+        trendNote: "NH₃ གཡོན་གྱི ppm ཚད་འཇལ་ལ་བཀོད། དྲོད་ཚད་དང་རློན་ཚད། འོད་ཚད་ལ་རང་རང་གི་ཚད་འཇལ་ཡོད།",
+        chartStats: ["NH₃ ཆ་སྙོམས", "NH₃ མཐོ་ཤོས", "དྲོད་ཚད་ཆ་སྙོམས", "རློན་ཚད་མཐོ་བའི་གྲངས"],
+        records: "དཔེ་འཇལ་ཟིན་ཐོ",
+        recordsNote: "དཔེ་འཇལ་གནས་ཚད་ 8 ཉར་ཚགས་བྱེད། གཞི་གྲངས་མཐུད་འབྲེལ་ཆེད་དུ་མྱུར་བཀོད་ཉར།",
+        snapshot: "གནས་ཚད་མྱུར་བཀོད",
+        tableHeaders: ["དུས་ཚོད", "དྲོད་ཚད", "རློན་ཚད", "ཐོག་མའི NH₃", "ཁ་གསབ་རྗེས་ཀྱི NH₃", "འོད་ཚད", "རིམ་པ"],
+        collection: "བསྡུ་ལེན་དང་ཁ་གསབ",
+        algorithm: "རྩིས་ཐབས་སྟོན་པ",
+        vent: "རླུང་འགྲོ་ཚོད་འཛིན",
+        ruleState: "ད་ལྟའི་རྣམ་འགྱུར",
+        knowledgeCatalog: "ཤེས་བྱའི་སྒྲིག་གཞི་དཀར་ཆག",
+        altitude: "མཚོ་ངོས་མཐོ་ཚད",
+        temperature: "དྲོད་ཚད",
+        humidity: "རློན་ཚད",
+        rawNh3: "ཐོག་མའི NH₃",
+        applyParams: "ད་ལྟའི་གནས་ཚད་སྤྱོད",
+        waitingInput: "ནང་འཇུག་སྒུག",
+        rawReading: "ཁ་གསབ་མ་བྱས་པ",
+        correctedReading: "ཁ་གསབ་བྱས་རྗེས",
+        fan: "རླུང་འཁོར་གློག་འཕྲུལ",
+        heater: "དྲོད་སྲུང་སྒྲིག་ཆས",
+        fanDesc: "ཁ་རྒྱག / མགྱོགས་དམའ / འབྲིང / ཕྱིར་འབུད",
+        heaterDesc: "དྲོད་ཚད་ 0℃ ལས་དམའ་ན་དྲོད་སྦྱོར",
+        noCommand: "བཀའ་བརྡ། བྱ་བ་མེད",
+        timeline: ["00:00", "12:00", "14:00", "24:00"]
+      }
+    };
+
+    const originalLanguageText = new WeakMap();
+    function setLocalizedText(element, value) {
+      if (!element) return;
+      if (!originalLanguageText.has(element)) originalLanguageText.set(element, element.textContent);
+      element.textContent = value;
+    }
+
+    function applyLanguage(language) {
+      const nextLanguage = ["zh", "en", "bo"].includes(language) ? language : "zh";
+      const copy = languageCopy[nextLanguage];
+      languageState.current = nextLanguage;
+      document.documentElement.dataset.language = nextLanguage;
+      document.documentElement.lang = nextLanguage === "bo" ? "bo" : nextLanguage === "en" ? "en" : "zh-CN";
+      if (els.languageSelect) els.languageSelect.value = nextLanguage;
+      try { localStorage.setItem("qjzh-language", nextLanguage); } catch (error) { console.warn("[语言切换] 无法保存语言偏好", error); }
+
+      const restoreOrSet = (selector, value) => {
+        document.querySelectorAll(selector).forEach((element, index) => {
+          const translated = Array.isArray(value) ? value[index] : value;
+          setLocalizedText(element, nextLanguage === "zh" ? originalLanguageText.get(element) || element.textContent : translated || element.textContent);
+        });
+      };
+      restoreOrSet(".title", copy?.title);
+      restoreOrSet(".subtitle", copy?.subtitle);
+      restoreOrSet(".language-label", copy?.language);
+      restoreOrSet(".status-strip > .pill:nth-of-type(2)", copy?.recent);
+      restoreOrSet(".theme-option", [copy?.lightTheme, copy?.darkTheme]);
+      restoreOrSet(".pipeline-name", copy?.pipelineNames);
+      restoreOrSet(".pipeline-value", copy?.pipelineValues);
+      restoreOrSet(".decision-engine", copy?.decisionEngine);
+      restoreOrSet(".ring-content span", copy?.riskIndex);
+      restoreOrSet(".risk-labels span", copy?.riskLabels);
+      restoreOrSet(".knowledge-result-label", copy?.localKb);
+      restoreOrSet("#adviceHistoryTitle", copy?.history);
+      restoreOrSet(".advice-history-empty", copy?.historyEmpty);
+      restoreOrSet(".left-col > .panel .panel-title", [copy?.trendTitle, copy?.records]);
+      restoreOrSet(".left-col > .panel .panel-note", [copy?.trendNote, null, copy?.recordsNote]);
+      restoreOrSet(".insight-card span", copy?.chartStats);
+      restoreOrSet("#snapshotButton", copy?.snapshot);
+      restoreOrSet(".data-table th", copy?.tableHeaders);
+      restoreOrSet(".right-col .panel-title", [copy?.collection, copy?.algorithm, copy?.vent, copy?.ruleState]);
+      restoreOrSet(".demo-row > span", [copy?.altitude, copy?.temperature, copy?.humidity, copy?.rawNh3]);
+      restoreOrSet("#demoSimulate", copy?.applyParams);
+      restoreOrSet("#demoStatus", copy?.waitingInput);
+      restoreOrSet(".demo-output span", [copy?.rawReading, copy?.correctedReading]);
+      restoreOrSet(".actuator-name", [copy?.fan, copy?.heater]);
+      restoreOrSet(".actuator-desc", [copy?.fanDesc, copy?.heaterDesc]);
+      restoreOrSet(".timeline-labels span", copy?.timeline);
+      restoreOrSet("#knowledgeCatalogTitle", copy?.knowledgeCatalog);
+      restoreOrSet(".status-strip .control", copy?.pause);
+      if (els.scenarioSelect) {
+        els.scenarioSelect.querySelectorAll("option").forEach((option, index) => {
+          if (!originalLanguageText.has(option)) originalLanguageText.set(option, option.textContent);
+          option.textContent = nextLanguage === "zh" ? originalLanguageText.get(option) : copy.scenario[index];
+        });
+      }
+      if (typeof trendChart !== "undefined") {
+        const labels = nextLanguage === "zh" ? ["补偿NH₃ ppm", "原始NH₃ ppm", "温度 ℃", "湿度 %", "光照 Lux"] : nextLanguage === "en" ? ["Compensated NH₃ ppm", "Raw NH₃ ppm", "Temperature ℃", "Humidity %", "Light Lux"] : ["ཁ་གསབ NH₃ ppm", "ཐོག་མའི NH₃ ppm", "དྲོད་ཚད ℃", "རློན་ཚད %", "འོད་ཚད Lux"];
+        trendChart.data.datasets.forEach((dataset, index) => { if (labels[index]) dataset.label = labels[index]; });
+        trendChart.update("none");
+      }
+    }
+
+    // 采集状态和时间戳属于动态文本，按当前语言生成，避免下一次采样把界面切回中文。
+    const runtimeLanguageCopy = {
+      zh: { collecting: "采集中", paused: "已暂停", pause: "暂停采集", resume: "继续采集", lastUpdate: "最后更新：" },
+      en: { collecting: "Collecting", paused: "Paused", pause: "Pause collection", resume: "Resume collection", lastUpdate: "Last update: " },
+      bo: { collecting: "བསྡུ་ལེན་བྱེད་བཞིན་པ", paused: "མཚམས་བཞག", pause: "བསྡུ་ལེན་མཚམས་འཇོག", resume: "བསྡུ་ལེན་མུ་མཐུད", lastUpdate: "མཇུག་མཐུད་དུས་ཚོད། " }
+    };
+
+    function runtimeText(key) {
+      return runtimeLanguageCopy[languageState.current]?.[key] || runtimeLanguageCopy.zh[key];
+    }
 
     // 切换主题时同步 Chart.js 文本、网格与提示框，保证数据曲线在两种背景下都清晰。
     function applyTheme(theme) {
@@ -3208,6 +3627,7 @@
       options.scales.yAmmonia.grid.color = palette.grid;
       options.scales.yTemperature.ticks.color = nextTheme === "light" ? "#317ecf" : "#78B8FF";
       options.scales.yHumidity.ticks.color = nextTheme === "light" ? "#008f78" : "#39E0BE";
+      options.scales.yLight.ticks.color = nextTheme === "light" ? "#9b7900" : "#D3A900";
       const markerSet = trendChart.data.datasets.find((dataset) => dataset.id === "ventilationMarkers");
       if (markerSet) markerSet.pointBorderColor = palette.markerBorder;
       trendChart.update("none");
@@ -3280,13 +3700,13 @@
       updateCalibration(data);
       pushRecord(data, result);
       pushChartPoint(data);
-      els.lastUpdate.textContent = `最后更新：${data.time}`;
+      els.lastUpdate.textContent = `${runtimeText("lastUpdate")}${data.time}`;
     }
 
     function setRunning(nextRunning) {
       state.running = nextRunning;
-      els.streamStatus.textContent = nextRunning ? "采集中" : "已暂停";
-      els.toggleStream.textContent = nextRunning ? "暂停采集" : "继续采集";
+      els.streamStatus.textContent = nextRunning ? runtimeText("collecting") : runtimeText("paused");
+      els.toggleStream.textContent = nextRunning ? runtimeText("pause") : runtimeText("resume");
 
       if (nextRunning) {
         tick();
@@ -3295,6 +3715,9 @@
         window.clearInterval(state.timer);
       }
     }
+
+    els.languageSelect.addEventListener("change", (event) => applyLanguage(event.target.value));
+    applyLanguage(document.documentElement.dataset.language || "zh");
 
     els.themeOptions.forEach((button) => {
       button.addEventListener("click", () => applyTheme(button.dataset.themeValue));
