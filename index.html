@@ -945,6 +945,91 @@
       gap: 10px;
     }
 
+    /* 算法演示卡片：通过页面输入调用已加载的补偿模型，便于现场展示模型响应。 */
+    .demo-row {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr) 74px;
+      gap: 9px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .demo-row + .demo-row {
+      margin-top: 10px;
+    }
+
+    .demo-row input {
+      width: 100%;
+      min-width: 0;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .demo-row output {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .demo-actions {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .demo-actions .control {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .demo-status {
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.35;
+    }
+
+    .demo-output-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .demo-output {
+      min-height: 74px;
+      padding: 11px;
+      border: 1px solid rgba(174, 220, 235, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .demo-output span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .demo-output strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--primary);
+      font-family: var(--mono);
+      font-size: 1.2rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .model-version {
+      color: var(--primary);
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
     .alarm-list {
       display: grid;
       gap: 8px;
@@ -2073,6 +2158,29 @@
           </div>
         </section>
 
+        <section class="panel glass" aria-label="算法演示面板">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">算法演示面板</h2>
+              <p class="panel-note">模型 <span class="model-version" id="modelVersion">v--</span> · 测试误差 0.71%</p>
+            </div>
+          </div>
+          <div class="demo-controls">
+            <label class="demo-row"><span>海拔</span><input id="demoAltitude" type="range" min="2200" max="3500" value="2800" step="10" aria-label="算法演示海拔"><output id="demoAltitudeOut">2800 m</output></label>
+            <label class="demo-row"><span>温度</span><input id="demoTemp" type="range" min="-15" max="25" value="10" step="0.5" aria-label="算法演示温度"><output id="demoTempOut">10.0 C</output></label>
+            <label class="demo-row"><span>湿度</span><input id="demoRh" type="range" min="20" max="85" value="60" step="1" aria-label="算法演示湿度"><output id="demoRhOut">60 %RH</output></label>
+            <label class="demo-row"><span>原始NH₃</span><input id="demoRawInput" type="range" min="0" max="30" value="18" step="0.1" aria-label="算法演示原始氨气"><output id="demoRawInputOut">18.0 ppm</output></label>
+          </div>
+          <div class="demo-actions">
+            <button class="control" id="demoSimulate" type="button">应用当前参数</button>
+            <span class="demo-status" id="demoStatus">等待输入</span>
+          </div>
+          <div class="demo-output-grid" aria-label="补偿前后结果">
+            <div class="demo-output"><span>补偿前读数</span><strong id="demoRaw">--</strong></div>
+            <div class="demo-output"><span>补偿后结果</span><strong id="demoCorrected">--</strong></div>
+          </div>
+        </section>
+
         <section class="panel glass">
           <div class="panel-head">
             <div>
@@ -2271,6 +2379,52 @@
         decimals: 0
       }
     };
+
+    const demoEls = {
+      altitude: document.getElementById("demoAltitude"),
+      altitudeOut: document.getElementById("demoAltitudeOut"),
+      temp: document.getElementById("demoTemp"),
+      tempOut: document.getElementById("demoTempOut"),
+      rh: document.getElementById("demoRh"),
+      rhOut: document.getElementById("demoRhOut"),
+      rawInput: document.getElementById("demoRawInput"),
+      rawInputOut: document.getElementById("demoRawInputOut"),
+      raw: document.getElementById("demoRaw"),
+      corrected: document.getElementById("demoCorrected"),
+      modelVersion: document.getElementById("modelVersion"),
+      simulate: document.getElementById("demoSimulate"),
+      status: document.getElementById("demoStatus")
+    };
+
+    // 实时刷新算法演示卡片，所有结果均来自当前已加载的 compensate 函数。
+    function updateCompensationDemo(statusText = "参数已更新") {
+      if (!demoEls.altitude || typeof compensate !== "function") return;
+      const altitude = Number(demoEls.altitude.value);
+      const temp = Number(demoEls.temp.value);
+      const rh = Number(demoEls.rh.value);
+      const raw = Number(demoEls.rawInput.value);
+
+      try {
+        const corrected = Number(compensate(altitude, temp, rh, raw));
+        demoEls.altitudeOut.textContent = `${altitude} m`;
+        demoEls.tempOut.textContent = `${temp.toFixed(1)} C`;
+        demoEls.rhOut.textContent = `${rh.toFixed(0)} %RH`;
+        demoEls.rawInputOut.textContent = `${raw.toFixed(1)} ppm`;
+        demoEls.raw.textContent = `${raw.toFixed(1)} ppm`;
+        demoEls.corrected.textContent = `${corrected.toFixed(2)} ppm`;
+        demoEls.modelVersion.textContent = window.MODEL_WEIGHTS?.version || "v--";
+        demoEls.status.textContent = statusText;
+      } catch (error) {
+        demoEls.status.textContent = "模型暂不可用";
+        console.error("[算法演示] 补偿模型调用失败", error);
+      }
+    }
+
+    [demoEls.altitude, demoEls.temp, demoEls.rh, demoEls.rawInput].forEach((input) => {
+      input?.addEventListener("input", () => updateCompensationDemo());
+    });
+    demoEls.simulate?.addEventListener("click", () => updateCompensationDemo("已应用当前参数"));
+    updateCompensationDemo("模型已加载");
 
     function clamp(value, min, max) {
       return Math.min(max, Math.max(min, value));
