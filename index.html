@@ -1780,6 +1780,69 @@
         line-height: 1.45;
       }
     }
+
+    /* 中等桌面宽度将控制区置于标题下方，避免项目名称被压缩成多行。 */
+    @media (max-width: 1450px) and (min-width: 981px) {
+      .topbar {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .status-strip {
+        justify-content: flex-start;
+      }
+    }
+
+    /* 本轮推理信息只呈现知识库的实时输出，不在界面中复制规则逻辑。 */
+    .rule-state-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+    }
+
+    .rule-state-list > div {
+      display: grid;
+      grid-template-columns: 5.5rem minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 9px 10px;
+      border: 1px solid rgba(174, 220, 235, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .rule-state-list dt {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .rule-state-list dd {
+      min-width: 0;
+      margin: 0;
+      color: #dbe9ef;
+      font-size: 0.84rem;
+      font-weight: 750;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .rule-state-list code {
+      color: var(--primary);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .knowledge-rule-list[data-ready="false"] {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    @media (max-width: 650px) {
+      .rule-state-list > div {
+        grid-template-columns: 1fr;
+        gap: 3px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2057,21 +2120,15 @@
         <section class="panel glass">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title">规则优先级</h2>
-              <p class="panel-note">每次采样后按顺序匹配，命中第一条即输出。</p>
+              <h2 class="panel-title">本轮推理状态</h2>
+              <p class="panel-note">直接显示当前本地知识库与决策引擎的输出，不在页面内重复实现规则。</p>
             </div>
           </div>
-          <div class="data-table-scroll">
-            <table class="data-table">
-              <tbody>
-                <tr><td class="level-critical">🔴 一级警报</td><td>氨气 &gt; 20ppm</td></tr>
-                <tr><td class="level-warning">🟡 警告</td><td>氨气 &gt; 15ppm</td></tr>
-                <tr><td class="level-alert">🟠 预警</td><td>湿度 &gt; 80% 且氨气 &gt; 10ppm</td></tr>
-                <tr><td class="level-caution">🔵 注意</td><td>温度 &lt; 0℃</td></tr>
-                <tr><td class="level-normal">🟢 正常</td><td>未触发异常阈值</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <dl class="rule-state-list" aria-live="polite">
+            <div><dt>命中规则</dt><dd><code id="activeRuleId">等待首次推理</code></dd></div>
+            <div><dt>执行动作</dt><dd id="activeRuleAction">等待决策引擎输出</dd></div>
+            <div><dt>可追溯依据</dt><dd id="activeRuleCitation">等待本地知识库加载</dd></div>
+          </dl>
         </section>
 
         <section class="knowledge-catalog glass" aria-labelledby="knowledgeCatalogTitle">
@@ -2081,23 +2138,8 @@
               <p class="panel-note">当前推理命中的阈值、运行约束与可追溯依据。</p>
             </div>
           </div>
-          <div class="knowledge-rule-list">
-            <article class="knowledge-rule-row" style="--rule-color:#ff6b6b">
-              <i class="knowledge-rule-accent"></i>
-              <div><span class="knowledge-rule-id">KB-NH3-START</span><strong class="knowledge-rule-name">氨气高风险启动</strong><span class="knowledge-rule-condition">NH3 ≥ 15.5 ppm 时进入通风决策</span><span class="knowledge-rule-source">依据：NY/T 388-1999《畜禽场环境质量标准》</span></div>
-            </article>
-            <article class="knowledge-rule-row" style="--rule-color:#ff9f43">
-              <i class="knowledge-rule-accent"></i>
-              <div><span class="knowledge-rule-id">KB-NH3-HYSTERESIS</span><strong class="knowledge-rule-name">氨气滞回防抖</strong><span class="knowledge-rule-condition">启动 15.5 ppm / 停止 9.5 ppm</span><span class="knowledge-rule-source">依据：本地知识库规则，防止风机频繁启停</span></div>
-            </article>
-            <article class="knowledge-rule-row" style="--rule-color:#00d4aa">
-              <i class="knowledge-rule-accent"></i>
-              <div><span class="knowledge-rule-id">KB-WINTER-VENT-WINDOW</span><strong class="knowledge-rule-name">冬季通风窗口</strong><span class="knowledge-rule-condition">仅 12:00-14:00 允许主动通风</span><span class="knowledge-rule-source">依据：本地知识库冬季运行规则</span></div>
-            </article>
-            <article class="knowledge-rule-row" style="--rule-color:#4a9eff">
-              <i class="knowledge-rule-accent"></i>
-              <div><span class="knowledge-rule-id">KB-TEMP-DROP-3C</span><strong class="knowledge-rule-name">温降安全终止</strong><span class="knowledge-rule-condition">单次温降 ≥ 3℃ 时立即停止通风</span><span class="knowledge-rule-source">依据：本地知识库温降安全规则</span></div>
-            </article>
+          <div class="knowledge-rule-list" id="knowledgeRuleList" data-ready="false">
+            正在读取本地知识库规则目录。
           </div>
         </section>
       </aside>
@@ -2135,7 +2177,8 @@
         type: "normal",
         tick: 0,
         duration: 0,
-        hold: 0
+        hold: 0,
+        previousTemperature: null
       }
     };
 
@@ -2180,6 +2223,9 @@
       adviceCitation: document.getElementById("adviceCitation"),
       adviceRuleId: document.getElementById("adviceRuleId"),
       adviceScenarioKey: document.getElementById("adviceScenarioKey"),
+      activeRuleId: document.getElementById("activeRuleId"),
+      activeRuleAction: document.getElementById("activeRuleAction"),
+      activeRuleCitation: document.getElementById("activeRuleCitation"),
       adviceHistoryLog: document.getElementById("adviceHistoryLog"),
       adviceHistoryCount: document.getElementById("adviceHistoryCount"),
       alarmList: document.getElementById("alarmList"),
@@ -2293,10 +2339,13 @@
         type,
         tick: 0,
         duration: type === "normal" ? 0 : 14,
-        hold: type === "normal" ? 0 : 6
+        hold: type === "normal" ? 0 : 6,
+        previousTemperature: null
       };
       els.scenarioHint.classList.toggle("show", type !== "normal");
       els.scenarioHint.textContent = type === "normal" ? "" : `场景模拟中：${els.scenarioSelect.options[els.scenarioSelect.selectedIndex].text}`;
+      // 通知知识库集成层重置场景推理历史，避免把标准序列状态带入演示场景。
+      window.dispatchEvent(new CustomEvent("dashboard:scenario-change", { detail: { type } }));
     }
 
     function scenarioBlendValue(base, target, min, max) {
@@ -2331,9 +2380,17 @@
       next.ammonia = compensate(next.altitude, next.temperature, next.humidity, next.rawAmmonia);
       if (state.scenario.type === "normal") return next;
 
+      next.tempDropRate = state.scenario.previousTemperature == null
+        ? next.tempDropRate
+        : Number((state.scenario.previousTemperature - next.temperature).toFixed(1));
+      state.scenario.previousTemperature = next.temperature;
+
       state.scenario.tick += 1;
 
       if (state.scenario.tick > state.scenario.duration + state.scenario.hold + 4) {
+        state.scenario.type = "normal";
+        state.scenario.previousTemperature = null;
+        els.scenarioSelect.value = "normal";
         els.scenarioHint.classList.remove("show");
       }
 
@@ -2877,6 +2934,8 @@
     // 本地知识库模拟接管原随机流：保留既有页面部件，只替换为可复现的24小时数据与决策。
     (function startLocalKnowledgeBaseModel() {
       let controller = null;
+      let scenarioEngine = null;
+      let scenarioHistory = [];
       const modelErrors = [];
 
       function showRuntimeError(error) {
@@ -2950,6 +3009,31 @@
         }[character]));
       }
 
+      // 从已加载的知识库读取规则目录，只负责可视化，不复制或修改规则内容。
+      function renderKnowledgeCatalog(catalog) {
+        const container = document.getElementById("knowledgeRuleList");
+        if (!container) return;
+        const colors = ["#ff6b6b", "#ffd93d", "#16d6b0", "#4a9eff", "#b690ff"];
+        const entries = Object.entries(catalog || {});
+        if (entries.length === 0) {
+          container.dataset.ready = "false";
+          container.textContent = "当前知识库未提供可展示的规则目录。";
+          return;
+        }
+        container.dataset.ready = "true";
+        container.innerHTML = entries.map(([id, rule], index) => `
+          <article class="knowledge-rule-row" style="--rule-color:${colors[index % colors.length]}">
+            <i class="knowledge-rule-accent"></i>
+            <div>
+              <span class="knowledge-rule-id">${escapeHtml(id)}</span>
+              <strong class="knowledge-rule-name">${escapeHtml(rule.title || "未命名规则")}</strong>
+              <span class="knowledge-rule-condition">${escapeHtml(rule.condition || "条件由知识库定义")}</span>
+              <span class="knowledge-rule-source">依据：${escapeHtml(rule.source || "本地知识库")}</span>
+            </div>
+          </article>
+        `).join("");
+      }
+
       function formatAdvice(value) {
         const safe = escapeHtml(value || "暂无专家建议。");
         return safe.replace(/(建议：|建议：[^。；]*|立即[^。；]*|清理粪污|检查北侧风口|保持圈舍密闭|启动保温设备)/g, "<strong>$1</strong>");
@@ -3002,8 +3086,22 @@
       }
 
       function updateKnowledgeUI(record) {
-        const data = record;
-        const decision = record.decision;
+        const scenarioActive = state.scenario.type !== "normal";
+        const data = scenarioActive ? applyScenario(record) : record;
+        let decision = record.decision;
+        if (scenarioActive && scenarioEngine) {
+          // 只用已加载的决策引擎推理场景覆盖数据，不更改知识库与补偿模型本身。
+          decision = scenarioEngine.decide(
+            data.hour,
+            data.temperature,
+            data.ammonia,
+            data.humidity,
+            data.tempDropRate,
+            scenarioHistory.slice(-3)
+          );
+          scenarioHistory.push(data.ammonia);
+          scenarioHistory = scenarioHistory.slice(-3);
+        }
         const result = toLegacyResult(decision);
         const risk = clamp((data.ammonia / 30) * 100, 3, 100);
         const riskColor = getRiskColor(data.ammonia);
@@ -3054,6 +3152,11 @@
         els.adviceCitation.textContent = `依据：${decision.citation || "本地知识库规则"}`;
         els.adviceRuleId.textContent = `触发规则 ID：${decision.ruleId || "LOCAL_RULE"}`;
         els.adviceScenarioKey.textContent = `场景：${decision.adviceKey || "默认降级"}`;
+        els.activeRuleId.textContent = decision.ruleId || "LOCAL_RULE";
+        els.activeRuleAction.textContent = decision.action === "ventilation"
+          ? `下发通风 ${decision.duration || 0} 分钟指令`
+          : decision.action === "alert_only" ? "仅输出预警，未下发通风指令" : "保持待命，继续监测";
+        els.activeRuleCitation.textContent = decision.citation || "本地知识库规则";
         appendAdviceHistory(data, decision);
         pushRecord(data, result);
         pushChartPoint(data, decision);
@@ -3123,6 +3226,12 @@
           window.clearInterval(state.timer);
           state.timer = null;
           const engine = new window.DecisionEngine("犊牦牛");
+          scenarioEngine = new window.DecisionEngine("犊牦牛");
+          window.addEventListener("dashboard:scenario-change", () => {
+            scenarioHistory = [];
+            scenarioEngine.reset();
+          });
+          renderKnowledgeCatalog(window.LocalKnowledgeBase.RULE_CATALOG);
           const report = window.LocalSimulator.runSelfCheck(engine);
           if (!report.hysteresisStable || !report.temperaturePriority || !report.expertAdviceAtNight || !report.morningAdvice || !report.fastTrendWarning) {
             throw new Error("自检未通过：滞回、温降优先级或专家建议字段异常");
