@@ -23,16 +23,18 @@ function read(fileName) {
 const index = read("index.html");
 const weightsTag = '<script src="model_weights.js?v=1.0.0"></script>';
 const engineTag = '<script src="compensator_engine.js?v=1.0.0"></script>';
-const uiTag = '<script src="ui_interactions.js?v=1.0.0" defer></script>';
+const simulatorTag = '<script src="simulator.js?v=1.0.0"></script>';
 const weightsIndex = index.indexOf(weightsTag);
 const engineIndex = index.indexOf(engineTag);
-const uiIndex = index.indexOf(uiTag);
+const simulatorIndex = index.indexOf(simulatorTag);
 
 assert(index.includes("COMPENSATOR-LOCK"), "Missing COMPENSATOR-LOCK marker in index.html.");
 assert(weightsIndex >= 0, "Missing versioned model_weights.js tag.");
 assert(engineIndex > weightsIndex, "compensator_engine.js must load after model_weights.js.");
-assert(uiIndex > engineIndex, "ui_interactions.js must load after the compensation engine.");
+assert(simulatorIndex > engineIndex, "simulator.js must load after the compensation engine.");
 assert(index.includes("compensate(next.altitude"), "Dashboard no longer calls compensate(...).");
+assert(!index.includes("highland_compensator.js"), "Legacy embedded-weight runtime must not be loaded.");
+assert(!index.includes("HighlandCompensator"), "Dashboard must use global compensate(...), not the legacy runtime.");
 
 const context = { console };
 context.globalThis = context;

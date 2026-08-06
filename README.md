@@ -1,5 +1,5 @@
-# 青境智衡 GitHub Pages 部署
+# GitHub Pages 独立部署包
 
-页面采用可热插拔的模型结构：`model_weights.js` 只保存 Q16.16 权重，`compensator_engine.js` 负责稳定的前向传播，`index.html` 与 `ui_interactions.js` 只负责展示和交互。
+本目录为独立部署包，三个模型文件（knowledgeBase/decisionEngine/simulator）保持分离，可直接修改单个文件而不影响整体结构。
 
-更新模型时替换 `model_weights.js` 并递增脚本查询参数版本号即可，无需改动页面核心逻辑。可访问 `online_test.html` 检查线上资源和典型推理结果。
+`highland_compensator.js` 为 `simulator.js` 的独立高原补偿运行时依赖，同样保持为单独文件，不能删除或合并。

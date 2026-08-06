@@ -4,7 +4,6 @@
   const URGENCY = Object.freeze({
     critical: Object.freeze({ label: "紧急行动", color: "#D32F2F" }),
     warning: Object.freeze({ label: "待办提醒", color: "#F57C00" }),
-    alert: Object.freeze({ label: "预警", color: "#FF9F43" }),
     info: Object.freeze({ label: "关注提示", color: "#1976D2" }),
     normal: Object.freeze({ label: "常规状态", color: "#388E3C" })
   });
@@ -46,8 +45,8 @@
     }
 
     classifyHumidity(value) {
-      // 与专家规则保持一致：湿度超过80%才触发高湿复合预警。
-      return value < 50 ? "LOW" : value <= 80 ? "NORMAL" : "HIGH";
+      // 面板湿度取整显示；69.5%及以上显示为70%，按高湿场景提前提醒。
+      return value < 50 ? "LOW" : value < 69.5 ? "NORMAL" : "HIGH";
     }
 
     classifyTemperature(value) {
@@ -72,10 +71,8 @@
       return { key, text: this.adviceTemplates[key] };
     }
 
-    resolveUrgency(nh3Level, humidityLevel, trend, tempDropRate, ammonia) {
-      if (tempDropRate >= this.windowRule.maxTemperatureDrop || ammonia > 20) return "critical";
-      if (ammonia > 15) return "warning";
-      if (humidityLevel === "HIGH" && ammonia > 10) return "alert";
+    resolveUrgency(nh3Level, humidityLevel, trend, tempDropRate) {
+      if (tempDropRate >= this.windowRule.maxTemperatureDrop || nh3Level === "HIGH") return "critical";
       if (nh3Level === "MEDIUM" || trend.trendWarning) return "warning";
       if (humidityLevel === "HIGH" || trend.trendLabel === "缓慢上升") return "info";
       return "normal";
@@ -109,7 +106,7 @@
       const inWindow = timeType === "WINDOW";
       const wasVentilating = previousState && previousState.action === "ventilation";
       const advice = this.getAdviceTemplate(nh3Level, humidityLevel, temperatureLevel, timeType);
-      const urgencyLevel = this.resolveUrgency(nh3Level, humidityLevel, trend, drop, ammonia);
+      const urgencyLevel = this.resolveUrgency(nh3Level, humidityLevel, trend, drop);
       const urgency = URGENCY[urgencyLevel];
       const alertLevel = nh3Level === "HIGH" ? "high" : nh3Level === "MEDIUM" ? "medium" : "low";
       const trendPrefix = trend.trendWarning
@@ -150,36 +147,13 @@
         });
       }
 
-      // 一级警报必须优先保留，即使当前不在午间通风窗口，也要输出明确的紧急处置规则。
-      if (ammonia > 20) {
-        return finish({
-          action: "ventilation",
-          duration: 10,
-          reason: "氨气浓度严重超标，立即启动最大通风并疏散幼畜。",
-          citation: "NY/T 388-1999",
-          ruleId: "NH3_OVER_20",
-          humanAdvice: "【紧急】氨气浓度严重超标。建议：立即启动最大通风，疏散幼畜至安全区域，并立即清理粪污。依据：NY/T 388-1999"
-        });
-      }
-
       if (!inWindow) {
         return finish({
           action: "alert_only",
           duration: 0,
           reason: "非通风窗口，执行现场处置建议",
-          citation: ammonia > 15 ? "NY/T 388-1999" : "计划书3.2节",
-          ruleId: ammonia > 15 ? "NH3_OVER_15" : "WINDOW_LOCK"
-        });
-      }
-
-      // 高湿高氨是独立的复合规则，窗口内应直接下发15分钟排湿通风指令。
-      if (humidityLevel === "HIGH" && ammonia > 10) {
-        return finish({
-          action: "ventilation",
-          duration: 15,
-          reason: "高湿高氨环境，清理粪污并延长午间通风至15分钟。",
-          citation: "环境监测项目基础.docx",
-          ruleId: "HUMIDITY_AND_NH3"
+          citation: nh3Level === "HIGH" ? "NY/T 388-1999" : "计划书3.2节",
+          ruleId: nh3Level === "HIGH" ? "NH3_WINDOW_LOCK" : "WINDOW_LOCK"
         });
       }
 
@@ -222,26 +196,6 @@
       });
     }
   }
-
-  /**
-   * Evaluate the five ordered expert rules for a sandbox input.
-   * @param {object} input Sensor values: hour 0-24, temperature C, humidity %, ammonia ppm.
-   * @returns {object} Deterministic alert level, title, rule ID and execution action.
-   */
-  global.decide = function decide(input) {
-    const data = input || {};
-    const hour = Number(data.hour ?? data.currentHour ?? 0);
-    const temperature = Number(data.temperature ?? data.temp ?? 0);
-    const humidity = Number(data.humidity ?? 0);
-    const ammonia = Number(data.ammonia ?? data.nh3 ?? 0);
-    const inWindow = hour >= 12 && hour <= 14;
-    const base = { hour, temperature, humidity, ammonia, inWindow };
-    if (ammonia > 20) return Object.assign(base, { level: "critical", title: "一级警报", icon: "🔴", ruleId: "NH3_OVER_20", action: "ventilation", duration: 10, reason: "氨气浓度严重超标，立即启动最大通风并疏散幼畜。" });
-    if (ammonia > 15) return Object.assign(base, { level: "warning", title: "警告", icon: "🟡", ruleId: "NH3_OVER_15", action: inWindow ? "ventilation" : "alert_only", duration: inWindow ? 8 : 0, reason: "氨气浓度超标，建议在 12:00-14:00 窗口进行 5-10 分钟短时通风。" });
-    if (humidity > 80 && ammonia > 10) return Object.assign(base, { level: "alert", title: "预警", icon: "🟠", ruleId: "HUMIDITY_AND_NH3", action: inWindow ? "ventilation" : "alert_only", duration: inWindow ? 15 : 0, reason: "高湿高氨环境，立即清理粪污并增加垫料更换频率。" });
-    if (temperature < 0) return Object.assign(base, { level: "caution", title: "注意", icon: "🔵", ruleId: "LOW_TEMPERATURE", action: "heating", duration: 0, reason: "低温环境，增加保温灯或加厚垫料，避免冷应激。" });
-    return Object.assign(base, { level: "normal", title: "正常", icon: "🟢", ruleId: "NORMAL", action: "none", duration: 0, reason: "当前圈舍环境适宜，继续保持当前管理措施。" });
-  };
 
   global.DecisionEngine = DecisionEngine;
 })(window);
