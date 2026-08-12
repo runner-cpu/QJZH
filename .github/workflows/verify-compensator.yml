@@ -15,4 +15,6 @@ jobs:
         with:
           node-version: 20
       - run: node verify_compensator.js
+      - run: node generate-knowledge-base-document.js
+      - run: git diff --exit-code -- knowledge-base-rules.md
       - run: node verify-deployment.js .

@@ -17,6 +17,11 @@ node verify_compensator.js
 node verify-deployment.js .
 ```
 
+`knowledge-base-rules.md` is generated from `knowledgeBase.js`. After changing
+the local expert rules, run `node generate-knowledge-base-document.js` before
+the deployment verification. The knowledge-base verification checks the source
+hash and blocks a stale rule document.
+
 The GitHub Actions workflow runs the same check for pushes and pull requests.
 When retraining the model, replace only `model_weights.js`, increment the query
 version in `index.html` and `online_test.html`, then update the expected version

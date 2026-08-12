@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const packageDirectory = path.resolve(process.argv[2] || "deploy-gh-pages");
 const requirements = [
@@ -46,6 +47,21 @@ for (const requirement of requirements) {
   requirement.checks.forEach((check) => {
     if (!check.test(content)) failures.push(`${requirement.file} is missing ${check}`);
   });
+}
+
+const knowledgeBasePath = path.join(packageDirectory, "knowledgeBase.js");
+const knowledgeDocumentPath = path.join(packageDirectory, "knowledge-base-rules.md");
+if (!fs.existsSync(knowledgeDocumentPath)) {
+  failures.push("Missing required document: knowledge-base-rules.md");
+} else if (fs.existsSync(knowledgeBasePath)) {
+  const sourceHash = crypto.createHash("sha256").update(fs.readFileSync(knowledgeBasePath, "utf8")).digest("hex");
+  const document = fs.readFileSync(knowledgeDocumentPath, "utf8");
+  if (!document.includes(`# 青境智衡本地决策知识库规则清单`)) {
+    failures.push("knowledge-base-rules.md is missing its document title");
+  }
+  if (!document.includes(`SHA256:${sourceHash}`)) {
+    failures.push("knowledge-base-rules.md is stale; regenerate it from knowledgeBase.js");
+  }
 }
 
 if (failures.length > 0) {
