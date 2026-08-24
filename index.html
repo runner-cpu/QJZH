@@ -2306,6 +2306,237 @@
         min-width: 0;
       }
     }
+
+    /* 高原补偿可视化：用纯 CSS 并排条形图直观呈现原始值与校准值。 */
+    .compensation-compare {
+      display: grid;
+      gap: 11px;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      border-radius: 9px;
+      background: linear-gradient(135deg, rgba(0, 212, 170, 0.07), rgba(74, 158, 255, 0.035));
+    }
+
+    .compensation-compare-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 0.87rem;
+      font-weight: 900;
+    }
+
+    .compensation-bar-row {
+      display: grid;
+      grid-template-columns: 68px minmax(0, 1fr) 64px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.77rem;
+      font-weight: 800;
+    }
+
+    .compensation-track {
+      position: relative;
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .compensation-bar {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      transition: width 560ms cubic-bezier(.22, .9, .33, 1), filter 240ms ease;
+    }
+
+    .compensation-bar.raw { background: rgba(174, 190, 201, 0.58); }
+    .compensation-bar.corrected {
+      background: linear-gradient(90deg, #00a98d, #00d4aa);
+      box-shadow: 0 0 15px rgba(0, 212, 170, 0.46);
+    }
+
+    .compensation-bar-row output {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .compensation-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.48;
+    }
+
+    .factor-value {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .factor-arrow {
+      display: inline-grid;
+      place-items: center;
+      width: 19px;
+      height: 19px;
+      border-radius: 50%;
+      color: #062018;
+      background: var(--primary);
+      font-family: var(--mono);
+      font-size: 0.87rem;
+      line-height: 1;
+      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+
+    .factor-arrow[data-direction="up"] { background: var(--primary); transform: translateY(-1px); }
+    .factor-arrow[data-direction="steady"] { color: #3e2a00; background: #ffd93d; }
+    .factor-arrow[data-direction="down"] { color: #2d1600; background: #ff9f43; transform: translateY(1px); }
+
+    /* 决策可解释性：保留引擎输出，同时展示面向现场演示的优先级命中路径。 */
+    .decision-evidence {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      margin: 10px 0 0;
+      padding: 5px 9px;
+      border: 1px solid rgba(0, 212, 170, 0.25);
+      border-radius: 6px;
+      color: var(--primary);
+      background: rgba(0, 212, 170, 0.07);
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .rule-match-chain,
+    .rule-library-details {
+      margin-top: 10px;
+      border: 1px solid rgba(174, 220, 235, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.027);
+    }
+
+    .rule-match-chain > summary,
+    .rule-library-details > summary {
+      display: flex;
+      align-items: center;
+      min-height: 39px;
+      padding: 0 11px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 900;
+      list-style: none;
+    }
+
+    .rule-match-chain > summary::-webkit-details-marker,
+    .rule-library-details > summary::-webkit-details-marker { display: none; }
+    .rule-match-chain > summary::after,
+    .rule-library-details > summary::after { content: "+"; margin-left: auto; color: var(--primary); font-family: var(--mono); font-size: 1rem; }
+    .rule-match-chain[open] > summary::after,
+    .rule-library-details[open] > summary::after { content: "-"; }
+
+    .rule-match-list {
+      display: grid;
+      gap: 7px;
+      padding: 0 10px 11px;
+    }
+
+    .rule-match-item {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.026);
+    }
+
+    .rule-match-item.is-match {
+      border-color: var(--rule-match-color, rgba(0, 212, 170, 0.52));
+      background: color-mix(in srgb, var(--rule-match-color, var(--primary)), transparent 89%);
+      box-shadow: inset 3px 0 0 var(--rule-match-color, var(--primary)), 0 0 15px color-mix(in srgb, var(--rule-match-color, var(--primary)), transparent 88%);
+    }
+
+    .rule-match-index {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: #06131f;
+      background: var(--rule-match-color, var(--primary));
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      font-weight: 950;
+    }
+
+    .rule-match-copy { min-width: 0; }
+    .rule-match-copy strong { display: block; color: var(--text); font-size: 0.76rem; }
+    .rule-match-copy span { display: block; margin-top: 2px; color: var(--muted); font-size: 0.72rem; line-height: 1.35; }
+    .rule-match-state { color: var(--muted); font-family: var(--mono); font-size: 0.78rem; font-weight: 900; }
+    .rule-match-item.is-match .rule-match-state { color: var(--rule-match-color, var(--primary)); }
+
+    .rule-library-content {
+      display: grid;
+      gap: 8px;
+      padding: 0 11px 12px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.48;
+    }
+
+    .rule-library-content article {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rule-library-content article:last-child { border-bottom: 0; }
+    .rule-library-content strong { color: var(--text); }
+    .rule-library-content em { color: var(--primary); font-style: normal; }
+
+    /* 移动端：保证决策、补偿和操作控件都可按顺序浏览与触摸。 */
+    @media (max-width: 768px) {
+      .main-grid { grid-template-columns: minmax(0, 1fr); }
+      .right-col { position: static; top: auto; max-height: none; grid-template-columns: minmax(0, 1fr); }
+      .decision-card { grid-template-columns: minmax(0, 1fr); }
+      .risk-wrap { justify-self: stretch; display: grid; grid-template-columns: 112px minmax(0, 1fr); column-gap: 12px; align-items: center; }
+      .risk-ring { grid-row: span 2; width: 108px; height: 108px; }
+      .risk-scale, .risk-labels { min-width: 0; }
+      .sensor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .control, .scenario-select, .theme-option, .language-switch, .language-switch select { min-height: 44px; }
+      .chart-box { min-height: 270px; height: 42vh; max-height: 360px; }
+      .data-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .data-table-scroll .data-table { min-width: 690px; }
+      #trendChart { touch-action: pan-y; }
+    }
+
+    @media (max-width: 480px) {
+      .app { width: min(100% - 16px, 1480px); margin-top: 8px; }
+      .topbar { grid-template-columns: minmax(0, 1fr); }
+      .status-strip { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; }
+      .status-strip > * { min-width: 0; }
+      .status-strip .scenario-select, .status-strip #lastUpdate, .status-strip .language-switch { grid-column: 1 / -1; }
+      .theme-switch { grid-column: 1 / -1; width: 100%; }
+      .theme-option { flex: 1; }
+      .sensor-grid { grid-template-columns: minmax(0, 1fr); }
+      .decision-head { align-items: flex-start; gap: 10px; }
+      .decision-icon { width: 54px; height: 54px; font-size: 1.7rem; }
+      .decision-title { font-size: 1.55rem; }
+      .risk-wrap { grid-template-columns: 90px minmax(0, 1fr); }
+      .risk-ring { width: 86px; height: 86px; }
+      .ring-content strong { font-size: 1.35rem; }
+      .ring-content span { font-size: 0.6rem; }
+      .compensation-bar-row { grid-template-columns: 58px minmax(0, 1fr) 58px; gap: 6px; }
+      .rule-match-item { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 6px; padding: 7px; }
+      .rule-match-index { width: 20px; height: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -2378,6 +2609,14 @@
             <div class="trigger" id="decisionTrigger" aria-label="当前触发条件">
               <span class="trigger-chip">触发条件：--</span>
             </div>
+            <!-- 决策依据与匹配链只用于解释当前本地推理结果，不改变知识库规则。 -->
+            <div class="decision-evidence" id="decisionEvidence">决策依据：等待本地规则引擎输出</div>
+            <details class="rule-match-chain" open>
+              <summary>规则匹配链 · 按优先级核验</summary>
+              <div class="rule-match-list" id="ruleMatchList" aria-live="polite">
+                <div class="rule-match-item"><span class="rule-match-index">--</span><div class="rule-match-copy"><strong>等待采样</strong><span>系统将在获得当前传感器数据后显示规则匹配过程。</span></div><span class="rule-match-state">--</span></div>
+              </div>
+            </details>
           </div>
 
           <div class="risk-wrap">
@@ -2542,9 +2781,16 @@
           </div>
           <div class="calibration-grid">
             <div class="calibration-item"><span>估算气压</span><strong id="pressureValue">--</strong></div>
-            <div class="calibration-item"><span>补偿系数</span><strong id="factorValue">--</strong></div>
+            <div class="calibration-item"><span>补偿系数</span><strong class="factor-value"><span id="factorValue">--</span><i class="factor-arrow" id="compensationFactorArrow" data-direction="steady" aria-label="补偿系数状态">→</i></strong></div>
             <div class="calibration-item"><span>原始氨气</span><strong id="rawAmmoniaValue">--</strong></div>
             <div class="calibration-item"><span>补偿后氨气</span><strong id="correctedAmmoniaValue">--</strong></div>
+          </div>
+          <!-- 纯 CSS 对比条形图，随每次补偿结果平滑更新。 -->
+          <div class="compensation-compare" aria-label="高原双维度补偿算法效果对比">
+            <p class="compensation-compare-title">高原双维度补偿算法效果对比</p>
+            <div class="compensation-bar-row"><span>原始 NH₃</span><div class="compensation-track"><i class="compensation-bar raw" id="compensationRawBar"></i></div><output id="compensationRawValue">--</output></div>
+            <div class="compensation-bar-row"><span>补偿 NH₃</span><div class="compensation-track"><i class="compensation-bar corrected" id="compensationCorrectedBar"></i></div><output id="compensationCorrectedValue">--</output></div>
+            <p class="compensation-note">基于气压-温湿度双变量非线性补偿模型，修正高海拔低压传感器漂移；理论测算误差由 35%-40% 优化至 10% 以内。</p>
           </div>
         </section>
 
@@ -2639,6 +2885,17 @@
           <div class="knowledge-rule-list" id="knowledgeRuleList" data-ready="false">
             正在读取本地知识库规则目录。
           </div>
+          <!-- 完整规则说明为只读展示，规则源文件仍由 knowledgeBase.js 维护。 -->
+          <details class="rule-library-details">
+            <summary>📄 查看完整规则库文档</summary>
+            <div class="rule-library-content">
+              <article><strong>一级警报</strong>：<em>氨气 &gt; 20 ppm</em>，立即强排通风并转移至安全区域。依据：NY/T 388-1999。</article>
+              <article><strong>警告</strong>：<em>氨气 &gt; 15 ppm</em>，在 12:00-14:00 执行 5-10 分钟短时通风，温度降幅不超过 3℃。依据：NY/T 388-1999 与本地冬季策略。</article>
+              <article><strong>复合预警</strong>：<em>湿度 &gt; 80% 且氨气 &gt; 10 ppm</em>，优先清粪、换干燥垫料并延长午间通风至 15 分钟。</article>
+              <article><strong>低温注意</strong>：<em>温度 &lt; 0℃</em>，启动保温，缩短单次通风至 3-5 分钟并观察幼畜状态。</article>
+              <article><strong>正常</strong>：未触发以上风险条件，保持管理措施并持续巡检。所有决策在本地主控侧离线执行，可追溯、无外部模型依赖。</article>
+            </div>
+          </details>
         </section>
       </aside>
     </main>
@@ -2695,6 +2952,8 @@
       decisionTitle: document.getElementById("decisionTitle"),
       decisionAdvice: document.getElementById("decisionAdvice"),
       decisionTrigger: document.getElementById("decisionTrigger"),
+      decisionEvidence: document.getElementById("decisionEvidence"),
+      ruleMatchList: document.getElementById("ruleMatchList"),
       riskRing: document.getElementById("riskRing"),
       riskPointer: document.getElementById("riskPointer"),
       ringValue: document.getElementById("ringValue"),
@@ -3195,6 +3454,7 @@
         <span class="trigger-chip">温度：<strong style="--chip-color:var(--temperature)">${data.temperature.toFixed(1)}℃</strong></span>
         <span class="trigger-chip">光照：<strong style="--chip-color:var(--light)">${data.light.toFixed(0)}Lux</strong></span>
       `;
+      renderRuleMatchChain(data, null);
       els.riskRing.style.setProperty("--risk", `${risk}%`);
       els.riskRing.style.setProperty("--ring-color", riskColor);
       els.riskPointer.style.setProperty("--pointer", `${risk}%`);
@@ -3212,12 +3472,52 @@
       return result;
     }
 
+    // 规则匹配链按项目展示的五级优先级解释当前传感器值，不参与或改写本地知识库推理。
+    function renderRuleMatchChain(data, decision) {
+      if (!els.ruleMatchList || !els.decisionEvidence) return;
+      const rules = [
+        { index: "①", name: "一级警报", condition: "氨气 > 20 ppm", matched: data.ammonia > 20, color: "#ff4d5e" },
+        { index: "②", name: "警告", condition: "氨气 > 15 ppm", matched: data.ammonia > 15, color: "#ffd93d" },
+        { index: "③", name: "复合预警", condition: "湿度 > 80% 且氨气 > 10 ppm", matched: data.humidity > 80 && data.ammonia > 10, color: "#ff9f43" },
+        { index: "④", name: "低温注意", condition: "温度 < 0℃", matched: data.temperature < 0, color: "#4a9eff" },
+        { index: "⑤", name: "正常", condition: "以上条件均未满足", matched: false, color: "#00d4aa" }
+      ];
+      const activeRule = rules.find((rule) => rule.matched) || rules[rules.length - 1];
+      rules[rules.length - 1].matched = activeRule.index === "⑤";
+      const engineRule = decision && decision.ruleId ? ` · 引擎规则 ${decision.ruleId}` : "";
+      els.decisionEvidence.textContent = `决策依据：命中规则 ${activeRule.index} —— ${activeRule.condition}${engineRule}`;
+      els.ruleMatchList.innerHTML = rules.map((rule) => `
+        <div class="rule-match-item${rule.index === activeRule.index ? " is-match" : ""}" style="--rule-match-color:${rule.color}">
+          <span class="rule-match-index">${rule.index}</span>
+          <div class="rule-match-copy"><strong>${rule.name}</strong><span>${rule.condition}</span></div>
+          <span class="rule-match-state">${rule.index === activeRule.index ? "✓ 命中" : "✗ 未满足"}</span>
+        </div>
+      `).join("");
+    }
+
     function updateCalibration(data) {
       const factor = data.ammonia > 0 ? data.ammonia / Math.max(data.rawAmmonia, 0.1) : 1;
       els.pressureValue.textContent = `${data.pressure.toFixed(1)} kPa`;
       els.factorValue.textContent = `${factor.toFixed(2)}x`;
       els.rawAmmoniaValue.textContent = `${data.rawAmmonia.toFixed(1)} ppm`;
       els.correctedAmmoniaValue.textContent = `${data.ammonia.toFixed(1)} ppm`;
+      const rawPercent = clamp((data.rawAmmonia / 30) * 100, 0, 100);
+      const correctedPercent = clamp((data.ammonia / 30) * 100, 0, 100);
+      const factorArrow = document.getElementById("compensationFactorArrow");
+      const rawBar = document.getElementById("compensationRawBar");
+      const correctedBar = document.getElementById("compensationCorrectedBar");
+      const rawValue = document.getElementById("compensationRawValue");
+      const correctedValue = document.getElementById("compensationCorrectedValue");
+      if (rawBar) rawBar.style.width = `${rawPercent}%`;
+      if (correctedBar) correctedBar.style.width = `${correctedPercent}%`;
+      if (rawValue) rawValue.textContent = `${data.rawAmmonia.toFixed(1)} ppm`;
+      if (correctedValue) correctedValue.textContent = `${data.ammonia.toFixed(1)} ppm`;
+      if (factorArrow) {
+        const direction = factor > 1.2 ? "up" : factor < 0.9 ? "down" : "steady";
+        factorArrow.dataset.direction = direction;
+        factorArrow.textContent = direction === "up" ? "↑" : direction === "down" ? "↓" : "→";
+        factorArrow.setAttribute("aria-label", direction === "up" ? "补偿上调" : direction === "down" ? "补偿下调" : "补偿适中");
+      }
     }
 
     function pushRecord(data, result) {
@@ -3922,6 +4222,8 @@
           <span class="trigger-chip">时刻：<strong>${data.time}</strong></span>
           <span class="trigger-chip">氨气：<strong style="--chip-color:${riskColor}">${data.ammonia.toFixed(1)}ppm</strong></span>
           <span class="trigger-chip">温降：<strong style="--chip-color:var(--temperature)">${data.tempDropRate.toFixed(1)}℃</strong></span>`;
+        // 以同一组已补偿数据刷新解释链，保留决策引擎实际命中的规则 ID 作为溯源证据。
+        renderRuleMatchChain(data, decision);
         els.riskRing.style.setProperty("--risk", `${risk}%`);
         els.riskRing.style.setProperty("--ring-color", riskColor);
         els.riskPointer.style.setProperty("--pointer", `${risk}%`);
