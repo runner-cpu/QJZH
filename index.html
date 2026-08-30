@@ -101,13 +101,21 @@
             const color = dataset.borderColor || colors[dataset.yAxisID] || "#00D4AA";
             const scale = scales[dataset.yAxisID] || { min: 0, max: 1 };
             ctx.beginPath();
+            let hasPreviousPoint = false;
             dataset.data.forEach((value, index) => {
+              // 通风标记等稀疏数据使用空值占位，空值必须断线而非错误落到 0 轴。
+              if (!Number.isFinite(value)) {
+                hasPreviousPoint = false;
+                return;
+              }
               const x = this.chartArea.left + (index / Math.max(1, dataset.data.length - 1)) * (this.chartArea.right - this.chartArea.left);
               const y = this.scaleValue(scale, value);
-              if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+              if (!hasPreviousPoint) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+              hasPreviousPoint = true;
             });
             ctx.strokeStyle = color; ctx.lineWidth = dataset.borderWidth || 2; ctx.setLineDash(dataset.borderDash || []); ctx.stroke(); ctx.setLineDash([]);
             dataset.data.forEach((value, index) => {
+              if (!Number.isFinite(value)) return;
               const x = this.chartArea.left + (index / Math.max(1, dataset.data.length - 1)) * (this.chartArea.right - this.chartArea.left);
               const y = this.scaleValue(scale, value);
               ctx.beginPath(); ctx.arc(x, y, dataset.pointRadius || 2, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
@@ -2537,26 +2545,253 @@
       .rule-match-item { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 6px; padding: 7px; }
       .rule-match-index { width: 20px; height: 20px; }
     }
+
+    /* 首屏优先布局：标题栏保持单层，核心读数与决策结果优先进入视野。 */
+    .app { grid-template-columns: minmax(0, 1fr); }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .topbar {
+      display: flex;
+      min-height: 68px;
+      gap: 14px;
+      padding: 12px 16px;
+      align-items: center;
+    }
+
+    .topbar > .brand-block {
+      min-width: 0;
+      flex: 1 1 310px;
+    }
+
+    .topbar .title {
+      text-wrap: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar .subtitle { display: none; }
+
+    .status-strip {
+      flex: 0 1 760px;
+      min-width: 0;
+      margin-left: auto;
+      gap: 7px;
+      justify-content: flex-end;
+    }
+
+    .status-strip .pill,
+    .status-strip .control,
+    .status-strip .scenario-select { min-height: 34px; padding: 7px 9px; }
+
+    .telemetry-pill { gap: 7px; }
+    .telemetry-divider { width: 1px; height: 14px; background: var(--line-strong); }
+    .status-strip #scenarioSelect { order: 10; }
+    .status-strip #toggleStream { order: 11; }
+
+    .sensor-grid { gap: 10px; }
+
+    .sensor-card {
+      min-height: 140px;
+      padding: 12px 14px;
+    }
+
+    .sensor-value { margin: 10px 0 8px; }
+
+    .decision-card {
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .decision-head { margin-bottom: 9px; }
+    .decision-icon { width: 54px; height: 54px; font-size: 1.75rem; }
+    .risk-wrap { padding: 4px 10px; }
+    .risk-ring { width: 148px; height: 148px; }
+
+    /* 覆盖旧的中等宽度标题栏规则，避免控件被强制移至标题下方。 */
+    @media (max-width: 1450px) and (min-width: 981px) {
+      .topbar { display: flex; }
+      .status-strip { justify-content: flex-end; }
+    }
+
+    @media (max-width: 980px) {
+      .topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+      }
+
+      .status-strip {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        justify-content: flex-start;
+      }
+
+      .decision-card { padding: 14px; }
+    }
+
+    @media (max-width: 768px) {
+      .sensor-card { min-height: 114px; }
+      .pipeline-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 7px; }
+      .pipeline-step { grid-template-columns: 1fr; min-height: 50px; padding: 6px; text-align: center; }
+      .pipeline-icon { width: 26px; height: 26px; margin: 0 auto; border-radius: 7px; font-size: 0.7rem; }
+      .pipeline-name { font-size: 0.7rem; }
+      .pipeline-value { display: none; }
+      .decision-card .risk-wrap { order: -1; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar { gap: 10px; padding: 12px; }
+      .topbar .title { font-size: 1.25rem; white-space: normal; }
+      .status-strip { gap: 6px; }
+      /* 合并采样点与更新时间为整行，避免多语言文本撑出移动端视口。 */
+      .status-strip .telemetry-pill { grid-column: 1 / -1; justify-content: center; }
+      .status-strip #lastUpdate { grid-column: auto; }
+      .status-strip .language-switch { grid-column: auto; }
+      .status-strip .theme-switch { grid-column: auto; }
+      .status-strip #scenarioSelect,
+      .status-strip #toggleStream { grid-column: auto; }
+      .sensor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .sensor-card { min-height: 104px; padding: 10px; }
+      .sensor-name { font-size: 0.82rem; }
+      .sensor-value { margin: 7px 0 6px; }
+      .sensor-value strong { font-size: 1.55rem; }
+      .pipeline-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 6px; }
+      .pipeline-step { grid-template-columns: 1fr; min-height: 46px; padding: 6px; text-align: center; }
+      .pipeline-icon { width: 24px; height: 24px; margin: 0 auto; border-radius: 7px; font-size: 0.68rem; }
+      .pipeline-name { font-size: 0.66rem; }
+      .pipeline-value { display: none; }
+    }
+
+    /* 首屏决策摘要：桌面端把执行动作并列展示，减少纵向占用并保持处置顺序清晰。 */
+    @media (min-width: 981px) {
+      .decision-card {
+        grid-template-columns: minmax(0, 1fr) 210px;
+        gap: 14px;
+        padding: 14px 16px;
+      }
+
+      .action-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .action-step {
+        grid-template-columns: 25px minmax(0, 1fr);
+        gap: 7px;
+        min-height: 72px;
+        padding: 8px;
+        font-size: 0.82rem;
+        line-height: 1.38;
+      }
+
+      .step-index {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        font-size: 0.78rem;
+      }
+
+      .risk-wrap {
+        gap: 9px;
+        padding: 2px 0 2px 14px;
+      }
+
+      .risk-ring {
+        width: 142px;
+        height: 142px;
+      }
+
+      .ring-content strong { font-size: 2.25rem; }
+      .ring-content span { font-size: 0.7rem; }
+      .risk-labels { font-size: 0.64rem; }
+    }
+
+    /* 曲线色标常驻于图表旁，避免观众仅靠悬停或分离图例识别数据序列。 */
+    .trend-key {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+      margin: 10px 0 8px;
+    }
+
+    .trend-key-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 4px 8px;
+      border: 1px solid color-mix(in srgb, var(--series), transparent 68%);
+      border-radius: 6px;
+      color: var(--text);
+      background: color-mix(in srgb, var(--series), transparent 92%);
+      font-size: 0.77rem;
+      font-weight: 800;
+    }
+
+    .trend-key-item i {
+      width: 18px;
+      height: 3px;
+      flex: 0 0 auto;
+      border-radius: 99px;
+      background: var(--series);
+      box-shadow: 0 0 9px color-mix(in srgb, var(--series), transparent 35%);
+    }
+
+    .trend-key-item.raw i {
+      background: repeating-linear-gradient(90deg, #a8b2bb 0 5px, transparent 5px 8px);
+      box-shadow: none;
+    }
+
+    .trend-key-item small {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    /* 浅色主题提高决策执行文字的对比度，保证建议不被背景吞没。 */
+    html[data-theme="light"] .action-step {
+      border-color: rgba(37, 79, 97, 0.16);
+      color: #254354;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    html[data-theme="light"] .action-step .step-status { color: #008f78; }
+    html[data-theme="light"] .decision-evidence { color: #176b5d; }
+    html[data-theme="light"] .trigger {
+      border-color: rgba(37, 79, 97, 0.2);
+      background: rgba(239, 248, 249, 0.78);
+    }
+
+    @media (max-width: 650px) {
+      .trend-key { gap: 5px; }
+      .trend-key-item { padding: 4px 7px; font-size: 0.72rem; }
+      .trend-key-item i { width: 14px; }
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="topbar glass">
-      <div>
+      <div class="brand-block">
         <h1 class="title">青境智衡 · 高原幼畜圈舍环境监测与决策系统</h1>
-        <p class="subtitle">实时采集温度、湿度、氨气、光照数据，并通过本地规则库输出预警等级与通风建议。</p>
+        <p class="subtitle sr-only">实时监测温湿度、氨气、光照，本地规则库输出预警与通风建议。</p>
       </div>
       <div class="status-strip" aria-label="系统状态与演示控制">
         <span class="pill"><span class="dot"></span><span id="streamStatus">采集中</span></span>
-        <select class="scenario-select" id="scenarioSelect" aria-label="场景模拟">
-          <option value="normal">正常环境</option>
-          <option value="ammonia">氨气缓慢超标</option>
-          <option value="cold">低温寒潮</option>
-          <option value="humidAmmonia">高湿高氨</option>
-        </select>
-        <span class="pill">最近 60 点</span>
-        <span class="pill" id="lastUpdate">最后更新：--</span>
-        <button class="control" id="toggleStream" type="button">暂停采集</button>
+        <span class="pill telemetry-pill"><span id="recentPoints">最近 60 点</span><i class="telemetry-divider" aria-hidden="true"></i><span id="lastUpdate">更新：--</span></span>
         <div class="theme-switch" role="group" aria-label="显示主题">
           <button type="button" class="theme-option" data-theme-value="light" aria-pressed="false">浅色</button>
           <button type="button" class="theme-option active" data-theme-value="dark" aria-pressed="true">深色</button>
@@ -2569,105 +2804,19 @@
             <option value="bo">བོད་ཡིག</option>
           </select>
         </label>
+        <select class="scenario-select" id="scenarioSelect" aria-label="场景模拟">
+          <option value="normal">正常环境</option>
+          <option value="ammonia">氨气缓慢超标</option>
+          <option value="cold">低温寒潮</option>
+          <option value="humidAmmonia">高湿高氨</option>
+        </select>
+        <button class="control" id="toggleStream" type="button">暂停采集</button>
       </div>
     </header>
 
-    <section class="pipeline-strip glass" aria-label="数据采集到执行调控流程">
-      <article class="pipeline-step" style="--step-color: var(--temperature);">
-        <span class="pipeline-icon">01</span>
-        <div><div class="pipeline-name">数据采集</div><div class="pipeline-value" id="flowCollect">等待采样</div></div>
-      </article>
-      <article class="pipeline-step" style="--step-color: var(--humidity);">
-        <span class="pipeline-icon">02</span>
-        <div><div class="pipeline-name">高原补偿</div><div class="pipeline-value" id="flowCompensate">压力校准 --</div></div>
-      </article>
-      <article class="pipeline-step" style="--step-color: var(--light);">
-        <span class="pipeline-icon">03</span>
-        <div><div class="pipeline-name">本地决策</div><div class="pipeline-value" id="flowDecision">规则待命中</div></div>
-      </article>
-      <article class="pipeline-step" style="--step-color: var(--ammonia);">
-        <span class="pipeline-icon">04</span>
-        <div><div class="pipeline-name">执行调控</div><div class="pipeline-value" id="flowExecute">指令待下发</div></div>
-      </article>
-    </section>
-
     <main class="main-grid">
       <section class="left-col">
-        <section class="decision-card glass" id="decisionPanel" data-level="normal" aria-label="本地决策建议">
-          <div class="decision-main">
-            <p class="scenario-hint" id="scenarioHint">场景模拟中</p>
-            <div class="decision-head">
-              <div class="decision-icon" id="decisionIcon">🟢</div>
-              <div>
-                <h2 class="decision-title" id="decisionTitle">正常</h2>
-                <p class="decision-engine">本地知识库决策引擎 · 命中第一条规则即输出建议</p>
-              </div>
-            </div>
-            <div class="action-list" id="decisionAdvice">
-              <div class="action-step"><span class="step-index">1</span><span><span class="step-status">▶ 待执行</span>等待首次采样。</span></div>
-            </div>
-            <div class="trigger" id="decisionTrigger" aria-label="当前触发条件">
-              <span class="trigger-chip">触发条件：--</span>
-            </div>
-            <!-- 决策依据与匹配链只用于解释当前本地推理结果，不改变知识库规则。 -->
-            <div class="decision-evidence" id="decisionEvidence">决策依据：等待本地规则引擎输出</div>
-            <details class="rule-match-chain" open>
-              <summary>规则匹配链 · 按优先级核验</summary>
-              <div class="rule-match-list" id="ruleMatchList" aria-live="polite">
-                <div class="rule-match-item"><span class="rule-match-index">--</span><div class="rule-match-copy"><strong>等待采样</strong><span>系统将在获得当前传感器数据后显示规则匹配过程。</span></div><span class="rule-match-state">--</span></div>
-              </div>
-            </details>
-          </div>
-
-          <div class="risk-wrap">
-            <div class="risk-ring" id="riskRing">
-              <div class="ring-content">
-                <strong id="ringValue">--</strong>
-                <span>氨气风险指数 ppm</span>
-              </div>
-            </div>
-            <div class="risk-scale" id="riskScale" aria-label="氨气风险刻度">
-              <span class="safe"></span>
-              <span class="watch"></span>
-              <span class="over"></span>
-              <span class="danger"></span>
-              <i class="risk-pointer" id="riskPointer"></i>
-            </div>
-            <div class="risk-labels">
-              <span>安全 &lt;10</span>
-              <span>关注 10-15</span>
-              <span>超标 15-20</span>
-              <span>危险 &gt;20</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="knowledge-result" id="decision-result" data-action="stop" data-urgency="normal" aria-live="polite">
-          <div class="expert-advice-head">
-            <span class="knowledge-result-label">LOCAL EXPERT KB</span>
-            <span class="urgency-badge" id="adviceUrgencyBadge">常规状态</span>
-          </div>
-          <p class="expert-advice-body" id="expertAdviceText">等待 24 小时本地模拟开始。</p>
-          <div class="trend-status" id="adviceTrendStatus">
-            <i class="trend-status-indicator"></i>
-            <span>趋势平稳</span>
-          </div>
-          <div class="expert-advice-footer">
-            <span id="adviceCitation">依据：KB-NH3-COMFORT</span>
-            <span id="adviceRuleId">触发规则 ID：-</span>
-            <span id="adviceScenarioKey">场景：-</span>
-          </div>
-        </section>
-        <section class="advice-history" aria-labelledby="adviceHistoryTitle">
-          <div class="advice-history-head">
-            <h3 class="advice-history-title" id="adviceHistoryTitle">历史建议日志</h3>
-            <span class="advice-history-count" id="adviceHistoryCount">0 / 24</span>
-          </div>
-          <div class="advice-history-log" id="adviceHistoryLog" role="log" aria-live="polite">
-            <div class="advice-history-empty">重要建议将在模拟推进后记录。</div>
-          </div>
-        </section>
-
+        <!-- 首屏优先：四路传感器数据先于详细建议展示。 -->
         <div class="sensor-grid" aria-label="实时传感器读数">
           <article class="sensor-card ammonia glass" id="card-ammonia">
             <div class="sensor-head">
@@ -2722,12 +2871,70 @@
           </article>
         </div>
 
+        <section class="decision-card glass" id="decisionPanel" data-level="normal" aria-label="本地决策建议">
+          <div class="decision-main">
+            <p class="scenario-hint" id="scenarioHint">场景模拟中</p>
+            <div class="decision-head">
+              <div class="decision-icon" id="decisionIcon">🟢</div>
+              <div>
+                <h2 class="decision-title" id="decisionTitle">正常</h2>
+                <p class="decision-engine">本地知识库决策引擎 · 命中第一条规则即输出建议</p>
+              </div>
+            </div>
+            <div class="action-list" id="decisionAdvice">
+              <div class="action-step"><span class="step-index">1</span><span><span class="step-status">▶ 待执行</span>等待首次采样。</span></div>
+            </div>
+            <div class="trigger" id="decisionTrigger" aria-label="当前触发条件">
+              <span class="trigger-chip">触发条件：--</span>
+            </div>
+            <!-- 决策依据与匹配链只用于解释当前本地推理结果，不改变知识库规则。 -->
+            <div class="decision-evidence" id="decisionEvidence">决策依据：等待本地规则引擎输出</div>
+            <!-- 首屏默认折叠，展开后仍可查看完整的规则核验过程。 -->
+            <details class="rule-match-chain">
+              <summary>规则匹配链 · 按优先级核验</summary>
+              <div class="rule-match-list" id="ruleMatchList" aria-live="polite">
+                <div class="rule-match-item"><span class="rule-match-index">--</span><div class="rule-match-copy"><strong>等待采样</strong><span>系统将在获得当前传感器数据后显示规则匹配过程。</span></div><span class="rule-match-state">--</span></div>
+              </div>
+            </details>
+          </div>
+
+          <div class="risk-wrap">
+            <div class="risk-ring" id="riskRing">
+              <div class="ring-content">
+                <strong id="ringValue">--</strong>
+                <span>氨气风险指数 ppm</span>
+              </div>
+            </div>
+            <div class="risk-scale" id="riskScale" aria-label="氨气风险刻度">
+              <span class="safe"></span>
+              <span class="watch"></span>
+              <span class="over"></span>
+              <span class="danger"></span>
+              <i class="risk-pointer" id="riskPointer"></i>
+            </div>
+            <div class="risk-labels">
+              <span>安全 &lt;10</span>
+              <span>关注 10-15</span>
+              <span>超标 15-20</span>
+              <span>危险 &gt;20</span>
+            </div>
+          </div>
+        </section>
+
         <section class="panel glass">
           <div class="panel-head">
             <div>
               <h2 class="panel-title">实时趋势曲线</h2>
               <p class="panel-note">氨气使用左侧 ppm 轴，温度、湿度与光照使用独立坐标轴；红色虚线为 15ppm 风险阈值，悬停任意点可查看该时刻的真实数据。</p>
             </div>
+          </div>
+          <!-- 图表色标与数据集颜色一一对应，便于快速区分多量纲曲线。 -->
+          <div class="trend-key" aria-label="实时曲线颜色说明">
+            <span class="trend-key-item" style="--series:#FF6B6B;"><i></i><span class="trend-key-label">补偿 NH₃</span><small>ppm</small></span>
+            <span class="trend-key-item raw" style="--series:#A8B2BB;"><i></i><span class="trend-key-label">原始 NH₃</span><small>ppm</small></span>
+            <span class="trend-key-item" style="--series:#4A9EFF;"><i></i><span class="trend-key-label">温度</span><small>℃</small></span>
+            <span class="trend-key-item" style="--series:#00D4AA;"><i></i><span class="trend-key-label">湿度</span><small>%</small></span>
+            <span class="trend-key-item" style="--series:#FFD93D;"><i></i><span class="trend-key-label">光照</span><small>Lux</small></span>
           </div>
           <div class="chart-box">
             <canvas id="trendChart"></canvas>
@@ -2768,6 +2975,33 @@
             </table>
           </div>
           <div class="snapshot-list" id="snapshotList" aria-label="快照列表"></div>
+        </section>
+
+        <!-- 次级推理日志保留在数据明细之后，不占用首屏核心监测与决策空间。 -->
+        <section class="knowledge-result" id="decision-result" data-action="stop" data-urgency="normal" aria-live="polite">
+          <div class="expert-advice-head">
+            <span class="knowledge-result-label">LOCAL EXPERT KB</span>
+            <span class="urgency-badge" id="adviceUrgencyBadge">常规状态</span>
+          </div>
+          <p class="expert-advice-body" id="expertAdviceText">等待 24 小时本地模拟开始。</p>
+          <div class="trend-status" id="adviceTrendStatus">
+            <i class="trend-status-indicator"></i>
+            <span>趋势平稳</span>
+          </div>
+          <div class="expert-advice-footer">
+            <span id="adviceCitation">依据：KB-NH3-COMFORT</span>
+            <span id="adviceRuleId">触发规则 ID：-</span>
+            <span id="adviceScenarioKey">场景：-</span>
+          </div>
+        </section>
+        <section class="advice-history" aria-labelledby="adviceHistoryTitle">
+          <div class="advice-history-head">
+            <h3 class="advice-history-title" id="adviceHistoryTitle">历史建议日志</h3>
+            <span class="advice-history-count" id="adviceHistoryCount">0 / 24</span>
+          </div>
+          <div class="advice-history-log" id="adviceHistoryLog" role="log" aria-live="polite">
+            <div class="advice-history-empty">重要建议将在模拟推进后记录。</div>
+          </div>
         </section>
       </section>
 
@@ -2899,6 +3133,26 @@
         </section>
       </aside>
     </main>
+
+    <!-- 辅助流程说明置于核心监测与决策区之后，避免占用首屏。 -->
+    <section class="pipeline-strip glass" aria-label="数据采集到执行调控流程">
+      <article class="pipeline-step" style="--step-color: var(--temperature);">
+        <span class="pipeline-icon">01</span>
+        <div><div class="pipeline-name">数据采集</div><div class="pipeline-value" id="flowCollect">等待采样</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--humidity);">
+        <span class="pipeline-icon">02</span>
+        <div><div class="pipeline-name">高原补偿</div><div class="pipeline-value" id="flowCompensate">压力校准 --</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--light);">
+        <span class="pipeline-icon">03</span>
+        <div><div class="pipeline-name">本地决策</div><div class="pipeline-value" id="flowDecision">规则待命中</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--ammonia);">
+        <span class="pipeline-icon">04</span>
+        <div><div class="pipeline-name">执行调控</div><div class="pipeline-value" id="flowExecute">指令待下发</div></div>
+      </article>
+    </section>
 
     <footer class="footer">
       <span>青境智衡 · 纯前端演示看板 · 模拟数据</span>
@@ -3581,6 +3835,19 @@
         ctx.fillStyle = "rgba(255, 107, 107, 0.95)";
         ctx.font = "12px ui-monospace, Menlo, Consolas, monospace";
         ctx.fillText("NH₃ 15ppm 阈值", chartArea.left + 8, y - 8);
+
+        // 悬停时增加时间定位线，使多条曲线的同一采样时刻更容易对照。
+        const activePoint = chart.tooltip?.getActiveElements?.()[0];
+        if (activePoint?.element?.x) {
+          ctx.beginPath();
+          ctx.setLineDash([3, 4]);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(0, 212, 170, 0.72)";
+          ctx.moveTo(activePoint.element.x, chartArea.top);
+          ctx.lineTo(activePoint.element.x, chartArea.bottom);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
         ctx.restore();
       }
     };
@@ -3597,6 +3864,9 @@
             data: state.ammonia,
             borderColor: "#FF6B6B",
             backgroundColor: "rgba(255, 107, 107, 0.12)",
+            pointBackgroundColor: "#FF6B6B",
+            pointBorderColor: "#FFE5E5",
+            pointBorderWidth: 1,
             tension: 0.36,
             pointRadius: 2.5,
             pointHoverRadius: 7,
@@ -3621,6 +3891,9 @@
             label: "温度 ℃",
             data: state.temperature,
             borderColor: "#4A9EFF",
+            pointBackgroundColor: "#4A9EFF",
+            pointBorderColor: "#DCEEFF",
+            pointBorderWidth: 1,
             tension: 0.36,
             pointRadius: 2,
             pointHoverRadius: 6,
@@ -3632,6 +3905,9 @@
             label: "湿度 %",
             data: state.humidity,
             borderColor: "#00D4AA",
+            pointBackgroundColor: "#00D4AA",
+            pointBorderColor: "#D9FFF6",
+            pointBorderWidth: 1,
             tension: 0.36,
             pointRadius: 2,
             pointHoverRadius: 6,
@@ -3645,6 +3921,9 @@
             data: state.light,
             borderColor: "#FFD93D",
             backgroundColor: "rgba(255, 217, 61, 0.08)",
+            pointBackgroundColor: "#FFD93D",
+            pointBorderColor: "#FFF6BF",
+            pointBorderWidth: 1,
             tension: 0.36,
             pointRadius: 2,
             pointHoverRadius: 6,
@@ -3749,6 +4028,7 @@
         trendTitle: "Real-time trend",
         trendNote: "NH₃ uses the left ppm axis; temperature, humidity and light use independent axes. Red dashed line: 15ppm risk threshold.",
         chartStats: ["NH₃ average", "NH₃ peak", "Temperature average", "High-humidity points"],
+        trendLegend: ["Compensated NH₃", "Raw NH₃", "Temperature", "Humidity", "Light"],
         records: "Sampling records",
         recordsNote: "Keep the latest 8 samples; save snapshots for traceable review.",
         snapshot: "Save snapshot",
@@ -3796,6 +4076,7 @@
         trendTitle: "དངོས་དུས་འཕེལ་ཕྱོགས",
         trendNote: "NH₃ གཡོན་གྱི ppm ཚད་འཇལ་ལ་བཀོད། དྲོད་ཚད་དང་རློན་ཚད། འོད་ཚད་ལ་རང་རང་གི་ཚད་འཇལ་ཡོད།",
         chartStats: ["NH₃ ཆ་སྙོམས", "NH₃ མཐོ་ཤོས", "དྲོད་ཚད་ཆ་སྙོམས", "རློན་ཚད་མཐོ་བའི་གྲངས"],
+        trendLegend: ["ཁ་གསབ NH₃", "ཐོག་མའི NH₃", "དྲོད་ཚད", "རློན་ཚད", "འོད་ཚད"],
         records: "དཔེ་འཇལ་ཟིན་ཐོ",
         recordsNote: "དཔེ་འཇལ་གནས་ཚད་ 8 ཉར་ཚགས་བྱེད། གཞི་གྲངས་མཐུད་འབྲེལ་ཆེད་དུ་མྱུར་བཀོད་ཉར།",
         snapshot: "གནས་ཚད་མྱུར་བཀོད",
@@ -3847,7 +4128,7 @@
       restoreOrSet(".title", copy?.title);
       restoreOrSet(".subtitle", copy?.subtitle);
       restoreOrSet(".language-label", copy?.language);
-      restoreOrSet(".status-strip > .pill:nth-of-type(2)", copy?.recent);
+      restoreOrSet("#recentPoints", copy?.recent);
       restoreOrSet(".theme-option", [copy?.lightTheme, copy?.darkTheme]);
       restoreOrSet(".pipeline-name", copy?.pipelineNames);
       restoreOrSet(".pipeline-value", copy?.pipelineValues);
@@ -3860,6 +4141,7 @@
       restoreOrSet(".left-col > .panel .panel-title", [copy?.trendTitle, copy?.records]);
       restoreOrSet(".left-col > .panel .panel-note", [copy?.trendNote, null, copy?.recordsNote]);
       restoreOrSet(".insight-card span", copy?.chartStats);
+      restoreOrSet(".trend-key-label", copy?.trendLegend);
       restoreOrSet("#snapshotButton", copy?.snapshot);
       restoreOrSet(".data-table th", copy?.tableHeaders);
       restoreOrSet(".right-col .panel-title", [copy?.collection, copy?.algorithm, copy?.vent, copy?.ruleState]);
@@ -3887,9 +4169,9 @@
 
     // 采集状态和时间戳属于动态文本，按当前语言生成，避免下一次采样把界面切回中文。
     const runtimeLanguageCopy = {
-      zh: { collecting: "采集中", paused: "已暂停", pause: "暂停采集", resume: "继续采集", lastUpdate: "最后更新：" },
-      en: { collecting: "Collecting", paused: "Paused", pause: "Pause collection", resume: "Resume collection", lastUpdate: "Last update: " },
-      bo: { collecting: "བསྡུ་ལེན་བྱེད་བཞིན་པ", paused: "མཚམས་བཞག", pause: "བསྡུ་ལེན་མཚམས་འཇོག", resume: "བསྡུ་ལེན་མུ་མཐུད", lastUpdate: "མཇུག་མཐུད་དུས་ཚོད། " }
+      zh: { collecting: "采集中", paused: "已暂停", pause: "暂停采集", resume: "继续采集", lastUpdate: "更新：" },
+      en: { collecting: "Collecting", paused: "Paused", pause: "Pause collection", resume: "Resume collection", lastUpdate: "Update: " },
+      bo: { collecting: "བསྡུ་ལེན་བྱེད་བཞིན་པ", paused: "མཚམས་བཞག", pause: "བསྡུ་ལེན་མཚམས་འཇོག", resume: "བསྡུ་ལེན་མུ་མཐུད", lastUpdate: "གསར་བཟོ། " }
     };
 
     function runtimeText(key) {
