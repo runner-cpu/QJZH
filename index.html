@@ -4674,8 +4674,10 @@
         return tr(`urgency.${urgency || "info"}`, zhFallback || "关注提示");
       }
 
-      // refreshOnly 用于语言切换：仅重新渲染当前状态，绝不推进模拟、追加图表点或写入新历史。
-      function updateKnowledgeUI(record, refreshOnly = false) {
+      // 模拟器第二个参数是采样序号；只有显式传入 true 才表示语言切换的仅刷新模式。
+      // 这样不会把第 1-23 个采样序号误判为 refreshOnly，导致曲线和决策日志只保留第一个点。
+      function updateKnowledgeUI(record, sampleIndexOrRefresh = 0) {
+        const refreshOnly = sampleIndexOrRefresh === true;
         const scenarioActive = state.scenario.type !== "normal";
         const data = refreshOnly ? record : (scenarioActive ? applyScenario(record) : record);
         let decision = refreshOnly ? (record.decision || state.currentDecision) : record.decision;
