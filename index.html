@@ -140,15 +140,27 @@
         drawTooltip(width, height) {
           const ctx = this.ctx;
           const labels = this.data.labels || [];
-          const rows = (this.data.datasets || []).filter((dataset) => dataset.data?.[this.hoverIndex] !== undefined && dataset.id !== "ventilationMarkers");
-          const lines = [labels[this.hoverIndex] || "--", ...rows.map((dataset) => `${dataset.label}: ${Number(dataset.data[this.hoverIndex]).toFixed(dataset.yAxisID === "yLight" || dataset.yAxisID === "yHumidity" ? 0 : 1)} ${dataset.yAxisID === "yLight" ? "Lux" : dataset.yAxisID === "yHumidity" ? "%" : dataset.yAxisID === "yTemperature" ? "℃" : "ppm"}`)];
+          const rows = (this.data.datasets || []).filter((dataset) => Number.isFinite(dataset.data?.[this.hoverIndex]) && dataset.id !== "ventilationMarkers");
+          const entries = rows.map((dataset) => {
+            const unit = dataset.yAxisID === "yLight" ? "Lux" : dataset.yAxisID === "yHumidity" ? "%" : dataset.yAxisID === "yTemperature" ? "℃" : "ppm";
+            const value = Number(dataset.data[this.hoverIndex]).toFixed(unit === "Lux" || unit === "%" ? 0 : 1);
+            return { color: dataset.borderColor || colors[dataset.yAxisID] || "#00D4AA", text: `${dataset.label}: ${value} ${unit}` };
+          });
           ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-          const boxWidth = Math.min(300, Math.max(180, ...lines.map((line) => ctx.measureText(line).width + 22)));
-          const boxHeight = lines.length * 18 + 14;
+          const boxWidth = Math.min(300, Math.max(180, ...entries.map((entry) => ctx.measureText(entry.text).width + 38)));
+          const boxHeight = entries.length * 18 + 34;
           const x = Math.min(width - boxWidth - 8, Math.max(8, this.chartArea.left + (this.hoverIndex / Math.max(1, labels.length - 1)) * (this.chartArea.right - this.chartArea.left) + 12));
           const y = Math.max(8, this.chartArea.top + 8);
           ctx.fillStyle = "rgba(8, 22, 32, 0.94)"; ctx.strokeStyle = "rgba(0, 212, 170, 0.5)"; ctx.lineWidth = 1; ctx.fillRect(x, y, boxWidth, boxHeight); ctx.strokeRect(x, y, boxWidth, boxHeight);
-          lines.forEach((line, index) => { ctx.fillStyle = index === 0 ? "#E8F0F8" : "#D7E4EE"; ctx.fillText(line, x + 10, y + 20 + index * 18); });
+          ctx.fillStyle = "#E8F0F8";
+          ctx.fillText(labels[this.hoverIndex] || "--", x + 10, y + 20);
+          entries.forEach((entry, index) => {
+            const rowY = y + 38 + index * 18;
+            ctx.fillStyle = entry.color;
+            ctx.fillRect(x + 10, rowY - 9, 10, 10);
+            ctx.fillStyle = "#D7E4EE";
+            ctx.fillText(entry.text, x + 27, rowY);
+          });
         }
       }
 
@@ -2575,10 +2587,39 @@
     }
 
     .topbar .title {
-      text-wrap: nowrap;
+      max-width: none;
+      overflow: visible;
+      text-overflow: clip;
+      text-wrap: wrap;
+      white-space: normal;
+      font-size: clamp(1.16rem, 1.55vw, 1.55rem);
+      line-height: 1.24;
+    }
+
+    /* 流程带位于首屏时保持紧凑，保留四步实时状态而不挤压核心数据卡。 */
+    .pipeline-strip {
+      gap: 7px;
+      padding: 8px;
+    }
+
+    .pipeline-step {
+      min-height: 56px;
+      padding: 8px;
+    }
+
+    .pipeline-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+    }
+
+    .pipeline-name { font-size: 0.84rem; }
+    .pipeline-value { font-size: 0.72rem; }
+
+    .topbar .title {
       max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
     }
 
     .topbar .subtitle { display: none; }
@@ -2813,6 +2854,26 @@
         <button class="control" id="toggleStream" type="button">暂停采集</button>
       </div>
     </header>
+
+    <!-- 数据流先行：让观众先建立“采集→补偿→决策→执行”的硬件闭环认知。 -->
+    <section class="pipeline-strip glass" aria-label="数据采集到执行调控流程">
+      <article class="pipeline-step" style="--step-color: var(--temperature);">
+        <span class="pipeline-icon">01</span>
+        <div><div class="pipeline-name">数据采集</div><div class="pipeline-value" id="flowCollect">等待采样</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--humidity);">
+        <span class="pipeline-icon">02</span>
+        <div><div class="pipeline-name">高原补偿</div><div class="pipeline-value" id="flowCompensate">压力校准 --</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--light);">
+        <span class="pipeline-icon">03</span>
+        <div><div class="pipeline-name">本地决策</div><div class="pipeline-value" id="flowDecision">规则待命中</div></div>
+      </article>
+      <article class="pipeline-step" style="--step-color: var(--ammonia);">
+        <span class="pipeline-icon">04</span>
+        <div><div class="pipeline-name">执行调控</div><div class="pipeline-value" id="flowExecute">指令待下发</div></div>
+      </article>
+    </section>
 
     <main class="main-grid">
       <section class="left-col">
@@ -3133,26 +3194,6 @@
         </section>
       </aside>
     </main>
-
-    <!-- 辅助流程说明置于核心监测与决策区之后，避免占用首屏。 -->
-    <section class="pipeline-strip glass" aria-label="数据采集到执行调控流程">
-      <article class="pipeline-step" style="--step-color: var(--temperature);">
-        <span class="pipeline-icon">01</span>
-        <div><div class="pipeline-name">数据采集</div><div class="pipeline-value" id="flowCollect">等待采样</div></div>
-      </article>
-      <article class="pipeline-step" style="--step-color: var(--humidity);">
-        <span class="pipeline-icon">02</span>
-        <div><div class="pipeline-name">高原补偿</div><div class="pipeline-value" id="flowCompensate">压力校准 --</div></div>
-      </article>
-      <article class="pipeline-step" style="--step-color: var(--light);">
-        <span class="pipeline-icon">03</span>
-        <div><div class="pipeline-name">本地决策</div><div class="pipeline-value" id="flowDecision">规则待命中</div></div>
-      </article>
-      <article class="pipeline-step" style="--step-color: var(--ammonia);">
-        <span class="pipeline-icon">04</span>
-        <div><div class="pipeline-name">执行调控</div><div class="pipeline-value" id="flowExecute">指令待下发</div></div>
-      </article>
-    </section>
 
     <footer class="footer">
       <span>青境智衡 · 纯前端演示看板 · 模拟数据</span>
@@ -3953,6 +3994,10 @@
             borderWidth: 1,
             titleColor: "#E8F0F8",
             bodyColor: "#D7E4EE",
+            displayColors: true,
+            boxWidth: 10,
+            boxHeight: 10,
+            usePointStyle: true,
             callbacks: {
               // Tooltip 按数据集的量纲显示每个采样点的真实值。
               label(context) {
