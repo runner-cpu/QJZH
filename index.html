@@ -14,7 +14,8 @@
   <script src="decisionEngine.js?v=1.0.0"></script>
   <script src="simulator.js?v=1.0.0"></script>
   <!-- Chart.js 负责绘制五条实时数据曲线与多量纲坐标轴。 -->
-  <script async src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <!-- 使用同步加载：Chart.js 成功时优先使用正式图表，网络失败时再由下方 Canvas 回退接管。 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script>
     // CDN 不可用时启用轻量 Canvas 回退，保证离线演示仍有曲线、坐标和点位 Tooltip。
     (function installChartFallback() {
@@ -34,6 +35,12 @@
           this.ctx = canvas.getContext("2d");
           instances.set(canvas, this);
           canvas.addEventListener("mousemove", (event) => this.setHover(event));
+          // 移动端用触摸位置复用同一套点位命中逻辑，避免回退图表在手机上只能看不能查值。
+          canvas.addEventListener("touchmove", (event) => {
+            const touch = event.touches[0];
+            if (touch) this.setHover(touch);
+          }, { passive: true });
+          canvas.addEventListener("touchend", () => { this.hoverIndex = -1; this.draw(); }, { passive: true });
           canvas.addEventListener("mouseleave", () => { this.hoverIndex = -1; this.draw(); });
           window.addEventListener("resize", () => this.draw());
           this.draw();
@@ -59,7 +66,7 @@
 
         draw() {
           const rect = this.canvas.getBoundingClientRect();
-          const width = Math.max(320, Math.floor(rect.width || 800));
+          const width = Math.max(240, Math.floor(rect.width || 800));
           const height = Math.max(240, Math.floor(rect.height || 355));
           const dpr = window.devicePixelRatio || 1;
           this.canvas.width = width * dpr;
@@ -69,7 +76,8 @@
           this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           const ctx = this.ctx;
           ctx.clearRect(0, 0, width, height);
-          this.chartArea = { left: 58, right: width - 106, top: 42, bottom: height - 42 };
+          const compact = width < 430;
+          this.chartArea = { left: compact ? 46 : 58, right: width - (compact ? 76 : 106), top: 42, bottom: height - 42 };
           const scales = this.options.scales || {};
           Object.keys(scales).filter((key) => key !== "x").forEach((key) => { this.scales[key] = scales[key]; });
           Object.keys(this.scales).forEach((key) => {
@@ -1026,6 +1034,21 @@
       height: 355px;
     }
 
+    /* 曲线采样计数作为面板角标，给出“已收到多少点”的实时反馈。 */
+    .chart-live-count {
+      flex: 0 0 auto;
+      align-self: start;
+      padding: 6px 9px;
+      border: 1px solid rgba(0, 212, 170, 0.28);
+      border-radius: 999px;
+      color: var(--primary);
+      background: rgba(0, 212, 170, 0.08);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
     .trend-summary {
       margin: 10px 0 0;
       color: var(--primary);
@@ -1761,10 +1784,10 @@
     .right-col {
       position: sticky;
       top: 16px;
-      max-height: calc(100vh - 32px);
-      overflow-y: auto;
-      padding-right: 3px;
-      scrollbar-color: rgba(22, 214, 176, 0.65) rgba(255, 255, 255, 0.06);
+      /* 让整页保持单一滚动上下文，避免右栏出现第二条滚动条而与左栏失去同步。 */
+      align-self: start;
+      overflow: visible;
+      padding-right: 0;
     }
 
     .decision-card {
@@ -2535,10 +2558,12 @@
       .data-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       .data-table-scroll .data-table { min-width: 690px; }
       #trendChart { touch-action: pan-y; }
+      .chart-live-count { align-self: center; }
     }
 
     @media (max-width: 480px) {
       .app { width: min(100% - 16px, 1480px); margin-top: 8px; }
+      html, body { overflow-x: hidden; }
       .topbar { grid-template-columns: minmax(0, 1fr); }
       .status-strip { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; }
       .status-strip > * { min-width: 0; }
@@ -2714,6 +2739,20 @@
       .pipeline-icon { width: 24px; height: 24px; margin: 0 auto; border-radius: 7px; font-size: 0.68rem; }
       .pipeline-name { font-size: 0.66rem; }
       .pipeline-value { display: none; }
+      .chart-live-count { width: 100%; text-align: center; }
+      /* 采样表只在自己的滚动容器内横向滚动，避免把手机页面整体撑宽。 */
+      .data-table-scroll { width: 100%; max-width: 100%; overflow-x: auto; }
+      .data-table-scroll .data-table { display: table; width: max-content; min-width: 690px; }
+    }
+
+    /* 尊重系统的减少动态偏好，保留状态变化但关闭光晕、旋转和过渡。 */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
     }
 
     /* 首屏决策摘要：桌面端把执行动作并列展示，减少纵向占用并保持处置顺序清晰。 */
@@ -2884,7 +2923,7 @@
               <div class="sensor-name"><span class="sensor-icon">NH₃</span><span class="sensor-label">氨气浓度</span></div>
               <span class="badge normal" id="status-ammonia">正常</span>
             </div>
-            <div class="sensor-value"><strong id="value-ammonia">--</strong><span>ppm</span></div>
+            <div class="sensor-value" aria-live="polite"><strong id="value-ammonia">--</strong><span>ppm</span></div>
             <div>
               <div class="meter"><span class="meter-fill" id="range-ammonia"></span></div>
               <div class="meter-labels"><span>0</span><span class="sensor-reference">15ppm阈值</span><span>30</span></div>
@@ -2896,7 +2935,7 @@
               <div class="sensor-name"><span class="sensor-icon">℃</span><span class="sensor-label">圈舍温度</span></div>
               <span class="badge normal" id="status-temperature">正常</span>
             </div>
-            <div class="sensor-value"><strong id="value-temperature">--</strong><span>℃</span></div>
+            <div class="sensor-value" aria-live="polite"><strong id="value-temperature">--</strong><span>℃</span></div>
             <div>
               <div class="meter">
                 <span class="meter-fill" id="range-temperature"></span>
@@ -2912,7 +2951,7 @@
               <div class="sensor-name"><span class="sensor-icon">RH</span><span class="sensor-label">相对湿度</span></div>
               <span class="badge normal" id="status-humidity">正常</span>
             </div>
-            <div class="sensor-value"><strong id="value-humidity">--</strong><span>%</span></div>
+            <div class="sensor-value" aria-live="polite"><strong id="value-humidity">--</strong><span>%</span></div>
             <div>
               <div class="meter"><span class="meter-fill" id="range-humidity"></span></div>
               <div class="meter-labels"><span>40</span><span class="sensor-reference">80%高湿</span><span>90</span></div>
@@ -2924,7 +2963,7 @@
               <div class="sensor-name"><span class="sensor-icon">☼</span><span class="sensor-label">光照强度</span></div>
               <span class="badge normal" id="status-light">正常</span>
             </div>
-            <div class="sensor-value"><strong id="value-light">--</strong><span>Lux</span></div>
+            <div class="sensor-value" aria-live="polite"><strong id="value-light">--</strong><span>Lux</span></div>
             <div>
               <div class="meter"><span class="meter-fill" id="range-light"></span></div>
               <div class="meter-labels"><span>0</span><span class="sensor-reference">补光参考</span><span>1000</span></div>
@@ -2988,6 +3027,8 @@
               <h2 class="panel-title">实时趋势曲线</h2>
               <p class="panel-note">氨气使用左侧 ppm 轴，温度、湿度与光照使用独立坐标轴；红色虚线为 15ppm 风险阈值，悬停任意点可查看该时刻的真实数据。</p>
             </div>
+            <!-- 动态显示当前曲线已接收的样本数，避免“最近60点”与实际点数产生误解。 -->
+            <span class="chart-live-count" id="chartPointCount" aria-live="polite">最近 0 / 60 点</span>
           </div>
           <!-- 图表色标与数据集颜色一一对应，便于快速区分多量纲曲线。 -->
           <div class="trend-key" aria-label="实时曲线颜色说明">
@@ -3253,7 +3294,7 @@
         "rule.basis": "Decision basis: matched rule {index} - {condition}{engineRule}", "rule.engine": " · Engine rule {ruleId}", "rule.matched": "Matched", "rule.unmet": "Not met", "rule.names": ["Level-one alert", "Warning", "Combined alert", "Low-temperature notice", "Normal"], "rule.conditions": ["NH3 > 20 ppm", "NH3 > 15 ppm", "Humidity > 80% and NH3 > 10 ppm", "Temperature < 0 C", "No above condition is met"],
         "level.critical": "Level-one alert", "level.warning": "Warning", "level.alert": "Combined alert", "level.caution": "Low-temperature notice", "level.normal": "Normal",
         "factor.up": "Compensation increase", "factor.down": "Compensation decrease", "factor.steady": "Balanced compensation",
-        "snapshot": "NH3 {ammonia} ppm · Temperature {temperature} C · Humidity {humidity}% · Light {light} Lux",
+        "snapshot": "NH3 {ammonia} ppm · Temperature {temperature} C · Humidity {humidity}% · Light {light} Lux", "chart.points": "Latest {count} / {max} points",
         "threshold": "NH3 15 ppm threshold", "trend.collecting": "Collecting trend data. A summary is available after 10 samples.", "trend.rising": "NH3 is rising continuously. Watch the noon ventilation window.", "trend.falling": "NH3 is falling continuously. Conditions are stabilizing.", "trend.stable": "NH3 is stable with no clear accumulation trend.", "trend.fast": "NH3 is rising rapidly ↑ · slope +{slope} ppm/h", "trend.slow": "NH3 is rising slowly ↗ · slope +{slope} ppm/h", "trend.down": "NH3 is falling ↓ · slope {slope} ppm/h", "trend.flat": "Trend stable · no clear deterioration", "points": "points",
         "knowledge.empty": "No displayable rule catalog is available from the local knowledge base.", "knowledge.untitled": "Untitled rule", "knowledge.condition": "Condition defined by the knowledge base", "knowledge.source": "Source", "knowledge.local": "Local knowledge base", "knowledge.citation": "Basis", "knowledge.ruleId": "Triggered rule ID", "knowledge.scenario": "Scenario", "knowledge.default": "Default fallback", "knowledge.activeVent": "Ventilation command issued for {duration} min", "knowledge.alertOnly": "Alert issued; no ventilation command", "knowledge.standby": "Remain on standby and continue monitoring", "knowledge.historyEmpty": "Important advice will be recorded as the simulation progresses.",
         "urgency.critical": "Urgent action", "urgency.warning": "Action reminder", "urgency.info": "Attention", "urgency.normal": "Routine status", "advice.critical": "Immediate response required. Clean manure sources, confirm the air outlet is clear, and keep livestock safe while the local controller manages ventilation.", "advice.warning": "Ammonia needs attention. Arrange cleaning and use the noon ventilation window while keeping temperature changes within limits.", "advice.info": "Monitor humidity and ammonia together. Replace damp bedding and schedule a noon inspection.", "advice.normal": "Conditions are controllable. Keep routine management and inspect the equipment regularly.",
@@ -4402,6 +4443,7 @@
       }
 
       trendChart.update();
+      updateChartPointCount();
       updateTrendSummary();
       updateChartInsights();
     }
@@ -4443,6 +4485,11 @@
       els.insightHumidCount.textContent = `${humidCount} ${tr("points", "点")}`;
     }
 
+    function updateChartPointCount() {
+      const count = document.getElementById("chartPointCount");
+      if (count) count.textContent = tr("chart.points", `最近 ${state.labels.length} / ${MAX_POINTS} 点`, { count: state.labels.length, max: MAX_POINTS });
+    }
+
     function tick() {
       const data = generateSensorData();
       state.currentData = data;
@@ -4480,8 +4527,7 @@
     els.scenarioSelect.addEventListener("change", (event) => startScenario(event.target.value));
     els.snapshotButton.addEventListener("click", saveSnapshot);
 
-    tick();
-    state.timer = window.setInterval(tick, SAMPLE_INTERVAL);
+    // 采集启动统一由本地知识库模拟器接管，避免旧随机流先写入一条不带决策依据的孤立数据。
 
     // 本地知识库模拟接管原随机流：保留既有页面部件，只替换为可复现的24小时数据与决策。
     (function startLocalKnowledgeBaseModel() {
@@ -4783,6 +4829,7 @@
           if (markerSet) markerSet.data.shift();
         }
         trendChart.update();
+        updateChartPointCount();
         updateTrendSummary();
         updateChartInsights();
       };
@@ -4834,6 +4881,8 @@
           window.addEventListener("dashboard:scenario-change", () => {
             scenarioHistory = [];
             scenarioEngine.reset();
+            // 场景切换后重新从第一个采样点运行，保证演示不会停留在上一轮24小时序列末尾。
+            beginSimulation(engine);
           });
           window.addEventListener("dashboard:language-change", () => {
             renderKnowledgeCatalog(window.LocalKnowledgeBase?.RULE_CATALOG);
