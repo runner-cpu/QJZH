@@ -34,7 +34,8 @@
     var descs = panel.querySelectorAll(".actuator-desc");
     var status = panel.querySelectorAll(".state-badge span:last-child");
     var expectedStatus = text(levelKey);
-    var expectedAdvice = recommendation.suggestions.join("；");
+    var mapAdvice = window.QJZH.mapAdvice || function (value) { return value; };
+    var expectedAdvice = mapAdvice(recommendation.suggestions.join("；"));
     var setText = function (node, value) { if (node && node.textContent !== value) node.textContent = value; };
     setText(names[0], "风险等级");
     setText(descs[0], "基于校准氨气与本地知识库规则");
@@ -82,7 +83,7 @@
       var subtitle = document.querySelector(".subtitle"); if (subtitle) subtitle.textContent = "数据接入 → 高原校准 → 智能决策 → 建议输出 → 环境报告";
       var titles = Array.from(document.querySelectorAll(".panel-title"));
       titles.forEach(function (node) {
-        if (node.textContent.indexOf("动态通风调控执行") >= 0) node.textContent = "决策建议输出";
+        if (node.textContent.indexOf("决策建议输出") >= 0) node.textContent = "决策建议输出";
         if (node.textContent.indexOf("采集与补偿状态") >= 0) node.textContent = "高原校准算法演示";
       });
       var pipeline = ["数据接入", "高原校准", "智能决策", "建议输出"];
@@ -99,11 +100,10 @@
         if (descs[1]) descs[1].textContent = "清粪 / 换垫料 / 检查风口 / 复测";
         var command = document.getElementById("commandText"); if (command) command.textContent = "建议：当前窗口可通风 8 分钟";
         var alarm = document.getElementById("alarmList"); if (alarm) { alarm.setAttribute("aria-label", "建议溯源"); var first = alarm.querySelector("span"); if (first) first.textContent = "建议溯源：规则 ID 与标准出处将在校准后显示"; }
-        var confidence = document.createElement("div"); confidence.className = "qjzh-confidence"; confidence.textContent = "置信度：高（输入在模型适用范围内）"; if (!panel.querySelector(".qjzh-confidence")) panel.insertBefore(confidence, panel.firstChild);
       }
       var decision = document.querySelector("#decisionPanel .decision-engine"); if (decision) decision.textContent = "本地知识库决策引擎 · 系统只输出决策建议，执行由养殖户既有设备或人工完成，不涉及风机控制";
       document.querySelectorAll(".footer span")[0]?.replaceChildren(document.createTextNode("青境智衡 · 纯软件环境数据服务演示 · v2026.09"));
-      document.querySelectorAll(".footer span")[1]?.replaceChildren(document.createTextNode("数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议 · 部署时间：2026-09-23"));
+      document.querySelectorAll(".footer span")[1]?.replaceChildren(document.createTextNode("数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议 · 部署时间：2026-09-24"));
     }
       rewriteDisplayCopy();
     renderRecommendationPanel();
@@ -143,6 +143,7 @@
       var badge = document.getElementById("dataQualityBadge");
       if (status) { status.className = "qjzh-data-state qjzh-state-" + (result?.level || "error"); status.textContent = result?.issues?.length ? result.issues.join("；") : "数据已接入并保存"; }
       if (badge && result) badge.textContent = "数据质量 " + result.quality + " · 置信度 " + result.confidence;
+      window.QJZH?.dataImport?.updateConfidence?.(result);
     });
     document.getElementById("loadDemoSimulation")?.addEventListener("click", function () {
       document.getElementById("loadSampleData")?.click();
@@ -151,11 +152,21 @@
     document.querySelectorAll("[data-scene]").forEach(function (button) {
       button.addEventListener("click", function () {
         var scene = button.dataset.scene;
-        if (scene === "institution") document.querySelector(".qjzh-tab[data-view='institution']")?.click();
-        if (scene === "retail") document.querySelector(".qjzh-tab[data-view='individual']")?.click();
+        var status = document.getElementById("dataImportStatus");
+        if (scene === "retail") {
+          document.querySelector(".qjzh-tab[data-view='individual']")?.click();
+          document.getElementById("loadSampleData")?.click();
+          document.getElementById("decisionPanel")?.scrollIntoView({ behavior: "smooth" });
+          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "散户场景：2620m 示例数据已加载，氨气 18.6→15.2ppm，红色预警，建议 12:00-14:00 通风 8 分钟"; }
+        }
+        if (scene === "institution") {
+          document.querySelector(".qjzh-tab[data-view='institution']")?.click();
+          document.getElementById("institutionView")?.scrollIntoView({ behavior: "smooth" });
+          if (status) { status.className = "qjzh-data-state qjzh-state"; status.textContent = "机构场景：5 个模拟圈舍风险排名（果洛 QH-GL-005 氨气 21.3ppm 紧急）"; }
+        }
         if (scene === "offline") {
-          var status = document.getElementById("dataImportStatus");
-          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "断网演示：本地看板仍可用，数据保存在本地存储。"; }
+          var sites = window.QJZH?.dataImport?.getRecords?.() || [];
+          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "断网演示：本地看板仍可用，当前已存 " + sites.length + " 条记录于本地存储，校准与决策全程离线完成。"; }
         }
       });
     });

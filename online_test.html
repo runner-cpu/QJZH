@@ -49,6 +49,11 @@
       report(html.indexOf("dataImportPanel") >= 0, "数据接入面板标记（主页面）");
       report(html.indexOf("pipeline-strip") >= 0, "流水线四节点标记（主页面）");
       report(html.indexOf("institutionView") >= 0 && html.indexOf("reportPanel") >= 0, "机构视图与季度报告标记（主页面）");
+      report(html.indexOf("动态通风调控执行") < 0, "原'动态通风调控执行'已从源码移除");
+      report(html.indexOf("数据接入") >= 0 && html.indexOf("指令待下发") < 0, "流水线已改为'数据接入→高原校准→智能决策→建议输出'");
+      report(html.indexOf("confidenceBadge") >= 0, "置信度元素存在");
+      report(html.indexOf('value="bo"') >= 0 && html.indexOf("qjzh-scene-presets") >= 0, "藏语选项与场景预设存在");
+      report(html.indexOf("纯软件环境数据服务演示") >= 0, "页脚源码已是合规声明");
     }).catch(function (error) {
       report(false, "主页面标记读取失败：" + error.message);
     });

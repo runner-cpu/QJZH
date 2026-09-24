@@ -15,8 +15,43 @@
   function parseLine(line) { var result = [], value = "", quoted = false; for (var i = 0; i < line.length; i += 1) { var c = line[i]; if (c === '"' && line[i + 1] === '"' && quoted) { value += '"'; i += 1; } else if (c === '"') quoted = !quoted; else if (c === "," && !quoted) { result.push(value); value = ""; } else value += c; } result.push(value); return result; }
   function parseCsv(text) { var lines = String(text == null ? "" : text).replace(/^\ufeff/, "").split(/\r?\n/).filter(function (line) { return line.trim() !== ""; }); if (!lines.length) return { records: [], errors: [{ row: 1, message: "CSV 为空" }], warnings: [] }; var headers = parseLine(lines[0]).map(function (h) { return h.trim(); }), missing = REQUIRED.filter(function (h) { return headers.indexOf(h) < 0; }); if (missing.length) return { records: [], errors: [{ row: 1, field: "header", message: "缺少字段: " + missing.join(", ") }], warnings: [] }; var records = [], errors = [], warnings = []; lines.slice(1).forEach(function (line, offset) { var values = parseLine(line), record = {}; headers.forEach(function (key, i) { record[key] = (values[i] == null ? "" : values[i]).trim(); }); var result = check(record); if (result.valid) { records.push(record); if (result.level === "warning") warnings.push({ row: offset + 2, issues: result.issues }); } else errors.push({ row: offset + 2, issues: result.issues, message: result.issues.join("；") }); }); return { records: records, errors: errors, warnings: warnings }; }
   function save(records) { var bySite = {}; records.forEach(function (record) { var id = record.site_id || "unknown"; (bySite[id] = bySite[id] || []).push(record); }); Object.keys(bySite).forEach(function (id) { var old = read("QJZH_RECORDS_" + id) || []; write("QJZH_RECORDS_" + id, old.concat(bySite[id]).slice(-1000)); }); write("QJZH_SITES", Object.keys(bySite)); return records; }
-  var api = q.dataImport = { MIN: MIN, MAX: MAX, REQUIRED: REQUIRED.slice(), storage: function () { store(); return storageMode; }, validate: check, validateManual: function (record) { var result = check(record || {}); if (result.valid) save([record]); return result; }, parseCsv: parseCsv, importCsv: function (text) { var result = parseCsv(text); if (result.records.length) save(result.records); return result; }, save: save, getRecords: function (siteId) { if (siteId) return read("QJZH_RECORDS_" + siteId) || []; var ids = read("QJZH_SITES") || []; return ids.reduce(function (all, id) { return all.concat(read("QJZH_RECORDS_" + id) || []); }, []); }, clearData: function () { var ids = read("QJZH_SITES") || []; ids.forEach(function (id) { store().removeItem("QJZH_RECORDS_" + id); }); store().removeItem("QJZH_SITES"); return true; }, loadDemo: function (text) { return api.importCsv(text || api.demoCsv); }, parseLine: parseLine };
-  api.demoCsv = "timestamp,site_id,altitude_m,temp_c,rh_percent,raw_nh3_ppm,device_model,species,age_days,stocking_density,barn_area\n2026-01-15T08:00:00+08:00,QH-HD-001,2620,-5,62,18.6,通用传感器,犊牦牛,45,1.2,180\n2026-01-15T12:00:00+08:00,QH-HD-001,2620,1,55,12.4,通用传感器,犊牦牛,45,1.2,180\n2026-01-15T08:00:00+08:00,QH-HZ-002,2800,-8,68,9.2,通用传感器,奶牛,120,0.9,240";
+  function qualityFor(result) { return result && result.errors && result.errors.length ? "reject" : result && result.warnings && result.warnings.length ? "warning" : "normal"; }
+  function updateConfidence(result) {
+    var badge = root.document && root.document.getElementById("confidenceBadge");
+    if (!badge || !result) return;
+    var level = result.level || qualityFor(result);
+    var map = {
+      normal: ["置信度：高（输入在模型适用范围内）", "qjzh-confidence"],
+      warning: ["置信度：中（部分输入超出模型适用范围）", "qjzh-confidence qjzh-confidence-warn"],
+      reject: ["置信度：低（输入超出模型适用范围，结果不可信）", "qjzh-confidence qjzh-confidence-err"]
+    };
+    var entry = map[level] || map.normal;
+    badge.textContent = entry[0]; badge.className = entry[1];
+  }
+  function resetConfidence() {
+    var badge = root.document && root.document.getElementById("confidenceBadge");
+    if (badge) { badge.textContent = "置信度：待接入数据后评估"; badge.className = "qjzh-confidence"; }
+  }
+  var api = q.dataImport = { MIN: MIN, MAX: MAX, REQUIRED: REQUIRED.slice(), storage: function () { store(); return storageMode; }, validate: check, validateManual: function (record) { var result = check(record || {}); if (result.valid) save([record]); return result; }, parseCsv: parseCsv, importCsv: function (text) { var result = parseCsv(text); if (result.records.length) save(result.records); result.level = qualityFor(result); return result; }, save: save, getRecords: function (siteId) { if (siteId) return read("QJZH_RECORDS_" + siteId) || []; var ids = read("QJZH_SITES") || []; return ids.reduce(function (all, id) { return all.concat(read("QJZH_RECORDS_" + id) || []); }, []); }, clearData: function () { var ids = read("QJZH_SITES") || []; ids.forEach(function (id) { store().removeItem("QJZH_RECORDS_" + id); }); store().removeItem("QJZH_SITES"); resetConfidence(); return true; }, loadDemo: function (text) { var result = api.importCsv(text || api.demoCsv); updateConfidence(result); return result; }, updateConfidence: updateConfidence, resetConfidence: resetConfidence, qualityFor: qualityFor, parseLine: parseLine };
+  api.demoCsv = [
+    "timestamp,site_id,altitude_m,temp_c,rh_percent,raw_nh3_ppm,device_model,species,age_days,stocking_density,barn_area",
+    "2026-01-15T08:00:00+08:00,QH-HD-001,2620,-5,62,18.6,generic_sensor,yak_calf,45,1.2,180",
+    "2026-01-15T12:00:00+08:00,QH-HD-001,2620,1,55,12.4,generic_sensor,yak_calf,45,1.2,180",
+    "2026-01-15T18:00:00+08:00,QH-HD-001,2620,-3,64,16.2,generic_sensor,yak_calf,45,1.2,180",
+    "2026-01-16T08:00:00+08:00,QH-HZ-002,2800,-8,68,9.2,generic_sensor,dairy_cattle,120,0.9,240",
+    "2026-01-16T12:00:00+08:00,QH-HZ-002,2800,0,58,7.5,generic_sensor,dairy_cattle,120,0.9,240",
+    "2026-01-16T18:00:00+08:00,QH-HZ-002,2800,-4,65,11.8,generic_sensor,dairy_cattle,120,0.9,240",
+    "2026-01-17T08:00:00+08:00,QH-GN-003,2450,-10,72,14.4,generic_sensor,tibetan_sheep,90,1.5,150",
+    "2026-01-17T12:00:00+08:00,QH-GN-003,2450,-1,60,8.8,generic_sensor,tibetan_sheep,90,1.5,150",
+    "2026-01-17T18:00:00+08:00,QH-GN-003,2450,-6,70,13.1,generic_sensor,tibetan_sheep,90,1.5,150",
+    "2026-01-18T08:00:00+08:00,QH-TJ-004,3050,-12,76,21.2,generic_sensor,yak,180,1.0,300",
+    "2026-01-18T12:00:00+08:00,QH-TJ-004,3050,-3,66,15.6,generic_sensor,yak,180,1.0,300",
+    "2026-01-18T18:00:00+08:00,QH-TJ-004,3050,-9,73,19.8,generic_sensor,yak,180,1.0,300",
+    "2026-01-19T08:00:00+08:00,QH-HN-005,3300,-14,80,24.6,generic_sensor,tibetan_sheep,150,1.3,210",
+    "2026-01-19T12:00:00+08:00,QH-HN-005,3300,-5,69,18.3,generic_sensor,tibetan_sheep,150,1.3,210",
+    "2026-01-19T18:00:00+08:00,QH-HN-005,3300,-11,77,22.1,generic_sensor,tibetan_sheep,150,1.3,210",
+    "2026-01-20T08:00:00+08:00,QH-HN-005,3300,-13,79,23.1,generic_sensor,tibetan_sheep,150,1.3,210"
+  ].join("\n");
   q.validateSensorRecord = check;
   q.storage = q.storage || { mode: function () { return api.storage(); }, get: read, set: write, clear: api.clearData };
   function bindUi() {
@@ -25,8 +60,8 @@
     var importStatus = root.document.getElementById("dataImportStatus");
     var emptyState = root.document.getElementById("dataEmptyState");
     var input = root.document.getElementById("csvInput");
-    if (input) input.addEventListener("change", function () { var file = input.files && input.files[0]; if (!file || !root.FileReader) return; var reader = new root.FileReader(); reader.onload = function () { var result = api.importCsv(reader.result); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = result.errors.length ? "部分数据未导入" : "数据已接入"; }; reader.readAsText(file, "utf-8"); });
-    var sample = root.document.getElementById("loadSampleData"); if (sample) sample.addEventListener("click", function () { var result = api.loadDemo(); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = "已加载示例数据"; var badge = root.document.getElementById("dataQualityBadge"); if (badge) badge.textContent = result.warnings.length ? "数据质量 B" : "数据质量 A"; });
+    if (input) input.addEventListener("change", function () { var file = input.files && input.files[0]; if (!file || !root.FileReader) return; var reader = new root.FileReader(); reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = result.errors.length ? "部分数据未导入" : "数据已接入"; }; reader.readAsText(file, "utf-8"); });
+    var sample = root.document.getElementById("loadSampleData"); if (sample) sample.addEventListener("click", function () { var result = api.loadDemo(); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = "已加载青海东部 5 圈舍示例数据（16 条记录）"; var badge = root.document.getElementById("dataQualityBadge"); if (badge) badge.textContent = "数据质量 " + (result.level === "normal" ? "A" : result.level === "warning" ? "B" : "C") + " · 置信度 " + (result.level === "normal" ? "高" : result.level === "warning" ? "中" : "低"); });
     if (manualForm) manualForm.setAttribute("data-qjzh-ready", "true");
     if (importStatus) importStatus.setAttribute("aria-live", "polite");
     if (emptyState) emptyState.setAttribute("data-qjzh-empty", "true");

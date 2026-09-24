@@ -12,7 +12,11 @@
   function read(key) { try { return JSON.parse(root.localStorage.getItem(key) || "null"); } catch (_) { return null; } }
   function getRows() {
     var imported = read("QJZH_INSTITUTIONS");
-    return (Array.isArray(imported) && imported.length ? imported : demo).map(function (row) { return Object.assign({}, row); });
+    var demoCopy = demo.map(function (row) { return Object.assign({}, row); });
+    if (!Array.isArray(imported) || !imported.length) return demoCopy;
+    var byId = {};
+    imported.concat(demoCopy).forEach(function (row) { byId[row.site_id || row.name] = Object.assign({}, row); });
+    return Object.keys(byId).map(function (key) { return byId[key]; });
   }
   function risk(nh3) { return nh3 >= 20 ? "紧急" : nh3 >= 15 ? "待办" : nh3 >= 10 ? "关注" : "正常"; }
   function render() {
