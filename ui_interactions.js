@@ -134,16 +134,6 @@
 
     var banner = document.getElementById("boundaryBanner");
     document.getElementById("dismissBoundary")?.addEventListener("click", function () { if (banner) banner.hidden = true; });
-    document.querySelectorAll(".qjzh-tab").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        document.querySelectorAll(".qjzh-tab").forEach(function (item) { item.classList.toggle("active", item === tab); });
-        var institution = document.getElementById("institutionView");
-        var individual = document.querySelector(".main-grid");
-        var isInstitution = tab.dataset.view === "institution";
-        if (institution) institution.classList.toggle("active", isInstitution);
-        if (individual) individual.hidden = isInstitution;
-      });
-    });
     var form = document.getElementById("manualDataForm");
     form?.addEventListener("submit", function (event) {
       event.preventDefault();
@@ -161,30 +151,30 @@
     });
     document.getElementById("loadDemoSimulation")?.addEventListener("click", function () {
       document.getElementById("loadSampleData")?.click();
-      document.getElementById("dataImportStatus").textContent = "青海冬季示例已导入，主看板正在按时间回放";
+      document.getElementById("dataImportStatus").textContent = translate("qjzh.data.demoReplay", "青海冬季示例已导入，主看板将按单站点时间回放");
     });
     document.querySelectorAll("[data-scene]").forEach(function (button) {
       button.addEventListener("click", function () {
         var scene = button.dataset.scene;
         var status = document.getElementById("dataImportStatus");
         if (scene === "retail") {
-          document.querySelector(".qjzh-tab[data-view='individual']")?.click();
+          window.location.hash = "#/overview";
           document.getElementById("loadSampleData")?.click();
-          document.getElementById("decisionPanel")?.scrollIntoView({ behavior: "smooth" });
-          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "散户场景：2620m 导入数据回放中，氨气 18.6→15.2ppm，建议 12:00-14:00 通风 8 分钟"; }
+          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = translate("qjzh.scene.retailStatus", "散户场景：QH-HD-001 单站点回放，校准后生成午间短时通风建议"); }
         }
         if (scene === "institution") {
-          document.querySelector(".qjzh-tab[data-view='institution']")?.click();
-          document.getElementById("institutionView")?.scrollIntoView({ behavior: "smooth" });
-          if (status) { status.className = "qjzh-data-state qjzh-state"; status.textContent = "机构场景：5 个模拟圈舍风险排名（果洛 QH-GL-005 氨气 21.3ppm 紧急）"; }
+          window.location.hash = "#/institution";
+          window.QJZH?.institutionView?.render?.();
+          if (status) { status.className = "qjzh-data-state qjzh-state"; status.textContent = translate("qjzh.scene.institutionStatus", "机构场景：5 个模拟圈舍按校准氨气风险排序"); }
         }
         if (scene === "offline") {
+          window.location.hash = "#/overview";
           var records = window.QJZH?.dataImport?.getRecords?.() || [];
           window.QJZH_NETWORK_STATE = { online: false, simulated: true, checkedAt: new Date().toISOString() };
           document.documentElement.dataset.network = "offline-demo";
           var probe = window.QJZH?.calibrate?.({ altitude_m: 2620, temp_c: -5, rh_percent: 62, raw_nh3_ppm: 18.6, timestamp: new Date().toISOString(), site_id: "OFFLINE-PROBE", device_model: "offline-demo" });
           var fallbackActive = window.QJZH?.activateCanvasFallback?.() === true;
-          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "断网实测演示：navigator.onLine=false（演示） · 本地 " + records.length + " 条记录可查看 · 页面内校准/决策脚本运行正常（校准 " + Number(probe?.calibrated_nh3_ppm || 0).toFixed(1) + "ppm）· Canvas 回退模式" + (fallbackActive ? "已接管" : "可用") + "。"; }
+          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = translate("qjzh.scene.offlineStatus", "断网演示：本地 {count} 条记录可查看 · 校准/决策脚本正常（{ppm} ppm）· Canvas 回退{fallback}", { count: records.length, ppm: Number(probe?.calibrated_nh3_ppm || 0).toFixed(1), fallback: fallbackActive ? translate("qjzh.scene.active", "已接管") : translate("qjzh.scene.available", "可用") }); }
         }
         document.querySelector(".qjzh-scene-presets")?.classList.remove("expanded");
       });
@@ -195,6 +185,6 @@
       var expanded = presets.classList.toggle("expanded");
       this.setAttribute("aria-expanded", String(expanded));
     });
-    document.getElementById("resetDemoData")?.addEventListener("click", function () { window.QJZH?.demoReset?.reset?.(); });
+    document.getElementById("resetDemoData")?.addEventListener("click", function () { window.location.hash = "#/overview"; window.QJZH?.demoReset?.reset?.(); });
   });
 })();

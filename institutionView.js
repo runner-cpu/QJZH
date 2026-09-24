@@ -34,11 +34,19 @@
     return Object.keys(byId).map(function (key) { return byId[key]; });
   }
   function risk(nh3) { return nh3 >= 20 ? "紧急" : nh3 >= 15 ? "待办" : nh3 >= 10 ? "关注" : "正常"; }
+  function filterRows(rows, query) {
+    var term = String(query || "").trim().toLocaleLowerCase();
+    if (!term) return rows.slice();
+    return rows.filter(function (row) {
+      return [row.site_id, row.name, row.species].some(function (value) { return String(value || "").toLocaleLowerCase().indexOf(term) >= 0; });
+    });
+  }
   function render() {
     var rows = getRows();
     var body = root.document && root.document.getElementById("institutionRows");
     var summary = root.document && root.document.getElementById("institutionSummary");
     var detail = root.document && root.document.getElementById("institutionRoleDetail");
+    var filter = root.document && root.document.getElementById("institutionFilter");
     var roleNode = root.document && root.document.getElementById("institutionRole");
     var role = roleNode ? roleNode.value : "station";
     if (roleNode) Array.from(roleNode.options).forEach(function (option) { option.textContent = roleLabels()[option.value] || option.textContent; });
@@ -46,6 +54,7 @@
       if (r.calibrated_nh3_ppm == null && root.compensate) r.calibrated_nh3_ppm = root.compensate(Number(r.altitude_m), Number(r.temp_c || 0), Number(r.rh_percent || 50), Number(r.raw_nh3_ppm || 0));
       r.risk_level = r.risk_level || risk(Number(r.calibrated_nh3_ppm || 0));
     });
+    rows = filterRows(rows, filter && filter.value);
     rows.sort(function (a, b) { return Number(b.calibrated_nh3_ppm || 0) - Number(a.calibrated_nh3_ppm || 0); });
     if (body) body.innerHTML = rows.map(function (r) {
       var snapshot = language() === "en" ? "Demo snapshot" : language() === "bo" ? "དཔེ་སྟོན་མྱུར་བཀོད" : "演示快照";
@@ -110,12 +119,13 @@
     if (q.reportRenderer && q.reportRenderer.renderInstitution) return q.reportRenderer.renderInstitution(rows);
     return rows;
   }
-  q.institutionView = { demo: demo, getRows: getRows, render: render, importLocal: importLocal, exportReport: exportReport, esc: esc };
+  q.institutionView = { demo: demo, getRows: getRows, filterRows: filterRows, render: render, importLocal: importLocal, exportReport: exportReport, esc: esc };
   root.addEventListener("DOMContentLoaded", function () {
     render();
     root.document.getElementById("institutionImport")?.addEventListener("click", importLocal);
     root.document.getElementById("institutionExport")?.addEventListener("click", exportReport);
     root.document.getElementById("institutionRole")?.addEventListener("change", render);
+    root.document.getElementById("institutionFilter")?.addEventListener("input", render);
     root.addEventListener("dashboard:language-change", render);
   });
 })(window);
