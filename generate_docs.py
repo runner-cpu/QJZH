@@ -360,7 +360,7 @@ def render(model: dict[str, Any], metrics: dict[str, float], metric_path: Path |
 
 当前部署存储形状为 `w1Q: {len(model['w1_q'])}x{len(model['w1_q'][0])}`（输入特征 x 隐藏单元）、`b1Q: {len(model['b1_q'])}`、`w2Q: {len(model['w2_q'])}`、`b2Q: 1`。按常见数学矩阵记号转置后，`W1` 可表述为 **{model['hidden_units']}x{model['feature_count']}**，`b1` 为 **{model['hidden_units']}**，`W2` 为 **1x{model['hidden_units']}**，`b2` 为 **1**。
 
-Q16.16 转换公式为 `q = round(float * {int(model['scale'])})`，反转换为 `float = q / {int(model['scale'])}`。单一参数的最大量化误差不超过 `0.5 / {int(model['scale'])} = {0.5/model['scale']:.10f}`；累计网络误差还与输入标准化、激活状态和 MAC 累加有关，ESP32-S3 固件应使用 64 位累加器并在每次乘法后按比例尺右移/饱和，以避免 32 位乘积溢出。
+Q16.16 转换公式为 `q = round(float * {int(model['scale'])})`，反转换为 `float = q / {int(model['scale'])}`。单一参数的最大量化误差不超过 `0.5 / {int(model['scale'])} = {0.5/model['scale']:.10f}`；累计网络误差还与输入标准化、激活状态和 MAC 累加有关。算法服务 API 化：`compensate()` 为标准接口，可被任何前端、后端或第三方设备调用。
 
 ### 5.1 全量 Q16.16 参数（部署真值）
 
@@ -462,7 +462,7 @@ knowledgeBase.js  ──> decisionEngine.js     ──> index.html（预警/建�
 
 调用示例：`const correctedPpm = compensate(2800, 10, 60, 30);`。输入均应处于模型校准域，前端应向用户展示 ppm 单位和模型版本。
 
-ESP32-S3 移植时，将本文件 5.1 节的整数数组存入只读 Flash；参数、输入和中间量均按 Q16.16 管理。乘法使用 `int64_t product = (int64_t)a * b`，随后执行符号正确的 `>> 16` 缩放；累加以 `int64_t` 保存，ReLU 对负值清零，输出经过反标准化后限幅到 `outputMinQ-outputMaxQ`。建议以这里的边界样例和网页样例建立固件回归测试，并逐项比较误差是否小于量化预算与业务容忍度。
+算法服务 API 化：`compensate()` 为统一的浏览器端标准接口，可被前端、后端或第三方设备以相同参数契约调用。集成方只需按海拔、温度、湿度和原始氨气读数传参，并以本节边界样例建立接口回归测试；无需绑定特定硬件平台。
 
 ## 10. 版本历史与维护日志
 

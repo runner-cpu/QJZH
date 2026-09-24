@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>青境智衡 · 高原幼畜圈舍环境监测与决策系统</title>
-  <meta name="description" content="青境智衡高原幼畜圈舍环境监测与本地专家知识库决策演示系统。">
+  <title>青境智衡 · 高原圈舍环境数据服务系统</title>
+  <meta name="description" content="青境智衡为 2200-3500m 高原圈舍提供数据接入、高原校准、通风决策建议与环境报告的纯软件数据服务。">
+  <meta property="og:title" content="青境智衡 · 高原圈舍环境数据服务系统">
+  <meta property="og:description" content="数据接入 → 高原校准 → 智能决策 → 建议输出 → 环境报告">
+  <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307141f'/%3E%3Cpath d='M16 38h32M22 28h20M32 14v34' stroke='%2316d6b0' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='44' r='6' fill='%23ffd93d'/%3E%3C/svg%3E">
   <!-- COMPENSATOR-LOCK: keep the learned highland model separate from UI and rule scripts. -->
   <script src="model_weights.js?v=1.0.0"></script>
@@ -13,6 +16,7 @@
   <script src="knowledgeBase.js?v=1.0.0"></script>
   <script src="decisionEngine.js?v=1.0.0"></script>
   <script src="simulator.js?v=1.0.0"></script>
+  <script src="build_info.js?v=20260924"></script>
   <script src="ui_text_map.js?v=20260923"></script>
   <script src="errorHandler.js?v=20260923"></script>
   <script src="csvTemplate.js?v=20260923"></script>
@@ -28,7 +32,8 @@
     // CDN 不可用时启用轻量 Canvas 回退，保证离线演示仍有曲线、坐标和点位 Tooltip。
     (function installChartFallback() {
       // simulator.js 已提供基础降级图表；这里用多坐标增强版替换它，若 CDN 真正加载则保留 Chart.js。
-      if (window.Chart?.version || window.Chart?.__qjzhEnhanced) return;
+      const nativeChart = window.Chart?.version ? window.Chart : null;
+      if (window.Chart?.__qjzhEnhanced) return;
       const plugins = [];
       const instances = new WeakMap();
       const colors = { yAmmonia: "#FF6B6B", yTemperature: "#4A9EFF", yHumidity: "#00D4AA", yLight: "#FFD93D" };
@@ -184,7 +189,8 @@
       FallbackChart.register = (...items) => plugins.push(...items);
       FallbackChart.getChart = (canvas) => instances.get(canvas);
       FallbackChart.__qjzhEnhanced = true;
-      window.Chart = FallbackChart;
+      window.QJZHCanvasChart = FallbackChart;
+      if (!nativeChart) window.Chart = FallbackChart;
     })();
   </script>
   <script>
@@ -2871,25 +2877,28 @@
   </style>
   <style id="qjzh-feature-styles">
     .qjzh-boundary-banner{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;gap:16px;align-items:center;padding:10px 18px;background:#e8f4ef;color:#123a34;border:1px solid #86c9b5;border-radius:12px;font-size:.9rem;line-height:1.5}.qjzh-boundary-banner button{border:0;background:transparent;font-size:1.5rem;cursor:pointer;color:inherit}.qjzh-tabs{display:flex;gap:8px;margin:16px 0}.qjzh-tab{padding:9px 18px;border:1px solid rgba(102,190,169,.4);border-radius:999px;background:transparent;color:inherit;cursor:pointer}.qjzh-tab.active{background:#16d6b0;color:#08231f}.qjzh-data-panel{margin:0 0 18px;padding:18px}.qjzh-data-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.qjzh-data-card{padding:14px;border:1px solid rgba(150,190,200,.25);border-radius:12px;background:rgba(7,20,31,.18)}.qjzh-data-card h3{margin:0 0 8px}.qjzh-data-card p{font-size:.85rem;line-height:1.5;min-height:46px}.qjzh-data-card input{width:100%;box-sizing:border-box;margin:4px 0;padding:8px;border-radius:8px;border:1px solid rgba(150,190,200,.35);background:transparent;color:inherit}.qjzh-button-row{display:flex;gap:8px;flex-wrap:wrap}.qjzh-manual-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.qjzh-manual-form input,.qjzh-manual-form button{min-width:0}.qjzh-manual-form button{grid-column:1/-1}.qjzh-quality-badge{padding:5px 10px;border-radius:999px;background:rgba(255,217,61,.15);color:#ffd93d;white-space:nowrap}.qjzh-data-state{margin:12px 0;padding:10px 12px;border-radius:8px}.qjzh-state-empty{background:rgba(120,150,170,.16)}.qjzh-state-loading{background:rgba(74,158,255,.16)}.qjzh-state-warning{background:rgba(245,124,0,.17);color:#ffd59c}.qjzh-state-error{background:rgba(211,47,47,.17);color:#ffb4b4}.qjzh-institution-view{display:none}.qjzh-institution-view.active{display:block}.qjzh-report-panel{margin:18px 0;padding:18px}.qjzh-scene-presets{position:fixed;right:18px;bottom:18px;z-index:15;display:flex;gap:8px;flex-wrap:wrap;max-width:300px}.qjzh-scene-presets button{font-size:.8rem}.qjzh-report-preview{background:#fff;color:#17232d;padding:20px;border-radius:10px}.qjzh-confidence{margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(22,214,176,.12);color:#8ff1dd}.qjzh-footer-compliance{display:block;margin-top:8px;font-size:.78rem;opacity:.8}@media(max-width:900px){.qjzh-data-grid{grid-template-columns:1fr}.qjzh-boundary-banner{position:relative;align-items:flex-start;font-size:.8rem}}
-    .qjzh-confidence-warn{background:rgba(245,124,0,.15);color:#ffd59c}.qjzh-confidence-err{background:rgba(211,47,47,.17);color:#ffb4b4}
+    .qjzh-confidence-warn{background:rgba(245,124,0,.15);color:#ffd59c}.qjzh-confidence-err{background:rgba(211,47,47,.17);color:#ffb4b4}.qjzh-scene-toggle{display:none}.qjzh-role-detail{margin:-4px 0 12px;font-size:.86rem;opacity:.82}
+    html[data-theme="light"] .qjzh-data-card{background:rgba(7,20,31,.05);border-color:rgba(7,20,31,.15)}html[data-theme="light"] .qjzh-data-card input{background:#fff;color:#17232d}html[data-theme="light"] .qjzh-boundary-banner{background:#eef7f2;border-color:#9ad5c2}html[data-theme="light"] .qjzh-quality-badge{background:rgba(245,124,0,.12);color:#9a5200}html[data-theme="light"] .qjzh-state-empty{background:rgba(120,150,170,.12)}html[data-theme="light"] .qjzh-confidence{background:rgba(22,214,176,.1);color:#0e7a64}html[data-theme="light"] .qjzh-institution-view table{color:#17232d}
+    @media(max-width:900px){.qjzh-scene-presets{position:static;display:block;max-width:100%;margin:14px 0 18px}.qjzh-scene-toggle{display:inline-flex}.qjzh-scene-actions{display:none;gap:8px;max-width:100%;overflow-x:auto;padding:8px 0 4px;scrollbar-width:thin}.qjzh-scene-presets.expanded .qjzh-scene-actions{display:flex}.qjzh-scene-actions button{flex:0 0 auto}}
     @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-tabs,.qjzh-boundary-banner,button{display:none!important}.main-grid,#decisionPanel,#reportPanel{display:block!important}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
   </style>
 </head>
 <body>
+    <noscript><div style="padding:16px;background:#ffe9e9;color:#a33;text-align:center">青境智衡为纯前端演示系统，需要启用 JavaScript 才能运行。</div></noscript>
     <aside class="qjzh-boundary-banner" id="boundaryBanner" role="note">
-      <span><strong>青境智衡 · 纯软件环境数据服务</strong>：兼容第三方通用传感器、人工录入与公开数据，仅提供校准、分析和决策建议，不生产/销售/控制硬件，不涉及风机控制。</span>
+      <span class="qjzh-boundary-copy"><strong>青境智衡 · 纯软件环境数据服务</strong>：兼容第三方通用传感器、人工录入与公开数据，仅提供校准、分析和决策建议，不生产/销售/控制硬件，不涉及风机控制。</span>
       <button type="button" id="dismissBoundary" aria-label="关闭边界声明">×</button>
     </aside>
     <nav class="qjzh-tabs" aria-label="视图切换">
-      <button class="qjzh-tab active" data-view="individual" type="button">散户版</button>
-      <button class="qjzh-tab" data-view="institution" type="button">机构版</button>
+      <button class="qjzh-tab active" data-view="individual" data-i18n="qjzh.tab.individual" type="button">散户版</button>
+      <button class="qjzh-tab" data-view="institution" data-i18n="qjzh.tab.institution" type="button">机构版</button>
     </nav>
     <section class="qjzh-data-panel glass" id="dataImportPanel" aria-labelledby="dataImportTitle">
-      <div class="panel-head"><div><h2 class="panel-title" id="dataImportTitle">数据接入</h2><p class="panel-note">本系统不做采集端，兼容市面通用传感器与人工录入，做采集后的校准、分析与决策端。<span id="recommendationOutputTitle">决策建议输出</span> · 建议输出</p></div><span class="qjzh-quality-badge" id="dataQualityBadge">尚未评分</span></div>
+      <div class="panel-head"><div><h2 class="panel-title" id="dataImportTitle" data-i18n="qjzh.data.title">数据接入</h2><p class="panel-note" data-i18n="qjzh.data.note">本系统不做采集端，兼容市面通用传感器与人工录入，做采集后的校准、分析与决策端。</p></div><span class="qjzh-quality-badge" id="dataQualityBadge">尚未评分</span></div>
       <div class="qjzh-data-grid">
-        <article class="qjzh-data-card"><h3>第三方传感器导入</h3><p>上传包含 timestamp、site_id、altitude_m、temp_c、rh_percent、raw_nh3_ppm、device_model 的 CSV。</p><input id="csvInput" type="file" accept=".csv,text/csv" aria-label="上传传感器 CSV"><div class="qjzh-button-row"><button class="control secondary" id="downloadCsvTemplate" type="button">下载 CSV 模板</button><button class="control secondary" id="loadSampleData" type="button">加载示例数据</button></div></article>
-        <article class="qjzh-data-card"><h3>人工录入</h3><form id="manualDataForm" class="qjzh-manual-form"><input name="site_id" required placeholder="站点名称"><input name="altitude_m" required type="number" min="2200" max="3500" placeholder="海拔 (m)"><input name="temp_c" required type="number" min="-15" max="25" step="0.1" placeholder="温度 (℃)"><input name="rh_percent" required type="number" min="20" max="85" placeholder="湿度 (%)"><input name="raw_nh3_ppm" required type="number" min="0" max="30" step="0.1" placeholder="原始氨气 (ppm)"><input name="device_model" value="人工录入" placeholder="设备型号"><button class="control" type="submit">接入并校准</button></form></article>
-        <article class="qjzh-data-card qjzh-empty-card" id="dataEmptyState"><h3>演示模拟数据</h3><p>尚未接入数据，请上传 CSV 或手动录入。</p><button class="control" id="loadDemoSimulation" type="button">加载青海冬季 24 小时演示</button></article>
+        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.importCsv">第三方传感器导入</h3><p>上传包含 timestamp、site_id、altitude_m、temp_c、rh_percent、raw_nh3_ppm、device_model 的 CSV。</p><input id="csvInput" type="file" accept=".csv,text/csv" aria-label="上传传感器 CSV"><div class="qjzh-button-row"><button class="control secondary" id="downloadCsvTemplate" type="button">下载 CSV 模板</button><button class="control secondary" id="loadSampleData" type="button">加载示例数据</button></div></article>
+        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.manual">人工录入</h3><form id="manualDataForm" class="qjzh-manual-form"><input name="site_id" required placeholder="站点名称"><input name="altitude_m" required type="number" min="2200" max="3500" placeholder="海拔 (m)"><input name="temp_c" required type="number" min="-15" max="25" step="0.1" placeholder="温度 (℃)"><input name="rh_percent" required type="number" min="20" max="85" placeholder="湿度 (%)"><input name="raw_nh3_ppm" required type="number" min="0" max="30" step="0.1" placeholder="原始氨气 (ppm)"><input name="device_model" value="人工录入" placeholder="设备型号"><button class="control" type="submit">接入并校准</button></form></article>
+        <article class="qjzh-data-card qjzh-empty-card" id="dataEmptyState"><h3 data-i18n="qjzh.data.demo">演示模拟数据</h3><p>尚未接入数据，请上传 CSV 或手动录入。</p><button class="control" id="loadDemoSimulation" type="button">加载青海冬季 24 小时演示</button></article>
       </div>
       <div id="dataImportStatus" class="qjzh-data-state qjzh-state-empty" role="status">尚未接入数据，请上传 CSV 或手动录入。</div>
       <button class="control secondary" id="clearLocalData" type="button">清除本地数据</button>
@@ -2897,7 +2906,7 @@
   <div class="app">
     <header class="topbar glass">
       <div class="brand-block">
-        <h1 class="title">青境智衡 · 高原幼畜圈舍环境监测与决策系统</h1>
+        <h1 class="title">青境智衡 · 高原圈舍环境数据服务系统</h1>
         <p class="subtitle sr-only">实时监测温湿度、氨气、光照，本地规则库输出预警与通风建议。</p>
       </div>
       <div class="status-strip" aria-label="系统状态与演示控制">
@@ -3165,7 +3174,7 @@
           <div class="panel-head">
             <div>
               <h2 class="panel-title">算法演示面板</h2>
-              <p class="panel-note">模型 <span class="model-version" id="modelVersion">v--</span> · 测试误差 0.71%</p>
+              <p class="panel-note">模型 <span class="model-version" id="modelVersion">v--</span> · <span id="modelBoundaryNote">测试误差 0.71%（合成测试集理论推导，待现场实测校准）</span></p>
             </div>
           </div>
           <div class="demo-controls">
@@ -3257,10 +3266,10 @@
           <details class="rule-library-details">
             <summary>📄 查看完整规则库文档</summary>
             <div class="rule-library-content">
-              <article><strong>一级警报</strong>：<em>氨气 &gt; 20 ppm</em>，立即强排通风并转移至安全区域。依据：NY/T 388-1999。</article>
-              <article><strong>警告</strong>：<em>氨气 &gt; 15 ppm</em>，在 12:00-14:00 执行 5-10 分钟短时通风，温度降幅不超过 3℃。依据：NY/T 388-1999 与本地冬季策略。</article>
+              <article><strong>一级警报</strong>：<em>氨气 &gt; 20 ppm</em>，建议立即组织通风并转移至安全区域。依据：NY/T 388-1999。</article>
+              <article><strong>警告</strong>：<em>氨气 &gt; 15 ppm</em>，建议在 12:00-14:00 通风 5-10 分钟，温度降幅不超过 3℃。依据：NY/T 388-1999 与本地冬季策略。</article>
               <article><strong>复合预警</strong>：<em>湿度 &gt; 80% 且氨气 &gt; 10 ppm</em>，优先清粪、换干燥垫料并延长午间通风至 15 分钟。</article>
-              <article><strong>低温注意</strong>：<em>温度 &lt; 0℃</em>，启动保温，缩短单次通风至 3-5 分钟并观察幼畜状态。</article>
+              <article><strong>低温注意</strong>：<em>温度 &lt; 0℃</em>，建议开启保温，缩短单次通风至 3-5 分钟并观察幼畜状态。</article>
               <article><strong>正常</strong>：未触发以上风险条件，保持管理措施并持续巡检。所有决策在本地主控侧离线执行，可追溯、无外部模型依赖。</article>
             </div>
           </details>
@@ -3269,20 +3278,21 @@
     </main>
 
     <section class="qjzh-institution-view panel glass" id="institutionView" aria-labelledby="institutionTitle">
-      <div class="panel-head"><div><h2 class="panel-title" id="institutionTitle">机构版多圈舍视图</h2><p class="panel-note">默认加载 5 个青海模拟圈舍，可从本地记录导入额外站点。</p></div><select id="institutionRole" aria-label="机构角色"><option>畜牧站</option><option>农牧院校</option><option>合作社</option></select></div>
+      <div class="panel-head"><div><h2 class="panel-title" id="institutionTitle" data-i18n="qjzh.institution.title">机构版多圈舍视图</h2><p class="panel-note">默认加载 5 个青海模拟圈舍，可从本地记录导入额外站点。</p></div><label><span data-i18n="qjzh.institution.role">机构角色</span> <select id="institutionRole" aria-label="机构角色"><option value="station">畜牧站</option><option value="college">农牧院校</option><option value="cooperative">合作社</option></select></label></div>
       <div id="institutionSummary" class="qjzh-data-state qjzh-state-empty">正在加载区域汇总…</div>
+      <p id="institutionRoleDetail" class="qjzh-role-detail">畜牧站角色：区域汇总优先，列表按氨气风险从高到低排列。</p>
       <div class="data-table-scroll"><table class="data-table"><thead><tr><th>站点</th><th>海拔</th><th>畜种</th><th>校准氨气</th><th>风险等级</th><th>最后更新时间</th></tr></thead><tbody id="institutionRows"></tbody></table></div>
       <div class="qjzh-button-row"><button class="control" id="institutionExport" type="button">导出区域报告</button><button class="control secondary" id="institutionImport" type="button">从本地记录导入</button></div>
     </section>
     <section class="qjzh-report-panel panel glass" id="reportPanel" aria-labelledby="reportTitle">
-      <div class="panel-head"><div><h2 class="panel-title" id="reportTitle">季度环境报告</h2><p class="panel-note">默认统计最近 90 天；报告将在新窗口渲染，可打印或另存为 PDF。</p></div></div>
+      <div class="panel-head"><div><h2 class="panel-title" id="reportTitle" data-i18n="qjzh.report.title">季度环境报告</h2><p class="panel-note">默认统计最近 90 天；报告将在新窗口渲染，可打印或另存为 PDF。</p></div></div>
       <div class="qjzh-button-row"><label>起始日期 <input id="reportStartDate" type="date"></label><label>结束日期 <input id="reportEndDate" type="date"></label><button class="control" id="generateReport" type="button">生成并打印报告</button></div>
       <div id="reportStatus" class="qjzh-data-state qjzh-state-empty">选择日期范围后生成报告。</div>
     </section>
-    <div class="qjzh-scene-presets" aria-label="答辩场景预设"><button class="control secondary" data-scene="retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" type="button">断网场景</button><button class="control secondary" id="resetDemoData" type="button">重置演示数据</button></div>
+    <div class="qjzh-scene-presets" aria-label="答辩场景预设"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" type="button" aria-expanded="false">演示</button><div class="qjzh-scene-actions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">断网场景</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
     <footer class="footer">
-      <span>青境智衡 · 纯软件环境数据服务演示 · v2026.09</span>
-      <span>数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议 · 部署时间：2026-09-24</span>
+      <span id="buildVersionText">青境智衡 · 纯软件环境数据服务演示</span>
+      <span id="buildDateText">数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议</span>
     </footer>
   </div>
 
@@ -3322,19 +3332,20 @@
       en: {
         "sensor.labels": ["Ammonia", "Barn temperature", "Relative humidity", "Illuminance"],
         "sensor.references": ["15 ppm threshold", "0 C / 22 C", "80% high humidity", "Supplemental-light guide"],
+        "qjzh.page.title": "Qingjing Zhiheng · Highland Barn Environmental Data Service", "qjzh.page.subtitle": "Data intake → highland calibration → decision support → recommendation → report", "qjzh.tab.individual": "Individual", "qjzh.tab.institution": "Institution", "qjzh.data.title": "Data intake", "qjzh.data.note": "The system does not provide sensors. It calibrates, analyzes and produces recommendations from third-party or manually entered data.", "qjzh.data.importCsv": "Third-party CSV", "qjzh.data.manual": "Manual entry", "qjzh.data.demo": "Demo data", "qjzh.confidence.wait": "Confidence: waiting for data", "qjzh.confidence.high": "Confidence: high", "qjzh.confidence.medium": "Confidence: medium", "qjzh.confidence.low": "Confidence: low", "qjzh.institution.title": "Institution multi-barn view", "qjzh.institution.role": "Institution role", "qjzh.report.title": "Quarterly environment report", "qjzh.scene.retail": "Individual scene", "qjzh.scene.institution": "Institution scene", "qjzh.scene.offline": "Offline scene", "qjzh.scene.reset": "Reset demo", "qjzh.advice.title": "Decision recommendations", "qjzh.algorithm.title": "Highland calibration demo", "qjzh.pipeline.intake": "Data intake", "qjzh.pipeline.calibrate": "Highland calibration", "qjzh.pipeline.decide": "Decision support", "qjzh.pipeline.output": "Recommendation", "qjzh.footer.product": "Qingjing Zhiheng · software environmental data service demo", "qjzh.footer.boundary": "Local-only data · no animal diagnosis · no hardware control · reference recommendations only", "qjzh.footer.deployed": "Deployed",
         "status.lowTemp": "Low temperature", "status.watch": "Watch", "status.normal": "Normal", "status.high": "High", "status.low": "Low", "status.severe": "Severe", "status.exceeded": "Above limit", "status.night": "Night",
         "step.pending": "Pending", "step.running": "Running", "step.monitoring": "Monitoring", "step.completed": "Complete", "step.trend": "Trend", "step.basis": "Basis",
-        "step.critical.1": "Start exhaust ventilation immediately and move young livestock to a safe area.", "step.critical.2": "Check barn sealing and investigate manure accumulation points.", "step.critical.3": "Monitor the NH3 decrease and record a reading every 2 minutes.",
+        "step.critical.1": "Recommend organizing ventilation immediately and moving young livestock to a safe area.", "step.critical.2": "Check barn sealing and investigate manure accumulation points.", "step.critical.3": "Monitor the NH3 decrease and record a reading every 2 minutes.",
         "step.warning.1": "Use low-speed ventilation for 5-10 minutes in the 12:00-14:00 window.", "step.warning.2": "Check for damp bedding and increase replacement frequency.", "step.warning.3": "Monitor temperature changes and keep the drop within 3 C.",
         "step.alert.1": "Remove manure promptly to reduce the ammonia source.", "step.alert.2": "Extend noon ventilation to 15 minutes.", "step.alert.3": "Add dry bedding to reduce humidity.",
         "step.caution.1": "Add heat lamps or extra bedding.", "step.caution.2": "Limit each ventilation event to 3-5 minutes.", "step.caution.3": "Observe crowding and add heating when required.",
         "step.normal.1": "Maintain the current management measures.", "step.normal.2": "Inspect equipment operation regularly.", "step.normal.3": "Watch the noon window and perform a short ventilation inspection when suitable.",
-        "fan.off": "Waiting for assessment", "fan.low": "Watch", "fan.medium": "To-do", "fan.exhaust": "Urgent", "heater.off": "Pending", "heater.heating": "Recommend insulation",
-        "command.none": "Recommendation: waiting for calibrated input", "command.critical": "Recommendation: organize ventilation and recheck", "command.warning": "Recommendation: short ventilation, 8 min, 12:00-14:00", "command.alert": "Recommendation: clean manure, replace bedding, then ventilate", "command.caution": "Recommendation: add insulation and shorten ventilation",
-        "alarm.critical": "NH3 {ammonia} ppm: recommend organizing ventilation and recheck.", "alarm.warning": "NH3 {ammonia} ppm: recommend a short noon ventilation review.", "alarm.alert": "Humidity {humidity}% + NH3 {ammonia} ppm: recommend cleaning manure and replacing bedding.", "alarm.caution": "Temperature {temperature} C; recommendation: {heater}.", "alarm.normal": "Conditions are normal; continue routine inspection.", "alarm.fan": "Risk {fan}; {command}",
+        "status.riskPending": "Waiting for assessment", "status.watch": "Watch", "status.todo": "To-do", "status.urgent": "Urgent", "status.recommendation": "Pending", "status.recommendInsulation": "Recommend insulation",
+        "advice.pending": "Recommendation: waiting for calibrated input", "advice.critical": "Recommendation: organize ventilation and recheck", "advice.warning": "Recommendation: short ventilation, 8 min, 12:00-14:00", "advice.alert": "Recommendation: clean manure, replace bedding, then ventilate", "advice.caution": "Recommendation: add insulation and shorten ventilation",
+        "alarm.critical": "NH3 {ammonia} ppm: recommend organizing ventilation and recheck.", "alarm.warning": "NH3 {ammonia} ppm: recommend a short noon ventilation review.", "alarm.alert": "Humidity {humidity}% + NH3 {ammonia} ppm: recommend cleaning manure and replacing bedding.", "alarm.caution": "Temperature {temperature} C; recommendation: {heater}.", "alarm.normal": "Conditions are normal; continue routine inspection.", "alarm.recommendation": "Risk {fan}; {command}",
         "pipeline.collect": "{time} · compatible third-party sensors", "pipeline.compensate": "{pressure} kPa · NH3 {raw} to {corrected}", "pipeline.execute": "Recommendation output",
         "trigger.time": "Time", "trigger.ammonia": "NH3", "trigger.humidity": "Humidity", "trigger.temperature": "Temperature", "trigger.light": "Light", "trigger.tempDrop": "Temperature drop",
-        "vent.inside": "Within window", "vent.outside": "Outside window", "vent.high": "NH3 is above the threshold. Run 5-10 minutes of short ventilation from 12:00-14:00 and keep the temperature change within 3 C.", "vent.normal": "No active ventilation is needed. Continue monitoring ammonia accumulation; inspect briefly during the noon window.", "vent.active": "Short ventilation has started for {duration} min. Continue monitoring the temperature drop.", "vent.alertOnly": "Recommendation only; review manually.", "vent.standby": "Continue routine inspection and monitoring.",
+        "vent.inside": "Within window", "vent.outside": "Outside window", "vent.high": "NH3 is above the threshold. Recommend 5-10 minutes of short ventilation from 12:00-14:00 and keep the temperature change within 3 C.", "vent.normal": "No active ventilation is recommended. Continue monitoring ammonia accumulation; inspect briefly during the noon window.", "vent.active": "Recommendation generated: {duration} minutes of short ventilation; continue monitoring the temperature drop.", "vent.alertOnly": "Recommendation only; review manually.", "vent.standby": "Continue routine inspection and monitoring.",
         "rule.basis": "Decision basis: matched rule {index} - {condition}{engineRule}", "rule.engine": " · Engine rule {ruleId}", "rule.matched": "Matched", "rule.unmet": "Not met", "rule.names": ["Level-one alert", "Warning", "Combined alert", "Low-temperature notice", "Normal"], "rule.conditions": ["NH3 > 20 ppm", "NH3 > 15 ppm", "Humidity > 80% and NH3 > 10 ppm", "Temperature < 0 C", "No above condition is met"],
         "level.critical": "Level-one alert", "level.warning": "Warning", "level.alert": "Combined alert", "level.caution": "Low-temperature notice", "level.normal": "Normal",
         "factor.up": "Compensation increase", "factor.down": "Compensation decrease", "factor.steady": "Balanced compensation",
@@ -3342,14 +3353,15 @@
         "threshold": "NH3 15 ppm threshold", "trend.collecting": "Collecting trend data. A summary is available after 10 samples.", "trend.rising": "NH3 is rising continuously. Watch the noon ventilation window.", "trend.falling": "NH3 is falling continuously. Conditions are stabilizing.", "trend.stable": "NH3 is stable with no clear accumulation trend.", "trend.fast": "NH3 is rising rapidly ↑ · slope +{slope} ppm/h", "trend.slow": "NH3 is rising slowly ↗ · slope +{slope} ppm/h", "trend.down": "NH3 is falling ↓ · slope {slope} ppm/h", "trend.flat": "Trend stable · no clear deterioration", "points": "points",
         "knowledge.empty": "No displayable rule catalog is available from the local knowledge base.", "knowledge.untitled": "Untitled rule", "knowledge.condition": "Condition defined by the knowledge base", "knowledge.source": "Source", "knowledge.local": "Local knowledge base", "knowledge.citation": "Basis", "knowledge.ruleId": "Triggered rule ID", "knowledge.scenario": "Scenario", "knowledge.default": "Default fallback", "knowledge.activeVent": "Recommendation: short ventilation for {duration} min", "knowledge.alertOnly": "Recommendation issued; review manually", "knowledge.standby": "Continue routine inspection and monitoring", "knowledge.historyEmpty": "Important advice will be recorded as the simulation progresses.",
         "urgency.critical": "Urgent action", "urgency.warning": "Action reminder", "urgency.info": "Attention", "urgency.normal": "Routine status", "advice.critical": "Immediate response required. Clean manure sources, confirm the air outlet is clear, and keep livestock safe while the local controller manages ventilation.", "advice.warning": "Ammonia needs attention. Arrange cleaning and use the noon ventilation window while keeping temperature changes within limits.", "advice.info": "Monitor humidity and ammonia together. Replace damp bedding and schedule a noon inspection.", "advice.normal": "Conditions are controllable. Keep routine management and inspect the equipment regularly.",
-        "simulation.running": "24-hour simulation running", "simulation.pause": "Pause simulation", "simulation.complete": "24-hour simulation complete", "simulation.restart": "Run simulation again", "simulation.paused": "Simulation paused", "simulation.resume": "Resume simulation", "simulation.time": "Simulation time: {time}", "simulation.data": "Local simulation data", "simulation.fanRun": "Low / {duration} min", "simulation.standby": "Off / standby", "marker.vent": "Ventilation started",
+        "simulation.running": "24-hour simulation running", "simulation.pause": "Pause simulation", "simulation.complete": "24-hour simulation complete", "simulation.restart": "Run simulation again", "simulation.paused": "Simulation paused", "simulation.resume": "Resume simulation", "simulation.time": "Simulation time: {time}", "simulation.data": "Local simulation data", "simulation.fanRun": "Recommend short ventilation / {duration} min", "simulation.standby": "Recommendation pending", "marker.vent": "Ventilation recommendation",
         "scenario.running": "Scenario simulation: {name}",
-        "static.scenarioAria": "Scenario simulation", "static.statusAria": "System status and demo controls", "static.themeAria": "Display theme", "static.languageAria": "Language selection", "static.pipelineAria": "Data intake to recommendation output process", "static.sensorAria": "Live sensor readings", "static.decisionAria": "Local decision advice", "static.triggerAria": "Current trigger conditions", "static.match": "Rule match chain · priority check", "static.waitSample": "Waiting for sample", "static.waitSampleDesc": "The rule matching process will appear after the current sensor sample is received.", "static.ventWindow": "Ventilation window 12:00-14:00", "static.waitDecision": "Waiting for decision", "static.ruleState": ["Matched rule", "Recommendation", "Traceable basis"], "static.catalogNote": "Current thresholds, operating constraints and traceable basis from the local rule catalog.", "static.catalogLoading": "Loading the local knowledge-base rule catalog.", "static.library": "View complete rule-library document", "static.libraryRules": ["Level-one alert: NH3 > 20 ppm. Recommend organizing ventilation and move livestock to a safe area. Basis: NY/T 388-1999.", "Warning: NH3 > 15 ppm. Recommend 5-10 minutes of short ventilation from 12:00-14:00; temperature change must not exceed 3 C.", "Combined alert: humidity > 80% and NH3 > 10 ppm. Clean manure, replace bedding and extend noon ventilation to 15 minutes.", "Low-temperature notice: temperature < 0 C. Recommend insulation and limit ventilation to 3-5 minutes.", "Normal: no risk condition is active. Continue inspection and offline local decision-making."], "static.footer": ["Qingjing Zhiheng · software environmental data service demo · v2026.09", "Data stays local · no animal diagnosis · no hardware control · reference recommendations only · deployed 2026-09-24"],
-        "static.calibrationLabels": ["Estimated pressure", "Compensation factor", "Raw NH3", "Compensated NH3"], "static.compareTitle": "Highland dual-variable compensation comparison", "static.compareLabels": ["Raw NH3", "Compensated NH3"], "static.compareNote": "A pressure-temperature-humidity nonlinear model corrects sensor drift in high-altitude low pressure; theoretical error is reduced from 35%-40% to within 10%.", "static.ventLabels": ["Risk level", "Recommendation"], "static.alarmWaiting": "Waiting for a traceable recommendation.", "static.ruleStateNote": "Displays current outputs from the local knowledge base and decision engine without duplicating the rules in this page.", "static.compensationNote": "Simulates sensor compensation under high-altitude, low-pressure conditions.", "static.executionNote": "Shows decision recommendations and their traceable basis; execution remains with existing equipment or people.", "static.modelNote": "test error 0.71%"
+        "static.scenarioAria": "Scenario simulation", "static.statusAria": "System status and demo controls", "static.themeAria": "Display theme", "static.languageAria": "Language selection", "static.pipelineAria": "Data intake to recommendation output process", "static.sensorAria": "Live sensor readings", "static.decisionAria": "Local decision advice", "static.triggerAria": "Current trigger conditions", "static.match": "Rule match chain · priority check", "static.waitSample": "Waiting for sample", "static.waitSampleDesc": "The rule matching process will appear after the current sensor sample is received.", "static.ventWindow": "Ventilation window 12:00-14:00", "static.waitDecision": "Waiting for decision", "static.ruleState": ["Matched rule", "Recommendation", "Traceable basis"], "static.catalogNote": "Current thresholds, operating constraints and traceable basis from the local rule catalog.", "static.catalogLoading": "Loading the local knowledge-base rule catalog.", "static.library": "View complete rule-library document", "static.libraryRules": ["Level-one alert: NH3 > 20 ppm. Recommend organizing ventilation and move livestock to a safe area. Basis: NY/T 388-1999.", "Warning: NH3 > 15 ppm. Recommend 5-10 minutes of short ventilation from 12:00-14:00; temperature change must not exceed 3 C.", "Combined alert: humidity > 80% and NH3 > 10 ppm. Clean manure, replace bedding and extend noon ventilation to 15 minutes.", "Low-temperature notice: temperature < 0 C. Recommend insulation and limit ventilation to 3-5 minutes.", "Normal: no risk condition is active. Continue inspection and offline local decision-making."],
+        "static.calibrationLabels": ["Estimated pressure", "Compensation factor", "Raw NH3", "Compensated NH3"], "static.compareTitle": "Highland dual-variable compensation comparison", "static.compareLabels": ["Raw NH3", "Compensated NH3"], "static.compareNote": "A pressure-temperature-humidity nonlinear model corrects sensor drift in high-altitude low pressure; theoretical error is reduced from 35%-40% to within 10%.", "static.ventLabels": ["Risk level", "Recommendation"], "static.alarmWaiting": "Waiting for a traceable recommendation.", "static.ruleStateNote": "Displays current outputs from the local knowledge base and decision engine without duplicating the rules in this page.", "static.compensationNote": "Simulates sensor compensation under high-altitude, low-pressure conditions.", "static.executionNote": "Shows decision recommendations and their traceable basis; execution remains with existing equipment or people.", "static.modelNote": "test error 0.71% (synthetic theoretical test; field calibration pending)"
       },
       bo: {
         "sensor.labels": ["ཨམ་མོ་ནི་ཡ", "ཁང་པའི་དྲོད་ཚད", "བརླན་ཚད", "འོད་ཀྱི་སྟུག་ཚད"],
         "sensor.references": ["15 ppm ཚད་ཐིག", "0 C / 22 C", "80% བརླན་ཚད་མཐོ", "ཁ་གསབ་འོད་ཀྱི་གཞི་འཛིན"],
+        "qjzh.page.title": "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ", "qjzh.page.subtitle": "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ", "qjzh.tab.individual": "ཁྱིམ་ཚང་ཐོན་སྐྱེད", "qjzh.tab.institution": "སྒྲིག་འཛུགས", "qjzh.data.title": "གཞི་གྲངས་འཇུག་པ", "qjzh.data.note": "མ་ལག་འདིས་བསྡུ་ལེན་སྒྲིག་ཆས་མི་བཟོ། ཕྱིའི་གཞི་གྲངས་ལ་ཁ་གསབ་དང་དཔྱད་ཞིབ། བསམ་འཆར་སྤྲོད།", "qjzh.data.importCsv": "CSV ནང་འདྲེན", "qjzh.data.manual": "ལག་བྲིས་ནང་འཇུག", "qjzh.data.demo": "དཔེ་སྟོན་གཞི་གྲངས", "qjzh.confidence.wait": "ཡིད་ཆེས། གཞི་གྲངས་སྒུག", "qjzh.confidence.high": "ཡིད་ཆེས་མཐོ", "qjzh.confidence.medium": "ཡིད་ཆེས་འབྲིང", "qjzh.confidence.low": "ཡིད་ཆེས་དམའ", "qjzh.institution.title": "སྒྲིག་འཛུགས་ཕྱུགས་ཁང་མང་པོའི་མཐོང་རིས", "qjzh.institution.role": "སྒྲིག་འཛུགས་ལས་འགན", "qjzh.report.title": "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", "qjzh.scene.retail": "ཁྱིམ་ཚང་རྣམ་པ", "qjzh.scene.institution": "སྒྲིག་འཛུགས་རྣམ་པ", "qjzh.scene.offline": "དྲ་མེད་རྣམ་པ", "qjzh.scene.reset": "དཔེ་སྟོན་བསྐྱར་སྒྲིག", "qjzh.advice.title": "ཐག་གཅོད་བསམ་འཆར", "qjzh.algorithm.title": "མཐོ་སྒང་ཁ་གསབ་དཔེ་སྟོན", "qjzh.pipeline.intake": "གཞི་གྲངས་འཇུག", "qjzh.pipeline.calibrate": "མཐོ་སྒང་ཁ་གསབ", "qjzh.pipeline.decide": "ཐག་གཅོད", "qjzh.pipeline.output": "བསམ་འཆར", "qjzh.footer.product": "མཐོ་སྒང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ་དཔེ་སྟོན", "qjzh.footer.boundary": "གཞི་གྲངས་ས་གནས་སུ་ཉར · སྨན་བཅོས་མིན · སྲ་ཆས་མི་ཚོད", "qjzh.footer.deployed": "འགྲེམས་སྤེལ་དུས་ཚོད",
         "status.lowTemp": "དྲོད་ཚད་དམའ", "status.watch": "དོ་སྣང", "status.normal": "རྒྱུན་ལྡན", "status.high": "མཐོ", "status.low": "དམའ", "status.severe": "ཚབས་ཆེ", "status.exceeded": "ཚད་བརྒལ", "status.night": "མཚན་མོ",
         "step.pending": "སྒུག་བཞིན", "step.running": "ལག་བསྟར", "step.monitoring": "ལྟ་ཞིབ", "step.completed": "ལེགས་འགྲུབ", "step.trend": "འཕེལ་ཕྱོགས", "step.basis": "གཞི་འཛིན",
         "vent.suggest": "རླུང་འགྲོའི་བསམ་འཆར", "vent.short": "དུས་ཐུང་རླུང་འགྲོ", "vent.hold": "རླུང་འགྲོ་རེ་ཞིག་འགོར་བཞག", "advice.source": "བསམ་འཆར་ཁུངས་བཙན",
@@ -3375,6 +3387,8 @@
         : uiCopy[language]?.[key] || uiCopy.en[key] || zhFallback;
       return String(template).replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
     }
+    window.QJZH = window.QJZH || {};
+    window.QJZH.translate = tr;
 
     /** 读取多项翻译文本，中文模式保留原有中文内容。 */
     function trList(key, index, zhFallback) {
@@ -3774,11 +3788,11 @@
 
     // 将规则命中结果转换为结构化建议清单，便于演示“本地决策 → 建议输出”。
     function getDecisionSteps(levelClass, inWindow) {
-      const stepIcon = inWindow ? `● ${tr("step.running", "执行中")}` : `▶ ${tr("step.pending", "待执行")}`;
+      const stepIcon = inWindow ? `● ${tr("step.completed", "建议已生成")}` : `▶ ${tr("step.pending", "待生成")}`;
 
       if (levelClass === "critical") {
         return [
-          { status: `● ${tr("step.running", "执行中")}`, text: tr("step.critical.1", "立即启动强排通风，疏散幼畜至安全区域。") },
+          { status: `● ${tr("step.completed", "建议已生成")}`, text: tr("step.critical.1", "建议立即组织通风，疏散幼畜至安全区域。") },
           { status: `▶ ${tr("step.pending", "待执行")}`, text: tr("step.critical.2", "检查暖棚密封性，排查粪污堆积点。") },
           { status: `▶ ${tr("step.pending", "待执行")}`, text: tr("step.critical.3", "持续监测氨气下降趋势，每 2 分钟记录一次。") }
         ];
@@ -3794,7 +3808,7 @@
 
       if (levelClass === "alert") {
         return [
-          { status: `● ${tr("step.running", "执行中")}`, text: tr("step.alert.1", "立即清理粪污，减少氨气源头。") },
+          { status: `● ${tr("step.completed", "建议已生成")}`, text: tr("step.alert.1", "建议及时清理粪污，减少氨气源头。") },
           { status: stepIcon, text: tr("step.alert.2", "延长午间通风至 15 分钟。") },
           { status: `▶ ${tr("step.pending", "待执行")}`, text: tr("step.alert.3", "增加干燥垫料，降低湿度。") }
         ];
@@ -3802,7 +3816,7 @@
 
       if (levelClass === "caution") {
         return [
-          { status: `● ${tr("step.running", "执行中")}`, text: tr("step.caution.1", "增加保温灯或加厚垫料。") },
+          { status: `● ${tr("step.completed", "建议已生成")}`, text: tr("step.caution.1", "建议增加保温灯或加厚垫料。") },
           { status: `▶ ${tr("step.pending", "待执行")}`, text: tr("step.caution.2", "缩短单次通风时长至 3-5 分钟。") },
           { status: `▶ ${tr("step.pending", "待执行")}`, text: tr("step.caution.3", "观察幼畜扎堆情况，必要时增加供暖。") }
         ];
@@ -3811,7 +3825,7 @@
       return [
         { status: `✓ ${tr("step.completed", "已完成")}`, text: tr("step.normal.1", "继续保持当前管理措施。") },
         { status: `▶ ${tr("step.pending", "待执行")}`, text: tr("step.normal.2", "定期巡查设备运行状态。") },
-        { status: inWindow ? `● ${tr("step.running", "执行中")}` : `▶ ${tr("step.pending", "待执行")}`, text: tr("step.normal.3", "关注午间窗口，可进行短时巡检通风。") }
+        { status: inWindow ? `● ${tr("step.completed", "建议已生成")}` : `▶ ${tr("step.pending", "待生成")}`, text: tr("step.normal.3", "关注午间窗口，可进行短时巡检通风。") }
       ];
     }
 
@@ -3827,26 +3841,26 @@
 
     // 根据规则结果刷新建议状态，让右侧栏表达“建议输出”。
     function updateActuators(levelClass, inWindow) {
-      let fan = { text: tr("fan.off", "等待判断"), color: "#7A9BB5", spin: false };
-      let heater = { text: tr("heater.off", "待生成"), color: "#7A9BB5" };
-      let command = tr("command.none", "建议：等待数据校准");
+      let fan = { text: tr("status.riskPending", "等待判断"), color: "#7A9BB5", spin: false };
+      let heater = { text: tr("status.recommendation", "待生成"), color: "#7A9BB5" };
+      let command = tr("advice.pending", "建议：等待数据校准");
 
       if (levelClass === "critical") {
-        fan = { text: tr("fan.exhaust", "紧急"), color: "#FF4D5E", spin: false };
-        command = tr("command.critical", "建议：组织通风并在 2 分钟后复测");
+        fan = { text: tr("status.urgent", "紧急"), color: "#FF4D5E", spin: false };
+        command = tr("advice.critical", "建议：组织通风并在 2 分钟后复测");
       } else if (levelClass === "warning") {
         fan = inWindow
-          ? { text: tr("fan.low", "关注"), color: "#00D4AA", spin: false }
-          : { text: tr("fan.off", "等待判断"), color: "#7A9BB5", spin: false };
-        command = tr("command.warning", "建议：12:00-14:00 短时通风 8 分钟");
+          ? { text: tr("status.watch", "关注"), color: "#00D4AA", spin: false }
+          : { text: tr("status.riskPending", "等待判断"), color: "#7A9BB5", spin: false };
+        command = tr("advice.warning", "建议：12:00-14:00 短时通风 8 分钟");
       } else if (levelClass === "alert") {
         fan = inWindow
-          ? { text: tr("fan.medium", "待办"), color: "#FF9F43", spin: false }
-          : { text: tr("fan.off", "等待判断"), color: "#7A9BB5", spin: false };
-        command = tr("command.alert", "建议：清粪换垫料后组织 15 分钟通风");
+          ? { text: tr("status.todo", "待办"), color: "#FF9F43", spin: false }
+          : { text: tr("status.riskPending", "等待判断"), color: "#7A9BB5", spin: false };
+        command = tr("advice.alert", "建议：清粪换垫料后组织 15 分钟通风");
       } else if (levelClass === "caution") {
-        heater = { text: tr("heater.heating", "建议保温"), color: "#FF4D5E" };
-        command = tr("command.caution", "建议：增加保温并将单次通风缩短至 3-5 分钟");
+        heater = { text: tr("status.recommendInsulation", "建议保温"), color: "#FF4D5E" };
+        command = tr("advice.caution", "建议：增加保温并将单次通风缩短至 3-5 分钟");
       }
 
       els.fanStatusText.textContent = fan.text;
@@ -3862,7 +3876,7 @@
     function updateAlarmList(data, result, execution) {
       const items = [];
       if (result.levelClass === "critical") {
-        items.push({ color: "#FF4D5E", text: tr("alarm.critical", `NH₃ ${data.ammonia.toFixed(1)}ppm，已进入强排与疏散流程。`, { ammonia: data.ammonia.toFixed(1) }) });
+        items.push({ color: "#FF4D5E", text: tr("alarm.critical", `NH₃ ${data.ammonia.toFixed(1)}ppm，建议组织通风并评估疏散。`, { ammonia: data.ammonia.toFixed(1) }) });
       } else if (result.levelClass === "warning") {
         items.push({ color: "#FFD93D", text: tr("alarm.warning", `NH₃ ${data.ammonia.toFixed(1)}ppm，等待或执行午间短时通风。`, { ammonia: data.ammonia.toFixed(1) }) });
       } else if (result.levelClass === "alert") {
@@ -3873,7 +3887,7 @@
         items.push({ color: "#00D4AA", text: tr("alarm.normal", "环境处于正常区间，继续日常巡检。") });
       }
 
-      items.push({ color: execution.fan.color, text: tr("alarm.fan", `风扇：${execution.fan.text}；${execution.command}`, { fan: execution.fan.text, command: execution.command }) });
+      items.push({ color: execution.fan.color, text: tr("alarm.recommendation", `风险：${execution.fan.text}；${execution.command}`, { fan: execution.fan.text, command: execution.command }) });
       els.alarmList.innerHTML = items.map((item) => `
         <div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${item.color};"></i><span>${item.text}</span></div>
       `).join("");
@@ -4051,7 +4065,7 @@
 
     Chart.register(thresholdLinePlugin);
 
-    const trendChart = new Chart(document.getElementById("trendChart"), {
+    let trendChart = new Chart(document.getElementById("trendChart"), {
       type: "line",
       data: {
         labels: state.labels,
@@ -4202,13 +4216,23 @@
         }
       }
     });
+    window.QJZH = window.QJZH || {};
+    window.QJZH.activateCanvasFallback = function () {
+      if (!window.QJZHCanvasChart || trendChart instanceof window.QJZHCanvasChart) return true;
+      const canvas = document.getElementById("trendChart");
+      const data = trendChart.data;
+      const options = trendChart.options;
+      if (typeof trendChart.destroy === "function") trendChart.destroy();
+      trendChart = new window.QJZHCanvasChart(canvas, { type: "line", data, options });
+      return true;
+    };
 
     // 语言包只负责界面文案，不参与采集、补偿和知识库决策。
     const languageState = { current: "zh" };
     const languageCopy = {
       en: {
-        title: "Qingjing Zhiheng · Highland Young Livestock Barn Monitoring & Decision System",
-        subtitle: "Live temperature, humidity, ammonia and light monitoring with a traceable local expert knowledge base.",
+        title: "Qingjing Zhiheng · Highland Barn Environmental Data Service",
+        subtitle: "Data intake → highland calibration → decision support → recommendation → environment report.",
         stream: "Collecting",
         scenario: ["Normal environment", "Slow ammonia rise", "Cold wave", "High humidity + ammonia"],
         recent: "Last 60 points",
@@ -4219,6 +4243,7 @@
         darkTheme: "Dark",
         language: "Language",
         languageOptions: ["Chinese", "English", "Tibetan"],
+        boundary: "Qingjing Zhiheng is a software-only environmental data service. It accepts third-party sensors, manual input and public data, then provides calibration, analysis and recommendations. It neither sells nor controls hardware.",
         pipelineNames: ["Data intake", "Highland calibration", "Local decision", "Recommendation output"],
         pipelineValues: ["Waiting for sample", "Pressure calibration --", "Rules awaiting input", "Recommendation pending"],
         decisionEngine: "Local knowledge-base engine · first matched rule returns a recommendation",
@@ -4256,8 +4281,8 @@
         timeline: ["00:00", "12:00", "14:00", "24:00"]
       },
       bo: {
-        title: "མཐོ་སའི་ཕྲུ་གུའི་ཕྱུགས་རིགས་གསོ་ཁང་གི་ཁོར་ཡུག་ལྟ་ཞིབ་དང་ཐག་གཅོད་མ་ལག",
-        subtitle: "དྲོད་ཚད། རློན་ཚད། ཨམ་མོ་ནི་ཡ་དང་འོད་ཀྱི་གཞི་གྲངས་དངོས་དུས་ལྟ་ཞིབ།",
+        title: "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ",
+        subtitle: "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ",
         stream: "བསྡུ་ལེན་བྱེད་བཞིན་པ",
         scenario: ["ཁོར་ཡུག་རྒྱུན་ལྡན", "ཨམ་མོ་ནི་ཡ་འཕར་བ", "གྲང་ངར་རླུང", "རློན་ཚད་མཐོ་བ་དང་ཨམ་མོ་ནི་ཡ་མཐོ་བ"],
         recent: "གནས་ཚད་ 60 མཐའ་མ",
@@ -4268,6 +4293,7 @@
         darkTheme: "མུན་ནག",
         language: "སྐད་ཡིག",
         languageOptions: ["རྒྱ་ཡིག", "English", "བོད་ཡིག"],
+        boundary: "མ་ལག་འདི་ནི་མཉེན་ཆས་ཁོ་ནའི་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ་ཞིག་ཡིན། ཕྱིའི་གཞི་གྲངས་ལ་ཁ་གསབ་དང་དཔྱད་ཞིབ། བསམ་འཆར་སྤྲོད་ཅིང་སྲ་ཆས་ཚོད་འཛིན་མི་བྱེད།",
         pipelineNames: ["གཞི་གྲངས་མཐུད་འཇུག", "མཐོ་སའི་ཁ་གསབ", "ས་གནས་ཐག་གཅོད", "བསམ་འཆར་སྟོན་པ"],
         pipelineValues: ["དཔེ་འཇལ་སྒུག་བཞིན་པ", "གནོན་ཤུགས་སྙོམས་སྒྲིག --", "སྒྲིག་གཞི་སྒུག་བཞིན་པ", "བསམ་འཆར་སྒུག་བཞིན་པ"],
         decisionEngine: "ས་གནས་ཤེས་བྱའི་མ་དཔེ། སྒྲིག་གཞི་དང་པོ་མཐུན་ན་བསམ་འཆར་སྟོན།",
@@ -4331,6 +4357,7 @@
       restoreOrSet(".title", copy?.title);
       restoreOrSet(".subtitle", copy?.subtitle);
       restoreOrSet(".language-label", copy?.language);
+      restoreOrSet(".qjzh-boundary-copy", copy?.boundary);
       restoreOrSet("#recentPoints", copy?.recent);
       restoreOrSet(".theme-option", [copy?.lightTheme, copy?.darkTheme]);
       restoreOrSet(".pipeline-name", copy?.pipelineNames);
@@ -4366,6 +4393,10 @@
           setLocalizedText(element, value);
         });
       };
+      document.querySelectorAll("[data-i18n]").forEach((element) => {
+        const fallback = originalLanguageText.get(element) || element.textContent;
+        setLocalizedText(element, tr(element.dataset.i18n, fallback));
+      });
       localize(".sensor-label", "sensor.labels", ["氨气浓度", "圈舍温度", "相对湿度", "光照强度"], 0);
       localize(".sensor-reference", "sensor.references", ["15ppm阈值", "0℃ / 22℃", "80%高湿", "补光参考"], 0);
       document.querySelector(".status-strip")?.setAttribute("aria-label", tr("static.statusAria", "系统状态与演示控制"));
@@ -4381,6 +4412,7 @@
       localize(".compensation-compare-title", "static.compareTitle", "高原双维度补偿算法效果对比");
       localize(".compensation-bar-row > span", "static.compareLabels", ["原始 NH₃", "补偿 NH₃"], 0);
       localize(".compensation-note", "static.compareNote", "基于气压-温湿度双变量非线性补偿模型，修正高海拔低压传感器漂移；理论测算误差由 35%-40% 优化至 10% 以内。");
+      localize("#modelBoundaryNote", "static.modelNote", "测试误差 0.71%（合成测试集理论推导，待现场实测校准）");
       localize(".actuator-name", "static.ventLabels", ["风险等级", "处置建议"], 0);
       localize(".vent-row > span:first-child", "static.ventWindow", "通风窗口 12:00-14:00");
       localize(".rule-state-list dt", "static.ruleState", ["命中规则", "建议事项", "可追溯依据"], 0);
@@ -4389,15 +4421,23 @@
       localize(".right-col > .panel:nth-of-type(4) .panel-note", "static.ruleStateNote", "直接显示当前本地知识库与决策引擎的输出，不在页面内重复实现规则。");
       localize(".knowledge-catalog .panel-note", "static.catalogNote", "当前推理命中的阈值、运行约束与可追溯依据。");
       localize(".rule-library-details > summary", "static.library", "📄 查看完整规则库文档");
-      localize(".rule-library-content article", "static.libraryRules", ["一级警报：氨气 > 20 ppm，立即强排通风并转移至安全区域。依据：NY/T 388-1999。", "警告：氨气 > 15 ppm，在 12:00-14:00 执行 5-10 分钟短时通风，温度降幅不超过 3℃。", "复合预警：湿度 > 80% 且氨气 > 10 ppm，优先清粪、换干燥垫料并延长午间通风至 15 分钟。", "低温注意：温度 < 0℃，启动保温，缩短单次通风至 3-5 分钟并观察幼畜状态。", "正常：未触发以上风险条件，保持管理措施并持续巡检。"], 0);
-      localize(".footer span", "static.footer", ["青境智衡 · 纯前端演示看板 · 模拟数据", "青海大学农牧学院 · 中国国际大学生创新大赛（2026）"], 0);
-      setLocalizedText(els.commandText, tr("command.none", "建议：等待数据校准"));
+      localize(".rule-library-content article", "static.libraryRules", ["一级警报：氨气 > 20 ppm，建议立即组织通风并转移至安全区域。依据：NY/T 388-1999。", "警告：氨气 > 15 ppm，建议在 12:00-14:00 通风 5-10 分钟，温度降幅不超过 3℃。", "复合预警：湿度 > 80% 且氨气 > 10 ppm，建议优先清粪、换干燥垫料并延长午间通风至 15 分钟。", "低温注意：温度 < 0℃，建议开启保温，缩短单次通风至 3-5 分钟并观察幼畜状态。", "正常：未触发以上风险条件，建议保持管理措施并持续巡检。"], 0);
+      document.querySelectorAll(".rule-library-content article").forEach((article) => { article.textContent = window.QJZH?.mapAdvice ? window.QJZH.mapAdvice(article.textContent) : article.textContent; });
+      const build = window.BUILD_INFO || { version: "--", deployedAt: new Date().toISOString() };
+      setLocalizedText(document.getElementById("buildVersionText"), `${tr("qjzh.footer.product", "青境智衡 · 纯软件环境数据服务演示")} · ${build.version}`);
+      setLocalizedText(document.getElementById("buildDateText"), `${tr("qjzh.footer.boundary", "数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议")} · ${tr("qjzh.footer.deployed", "部署时间")}：${build.deployedAt.slice(0, 10)}`);
+      setLocalizedText(els.commandText, tr("advice.pending", "建议：等待数据校准"));
       localize("#alarmList .alarm-item span", "static.alarmWaiting", "等待规则引擎输出执行事件。");
       if (state.scenario.type !== "normal") {
         const activeName = els.scenarioSelect?.options[els.scenarioSelect.selectedIndex]?.text || "";
         els.scenarioHint.textContent = tr("scenario.running", `场景模拟中：${activeName}`, { name: activeName });
+      } else if (window.QJZH?.dataImport?.useImported?.()) {
+        const first = window.QJZH.dataImport.importedRecords()[0];
+        els.scenarioHint.classList.add("show");
+        els.scenarioHint.textContent = `正在回放导入数据（${first?.site_id || "本地站点"}）`;
       } else {
-        els.scenarioHint.textContent = "";
+        els.scenarioHint.classList.add("show");
+        els.scenarioHint.textContent = "本地模拟中";
       }
       if (els.scenarioSelect) {
         els.scenarioSelect.querySelectorAll("option").forEach((option, index) => {
@@ -4411,6 +4451,9 @@
           option.textContent = nextLanguage === "zh" ? originalLanguageText.get(option) : copy.languageOptions?.[index] || option.textContent;
         });
       }
+      const importedForConfidence = window.QJZH?.dataImport?.importedRecords?.()[0];
+      if (importedForConfidence) window.QJZH.dataImport.updateConfidence(window.QJZH.dataImport.validate(importedForConfidence));
+      else window.QJZH?.dataImport?.resetConfidence?.();
       if (typeof trendChart !== "undefined") {
         const labels = nextLanguage === "zh" ? ["补偿NH₃ ppm", "原始NH₃ ppm", "温度 ℃", "湿度 %", "光照 Lux", "通风启动"] : nextLanguage === "en" ? ["Compensated NH₃ ppm", "Raw NH₃ ppm", "Temperature ℃", "Humidity %", "Light Lux", "Ventilation started"] : ["ཁ་གསབ NH₃ ppm", "ཐོག་མའི NH₃ ppm", "དྲོད་ཚད ℃", "རློན་ཚད %", "འོད་ཚད Lux", "རླུང་འགྲོ་འགོ་འཛུགས"];
         trendChart.data.datasets.forEach((dataset, index) => { if (labels[index]) dataset.label = labels[index]; });
@@ -4677,7 +4720,7 @@
 
       function formatAdvice(value) {
         const safe = escapeHtml(value || tr("advice.normal", "暂无专家建议。"));
-        return safe.replace(/(建议：|建议：[^。；]*|立即[^。；]*|清理粪污|检查北侧风口|保持圈舍密闭|启动保温设备)/g, "<strong>$1</strong>");
+        return safe.replace(/(建议：|建议：[^。；]*|立即[^。；]*|清理粪污|检查北侧风口|保持圈舍密闭|建议开启保温设备)/g, "<strong>$1</strong>");
       }
 
       function adviceForDisplay(decision) {
@@ -4798,7 +4841,7 @@
         els.decisionIcon.textContent = result.icon;
         els.decisionTitle.textContent = localizedLevel(result.levelClass, result.title);
         els.decisionAdvice.innerHTML = `
-          <div class="action-step"><span class="step-index">1</span><span><span class="step-status">${fanOn ? `● ${tr("step.running", "执行中")}` : `▶ ${tr("step.monitoring", "监测中")}`}</span>${formatAdvice(adviceForDisplay(decision))}</span></div>
+          <div class="action-step"><span class="step-index">1</span><span><span class="step-status">${fanOn ? `● ${tr("step.completed", "建议已生成")}` : `▶ ${tr("step.monitoring", "监测中")}`}</span>${formatAdvice(adviceForDisplay(decision))}</span></div>
           <div class="action-step"><span class="step-index">2</span><span><span class="step-status">${tr("step.trend", "趋势")}</span>${escapeHtml(trendText(decision))}</span></div>
           <div class="action-step"><span class="step-index">3</span><span><span class="step-status">${tr("step.basis", "依据")}</span>${escapeHtml(localizedCitation(decision))}</span></div>`;
         els.decisionTrigger.innerHTML = `
@@ -4816,16 +4859,17 @@
         els.ventAdvice.textContent = fanOn
           ? tr("vent.active", `建议 ${decision.duration} 分钟短时通风，持续监测温度降幅。`, { duration: decision.duration })
           : decision.action === "alert_only" ? tr("vent.alertOnly", "仅输出建议，请人工复核。") : tr("vent.standby", "保持巡检，继续监测。");
-        els.fanStatusText.textContent = fanOn ? tr("fan.low", "关注") : tr("fan.off", "等待判断");
+        els.fanStatusText.textContent = fanOn ? tr("status.watch", "关注") : tr("status.riskPending", "等待判断");
         els.fanStatusDot.style.setProperty("--state-color", fanOn ? "#00D4AA" : "#7A9BB5");
         els.fanIcon.classList.toggle("spin", fanOn);
-        els.heaterStatusText.textContent = data.temperature < 0 ? tr("heater.heating", "建议保温") : tr("heater.off", "待生成");
+        els.heaterStatusText.textContent = data.temperature < 0 ? tr("status.recommendInsulation", "建议保温") : tr("status.recommendation", "待生成");
         els.heaterStatusDot.style.setProperty("--state-color", data.temperature < 0 ? "#FF4D5E" : "#7A9BB5");
         els.commandText.textContent = fanOn
           ? tr("knowledge.activeVent", `建议：${decision.duration} 分钟短时通风`, { duration: decision.duration })
           : decision.action === "alert_only" ? tr("knowledge.alertOnly", "仅输出建议，请人工复核") : tr("knowledge.standby", "保持巡检，继续监测");
         els.alarmList.innerHTML = `<div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${fanOn ? "#00D4AA" : "#FF9F43"};"></i><span>${escapeHtml(decision.ruleId)} · ${escapeHtml(localizedCitation(decision))}</span></div>`;
-        els.flowCollect.textContent = tr("pipeline.collect", `${data.time} · 本地模拟数据`, { time: data.time }).replace("4 sensors online", tr("simulation.data", "本地模拟数据"));
+        const sourceLabel = data.source === "imported" ? `导入数据 · ${data.siteId || "本地站点"}` : tr("simulation.data", "本地模拟数据");
+        els.flowCollect.textContent = `${data.time} · ${sourceLabel}`;
         els.flowCompensate.textContent = tr("pipeline.compensate", `${data.pressure.toFixed(1)}kPa · NH₃ ${data.rawAmmonia.toFixed(1)}→${data.ammonia.toFixed(1)}`, { pressure: data.pressure.toFixed(1), raw: data.rawAmmonia.toFixed(1), corrected: data.ammonia.toFixed(1) });
         els.flowDecision.textContent = `${result.icon} ${localizedLevel(result.levelClass, result.title)}`;
         els.flowExecute.textContent = fanOn ? tr("simulation.fanRun", `建议短时通风 / ${decision.duration}分钟`, { duration: decision.duration }) : tr("simulation.standby", "建议待生成");
@@ -4896,18 +4940,86 @@
         }
       }
 
+      function getNextSample(previousTemperature) {
+        const imported = window.QJZH?.dataImport?.nextRecord?.();
+        if (!imported) return null;
+        const timestamp = String(imported.timestamp || "");
+        const time = timestamp.length >= 16 ? timestamp.slice(11, 16) : "--:--";
+        const hour = Number(time.slice(0, 2)) + Number(time.slice(3, 5) || 0) / 60;
+        const temperature = Number(imported.temp_c);
+        const humidity = Number(imported.rh_percent);
+        const altitude = Number(imported.altitude_m);
+        const rawAmmonia = Number(imported.raw_nh3_ppm);
+        const ammonia = Number(window.compensate(altitude, temperature, humidity, rawAmmonia));
+        return {
+          hour: Number.isFinite(hour) ? hour : 0,
+          time,
+          timestamp,
+          siteId: String(imported.site_id || "未命名站点"),
+          temperature,
+          ammonia,
+          referenceAmmonia: ammonia,
+          modelAmmonia: ammonia,
+          rawAmmonia,
+          humidity,
+          altitude,
+          pressure: Number(window.LocalSimulator.estimatePressureKpa(altitude).toFixed(1)),
+          light: 100,
+          tempDropRate: previousTemperature == null ? 0 : Number((previousTemperature - temperature).toFixed(1)),
+          source: "imported"
+        };
+      }
+
+      function runImportedReplay(engine, updateUICallback) {
+        const count = window.QJZH?.dataImport?.importedRecords?.().length || 0;
+        window.QJZH?.dataImport?.resetCursor?.();
+        if (typeof engine.reset === "function") engine.reset();
+        let index = 0;
+        let previousTemperature = null;
+        let timer = null;
+        let stopped = false;
+        const historyNh3 = [];
+        let resolveDone;
+        const done = new Promise((resolve) => { resolveDone = resolve; });
+        function advance() {
+          if (stopped) return;
+          if (index >= count) { resolveDone({ source: "imported", count }); return; }
+          const sample = getNextSample(previousTemperature);
+          if (!sample) { resolveDone({ source: "imported", count: index }); return; }
+          sample.decision = engine.decide(sample.hour, sample.temperature, sample.ammonia, sample.humidity, sample.tempDropRate, historyNh3.slice(-2));
+          historyNh3.push(sample.ammonia);
+          previousTemperature = sample.temperature;
+          updateUICallback(sample, index);
+          index += 1;
+          timer = window.setTimeout(advance, 1000);
+        }
+        advance();
+        return { stop: function () { stopped = true; window.clearTimeout(timer); }, done };
+      }
+
       function beginSimulation(engine) {
         if (controller) controller.stop();
         clearDashboardData();
         configureDecisionMarkers();
+        const useImported = Boolean(window.QJZH?.dataImport?.useImported?.());
+        if (useImported) {
+          state.scenario.type = "normal";
+          els.scenarioSelect.value = "normal";
+          els.scenarioHint.classList.add("show");
+          const first = window.QJZH.dataImport.importedRecords()[0];
+          els.scenarioHint.textContent = `正在回放导入数据（${first?.site_id || "本地站点"}）`;
+        } else {
+          els.scenarioHint.classList.add("show");
+          els.scenarioHint.textContent = "本地模拟中";
+        }
         state.running = true;
-        els.streamStatus.textContent = tr("simulation.running", "24小时模拟中");
+        els.streamStatus.textContent = useImported ? "导入数据回放中" : tr("simulation.running", "24小时模拟中");
         els.toggleStream.textContent = tr("simulation.pause", "暂停模拟");
-        controller = window.LocalSimulator.runSimulation(engine, updateKnowledgeUI);
+        controller = useImported ? runImportedReplay(engine, updateKnowledgeUI) : window.LocalSimulator.runSimulation(engine, updateKnowledgeUI);
         controller.done.then(() => {
           if (state.running) {
             state.running = false;
-            els.streamStatus.textContent = tr("simulation.complete", "24小时模拟完成");
+            els.streamStatus.textContent = useImported ? "导入数据回放完成" : tr("simulation.complete", "24小时模拟完成");
             els.toggleStream.textContent = tr("simulation.restart", "重新运行模拟");
           }
         });
@@ -4926,6 +5038,11 @@
             scenarioHistory = [];
             scenarioEngine.reset();
             // 场景切换后重新从第一个采样点运行，保证演示不会停留在上一轮24小时序列末尾。
+            beginSimulation(engine);
+          });
+          window.addEventListener("qjzh:data-imported", () => {
+            state.scenario.type = "normal";
+            scenarioHistory = [];
             beginSimulation(engine);
           });
           window.addEventListener("dashboard:language-change", () => {

@@ -5,6 +5,8 @@
 (function () {
   "use strict";
   window.QJZH = window.QJZH || {};
+  function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character]; }); }
+  function translate(key, fallback, values) { return window.QJZH.translate ? window.QJZH.translate(key, fallback, values || {}) : fallback; }
   window.QJZH.calibrate = function (input) {
     input = input || {};
     var raw = Number(input.raw_nh3_ppm ?? input.raw ?? 0);
@@ -51,7 +53,7 @@
     setText(command, text("suggest_ventilation") + "：" + expectedAdvice + "（窗口 " + recommendation.ventilation_window + "）");
     var alarms = document.getElementById("alarmList");
     var alarmText = "建议溯源：" + recommendation.rule_id + " · " + recommendation.standard;
-    if (alarms && alarms.textContent.trim() !== alarmText) alarms.innerHTML = "<div class=\"alarm-item\"><i class=\"alarm-dot\" style=\"--alarm-color:" + levelColor + ";\"></i><span>" + alarmText + "</span></div>";
+    if (alarms && alarms.textContent.trim() !== alarmText) alarms.innerHTML = "<div class=\"alarm-item\"><i class=\"alarm-dot\" style=\"--alarm-color:" + levelColor + ";\"></i><span>" + esc(alarmText) + "</span></div>";
     var vent = document.getElementById("ventAdvice");
     setText(vent, expectedAdvice + "。系统不向风机或其他硬件下发控制指令。");
     var flow = document.getElementById("flowExecute");
@@ -79,14 +81,19 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     function rewriteDisplayCopy() {
-      var title = document.querySelector(".title"); if (title) title.textContent = "青境智衡 · 高原圈舍环境数据服务系统";
-      var subtitle = document.querySelector(".subtitle"); if (subtitle) subtitle.textContent = "数据接入 → 高原校准 → 智能决策 → 建议输出 → 环境报告";
+      var title = document.querySelector(".title"); if (title) title.textContent = translate("qjzh.page.title", "青境智衡 · 高原圈舍环境数据服务系统");
+      var subtitle = document.querySelector(".subtitle"); if (subtitle) subtitle.textContent = translate("qjzh.page.subtitle", "数据接入 → 高原校准 → 智能决策 → 建议输出 → 环境报告");
       var titles = Array.from(document.querySelectorAll(".panel-title"));
       titles.forEach(function (node) {
-        if (node.textContent.indexOf("决策建议输出") >= 0) node.textContent = "决策建议输出";
-        if (node.textContent.indexOf("采集与补偿状态") >= 0) node.textContent = "高原校准算法演示";
+        if (node.textContent.indexOf("决策建议输出") >= 0) node.textContent = translate("qjzh.advice.title", "决策建议输出");
+        if (node.textContent.indexOf("采集与补偿状态") >= 0) node.textContent = translate("qjzh.algorithm.title", "高原校准算法演示");
       });
-      var pipeline = ["数据接入", "高原校准", "智能决策", "建议输出"];
+      var pipeline = [
+        translate("qjzh.pipeline.intake", "数据接入"),
+        translate("qjzh.pipeline.calibrate", "高原校准"),
+        translate("qjzh.pipeline.decide", "智能决策"),
+        translate("qjzh.pipeline.output", "建议输出")
+      ];
       document.querySelectorAll(".pipeline-name").forEach(function (node, index) { if (pipeline[index]) node.textContent = pipeline[index]; });
       var flow = { flowCollect: "兼容第三方传感器", flowCompensate: "校准值 + 置信度", flowDecision: "建议待生成", flowExecute: "建议输出" };
       Object.keys(flow).forEach(function (id) { var node = document.getElementById(id); if (node) node.textContent = flow[id]; });
@@ -102,15 +109,21 @@
         var alarm = document.getElementById("alarmList"); if (alarm) { alarm.setAttribute("aria-label", "建议溯源"); var first = alarm.querySelector("span"); if (first) first.textContent = "建议溯源：规则 ID 与标准出处将在校准后显示"; }
       }
       var decision = document.querySelector("#decisionPanel .decision-engine"); if (decision) decision.textContent = "本地知识库决策引擎 · 系统只输出决策建议，执行由养殖户既有设备或人工完成，不涉及风机控制";
-      document.querySelectorAll(".footer span")[0]?.replaceChildren(document.createTextNode("青境智衡 · 纯软件环境数据服务演示 · v2026.09"));
-      document.querySelectorAll(".footer span")[1]?.replaceChildren(document.createTextNode("数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议 · 部署时间：2026-09-24"));
+      var build = window.BUILD_INFO || { version: "--", deployedAt: new Date().toISOString() };
+      document.querySelectorAll(".footer span")[0]?.replaceChildren(document.createTextNode(translate("qjzh.footer.product", "青境智衡 · 纯软件环境数据服务演示") + " · " + build.version));
+      document.querySelectorAll(".footer span")[1]?.replaceChildren(document.createTextNode(translate("qjzh.footer.boundary", "数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议") + " · " + translate("qjzh.footer.deployed", "部署时间") + "：" + build.deployedAt.slice(0, 10)));
     }
       rewriteDisplayCopy();
     renderRecommendationPanel();
     var recommendationPanel = document.querySelector(".actuator-panel");
     if (recommendationPanel && window.MutationObserver) {
-      var observer = new MutationObserver(function () { renderRecommendationPanel(); });
-      observer.observe(recommendationPanel, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class", "style"] });
+      var observerOptions = { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class", "style"] };
+      var observer = new MutationObserver(function () {
+        observer.disconnect();
+        renderRecommendationPanel();
+        observer.observe(recommendationPanel, observerOptions);
+      });
+      observer.observe(recommendationPanel, observerOptions);
     }
     document.getElementById("modelVersion").textContent = window.MODEL_WEIGHTS.version;
     ["demoAltitude", "demoTemp", "demoRh"].forEach(function (id) {
@@ -144,10 +157,11 @@
       if (status) { status.className = "qjzh-data-state qjzh-state-" + (result?.level || "error"); status.textContent = result?.issues?.length ? result.issues.join("；") : "数据已接入并保存"; }
       if (badge && result) badge.textContent = "数据质量 " + result.quality + " · 置信度 " + result.confidence;
       window.QJZH?.dataImport?.updateConfidence?.(result);
+      if (result?.valid) window.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: { records: [record], errors: [], warnings: [] } }));
     });
     document.getElementById("loadDemoSimulation")?.addEventListener("click", function () {
       document.getElementById("loadSampleData")?.click();
-      document.getElementById("dataImportStatus").textContent = "已加载青海冬季 24 小时演示数据";
+      document.getElementById("dataImportStatus").textContent = "青海冬季示例已导入，主看板正在按时间回放";
     });
     document.querySelectorAll("[data-scene]").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -157,7 +171,7 @@
           document.querySelector(".qjzh-tab[data-view='individual']")?.click();
           document.getElementById("loadSampleData")?.click();
           document.getElementById("decisionPanel")?.scrollIntoView({ behavior: "smooth" });
-          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "散户场景：2620m 示例数据已加载，氨气 18.6→15.2ppm，红色预警，建议 12:00-14:00 通风 8 分钟"; }
+          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "散户场景：2620m 导入数据回放中，氨气 18.6→15.2ppm，建议 12:00-14:00 通风 8 分钟"; }
         }
         if (scene === "institution") {
           document.querySelector(".qjzh-tab[data-view='institution']")?.click();
@@ -165,10 +179,21 @@
           if (status) { status.className = "qjzh-data-state qjzh-state"; status.textContent = "机构场景：5 个模拟圈舍风险排名（果洛 QH-GL-005 氨气 21.3ppm 紧急）"; }
         }
         if (scene === "offline") {
-          var sites = window.QJZH?.dataImport?.getRecords?.() || [];
-          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "断网演示：本地看板仍可用，当前已存 " + sites.length + " 条记录于本地存储，校准与决策全程离线完成。"; }
+          var records = window.QJZH?.dataImport?.getRecords?.() || [];
+          window.QJZH_NETWORK_STATE = { online: false, simulated: true, checkedAt: new Date().toISOString() };
+          document.documentElement.dataset.network = "offline-demo";
+          var probe = window.QJZH?.calibrate?.({ altitude_m: 2620, temp_c: -5, rh_percent: 62, raw_nh3_ppm: 18.6, timestamp: new Date().toISOString(), site_id: "OFFLINE-PROBE", device_model: "offline-demo" });
+          var fallbackActive = window.QJZH?.activateCanvasFallback?.() === true;
+          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = "断网实测演示：navigator.onLine=false（演示） · 本地 " + records.length + " 条记录可查看 · 页面内校准/决策脚本运行正常（校准 " + Number(probe?.calibrated_nh3_ppm || 0).toFixed(1) + "ppm）· Canvas 回退模式" + (fallbackActive ? "已接管" : "可用") + "。"; }
         }
+        document.querySelector(".qjzh-scene-presets")?.classList.remove("expanded");
       });
+    });
+    document.getElementById("scenePresetToggle")?.addEventListener("click", function () {
+      var presets = document.querySelector(".qjzh-scene-presets");
+      if (!presets) return;
+      var expanded = presets.classList.toggle("expanded");
+      this.setAttribute("aria-expanded", String(expanded));
     });
     document.getElementById("resetDemoData")?.addEventListener("click", function () { window.QJZH?.demoReset?.reset?.(); });
   });
