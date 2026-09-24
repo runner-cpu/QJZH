@@ -2763,7 +2763,7 @@
       }
     }
 
-    /* 首屏决策摘要：桌面端把执行动作并列展示，减少纵向占用并保持处置顺序清晰。 */
+    /* 首屏决策摘要：桌面端把建议事项并列展示，减少纵向占用并保持处置顺序清晰。 */
     @media (min-width: 981px) {
       .decision-card {
         grid-template-columns: minmax(0, 1fr) 210px;
@@ -3238,7 +3238,7 @@
           </div>
           <dl class="rule-state-list" aria-live="polite">
             <div><dt>命中规则</dt><dd><code id="activeRuleId">等待首次推理</code></dd></div>
-            <div><dt>执行动作</dt><dd id="activeRuleAction">等待决策引擎输出</dd></div>
+            <div><dt>建议事项</dt><dd id="activeRuleAction">等待决策引擎输出</dd></div>
             <div><dt>可追溯依据</dt><dd id="activeRuleCitation">等待本地知识库加载</dd></div>
           </dl>
         </section>
@@ -3772,7 +3772,7 @@
       };
     }
 
-    // 将规则命中结果转换为结构化执行清单，便于演示“本地决策 → 执行动作”。
+    // 将规则命中结果转换为结构化建议清单，便于演示“本地决策 → 建议输出”。
     function getDecisionSteps(levelClass, inWindow) {
       const stepIcon = inWindow ? `● ${tr("step.running", "执行中")}` : `▶ ${tr("step.pending", "待执行")}`;
 
@@ -4383,7 +4383,7 @@
       localize(".compensation-note", "static.compareNote", "基于气压-温湿度双变量非线性补偿模型，修正高海拔低压传感器漂移；理论测算误差由 35%-40% 优化至 10% 以内。");
       localize(".actuator-name", "static.ventLabels", ["风险等级", "处置建议"], 0);
       localize(".vent-row > span:first-child", "static.ventWindow", "通风窗口 12:00-14:00");
-      localize(".rule-state-list dt", "static.ruleState", ["命中规则", "执行动作", "可追溯依据"], 0);
+      localize(".rule-state-list dt", "static.ruleState", ["命中规则", "建议事项", "可追溯依据"], 0);
       localize(".right-col > .panel:nth-of-type(1) .panel-note", "static.compensationNote", "模拟高海拔低压环境下的传感器补偿过程。");
       localize(".right-col > .panel:nth-of-type(3) .panel-note", "static.executionNote", "展示决策建议与可追溯依据，执行由既有设备或人工完成。");
       localize(".right-col > .panel:nth-of-type(4) .panel-note", "static.ruleStateNote", "直接显示当前本地知识库与决策引擎的输出，不在页面内重复实现规则。");
