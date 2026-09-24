@@ -6,6 +6,10 @@
   <title>青境智衡部署验证</title>
   <script src="model_weights.js?v=1.0.0"></script>
   <script src="compensator_engine.js?v=1.0.0"></script>
+  <script src="ui_text_map.js?v=20260923"></script>
+  <script src="errorHandler.js?v=20260923"></script>
+  <script src="csvTemplate.js?v=20260923"></script>
+  <script src="dataImport.js?v=20260923"></script>
   <style>body{max-width:720px;margin:48px auto;padding:0 20px;background:#0b1a2a;color:#e8f0f8;font-family:system-ui}li{margin:10px 0;padding:10px;border-left:4px solid #7a9bb5;background:#10293a}.pass{border-color:#00d4aa}.fail{border-color:#ff4d5e}code{color:#00d4aa}</style>
 </head>
 <body>
@@ -36,6 +40,18 @@
       report(hasWeights && Boolean(MODEL_WEIGHTS.version), "部署时间戳与模型版本已显示：" + (hasWeights ? MODEL_WEIGHTS.version : "未加载"));
     }
     runOnlineTests();
+    report(Boolean(window.QJZH && window.QJZH.dataImport), "数据接入模块已加载");
+    fetch("index.html", { cache: "no-store" }).then(function (response) {
+      if (!response.ok) throw new Error("index.html HTTP " + response.status);
+      return response.text();
+    }).then(function (html) {
+      report(html.indexOf("qjzh-boundary-banner") >= 0, "边界声明 Banner 标记（主页面）");
+      report(html.indexOf("dataImportPanel") >= 0, "数据接入面板标记（主页面）");
+      report(html.indexOf("pipeline-strip") >= 0, "流水线四节点标记（主页面）");
+      report(html.indexOf("institutionView") >= 0 && html.indexOf("reportPanel") >= 0, "机构视图与季度报告标记（主页面）");
+    }).catch(function (error) {
+      report(false, "主页面标记读取失败：" + error.message);
+    });
   </script>
 </body>
 </html>

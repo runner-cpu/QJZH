@@ -1,0 +1,2 @@
+timestamp,site_id,altitude_m,temp_c,rh_percent,raw_nh3_ppm,device_model,species,age_days,stocking_density,barn_area
+2026-01-01T08:00:00+08:00,SITE-001,2800,-5,60,12.5,generic_sensor,yak,45,1.0,180
