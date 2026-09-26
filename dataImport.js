@@ -12,7 +12,42 @@
   function read(key) { try { var value = store().getItem(key); return value ? JSON.parse(value) : null; } catch (_) { return null; } }
   function write(key, value) { try { store().setItem(key, JSON.stringify(value)); return { ok: true, mode: storageMode }; } catch (_) { storageMode = "memory"; memory[key] = JSON.stringify(value); return { ok: true, mode: storageMode, warning: "当前会话可用，刷新后数据丢失" }; } }
   function number(value) { return value === "" || value == null ? NaN : Number(value); }
-  function check(record) { var issues = [], fields = ["altitude_m", "temp_c", "rh_percent", "raw_nh3_ppm"], warning = false, reject = false; fields.forEach(function (field) { var value = number(record[field]); if (!Number.isFinite(value)) { issues.push(field + " 必须为数字"); reject = true; return; } var range = MAX[field] - MIN[field]; if (value < MIN[field] || value > MAX[field]) { var distance = value < MIN[field] ? MIN[field] - value : value - MAX[field]; if (distance / range <= 0.1) { warning = true; issues.push(field + " 超出适用范围（警告）"); } else { reject = true; issues.push(field + " 超出模型适用范围"); } } }); REQUIRED.forEach(function (field) { if (record[field] == null || String(record[field]).trim() === "") { issues.push("缺少字段: " + field); reject = true; } }); var quality = reject ? "C" : warning ? "B" : "A"; return { valid: !reject, accepted: !reject, quality: quality, level: reject ? "reject" : warning ? "warning" : "normal", confidence: reject ? "低" : warning ? "中" : "高", issues: issues, record: record }; }
+  function check(record) {
+    var issues = [], fields = ["altitude_m", "temp_c", "rh_percent", "raw_nh3_ppm"], warning = false, reject = false;
+    fields.forEach(function (field) {
+      var value = number(record[field]);
+      if (!Number.isFinite(value)) {
+        issues.push(text("qjzh.validation.number", "{field} 必须为数字", { field: field }));
+        reject = true;
+        return;
+      }
+      var range = MAX[field] - MIN[field];
+      if (value < MIN[field] || value > MAX[field]) {
+        var distance = value < MIN[field] ? MIN[field] - value : value - MAX[field];
+        if (distance / range <= 0.1) {
+          warning = true;
+          issues.push(text("qjzh.validation.rangeWarning", "{field} 超出适用范围（警告）", { field: field }));
+        } else {
+          reject = true;
+          issues.push(text("qjzh.validation.rangeReject", "{field} 超出模型适用范围", { field: field }));
+        }
+      }
+    });
+    REQUIRED.forEach(function (field) {
+      if (record[field] == null || String(record[field]).trim() === "") {
+        issues.push(text("qjzh.validation.missing", "缺少字段：{field}", { field: field }));
+        reject = true;
+      }
+    });
+    var quality = reject ? "C" : warning ? "B" : "A";
+    var level = reject ? "reject" : warning ? "warning" : "normal";
+    var confidence = level === "reject"
+      ? text("qjzh.confidence.levelLow", "低")
+      : level === "warning"
+        ? text("qjzh.confidence.levelMedium", "中")
+        : text("qjzh.confidence.levelHigh", "高");
+    return { valid: !reject, accepted: !reject, quality: quality, level: level, confidence: confidence, issues: issues, record: record };
+  }
   function parseLine(line) { var result = [], value = "", quoted = false; for (var i = 0; i < line.length; i += 1) { var c = line[i]; if (c === '"' && line[i + 1] === '"' && quoted) { value += '"'; i += 1; } else if (c === '"') quoted = !quoted; else if (c === "," && !quoted) { result.push(value); value = ""; } else value += c; } result.push(value); return result; }
   function splitRows(text) {
     var input = String(text == null ? "" : text).replace(/^\ufeff/, "");
@@ -32,7 +67,7 @@
     if (row.trim() !== "") rows.push(row);
     return rows;
   }
-  function parseCsv(text) { var lines = splitRows(text); if (!lines.length) return { records: [], errors: [{ row: 1, message: "CSV 为空" }], warnings: [] }; var headers = parseLine(lines[0]).map(function (h) { return h.trim(); }), missing = REQUIRED.filter(function (h) { return headers.indexOf(h) < 0; }); if (missing.length) return { records: [], errors: [{ row: 1, field: "header", message: "缺少字段: " + missing.join(", ") }], warnings: [] }; var records = [], errors = [], warnings = []; lines.slice(1).forEach(function (line, offset) { var values = parseLine(line), record = {}; headers.forEach(function (key, i) { record[key] = (values[i] == null ? "" : values[i]).trim(); }); var result = check(record); if (result.valid) { records.push(record); if (result.level === "warning") warnings.push({ row: offset + 2, issues: result.issues }); } else errors.push({ row: offset + 2, issues: result.issues, message: result.issues.join("；") }); }); return { records: records, errors: errors, warnings: warnings }; }
+  function parseCsv(csvText) { var lines = splitRows(csvText); if (!lines.length) return { records: [], errors: [{ row: 1, message: text("qjzh.validation.csvEmpty", "CSV 为空") }], warnings: [] }; var headers = parseLine(lines[0]).map(function (h) { return h.trim(); }), missing = REQUIRED.filter(function (h) { return headers.indexOf(h) < 0; }); if (missing.length) return { records: [], errors: [{ row: 1, field: "header", message: text("qjzh.validation.missing", "缺少字段：{field}", { field: missing.join(", ") }) }], warnings: [] }; var records = [], errors = [], warnings = []; lines.slice(1).forEach(function (line, offset) { var values = parseLine(line), record = {}; headers.forEach(function (key, i) { record[key] = (values[i] == null ? "" : values[i]).trim(); }); var result = check(record); if (result.valid) { records.push(record); if (result.level === "warning") warnings.push({ row: offset + 2, issues: result.issues }); } else errors.push({ row: offset + 2, issues: result.issues, message: result.issues.join("；") }); }); return { records: records, errors: errors, warnings: warnings }; }
   function recordKey(record) { return String(record.site_id || "unknown") + "\u0000" + String(record.timestamp || ""); }
   function save(records, options) {
     options = options || {};
@@ -56,9 +91,9 @@
     if (!badge || !result) return;
     var level = result.level || qualityFor(result);
     var map = {
-      normal: [text("qjzh.confidence.high", "置信度：高") + "（输入在模型适用范围内）", "qjzh-confidence"],
-      warning: [text("qjzh.confidence.medium", "置信度：中") + "（部分输入超出模型适用范围）", "qjzh-confidence qjzh-confidence-warn"],
-      reject: [text("qjzh.confidence.low", "置信度：低") + "（输入超出模型适用范围，结果不可信）", "qjzh-confidence qjzh-confidence-err"]
+      normal: [text("qjzh.confidence.detailHigh", "置信度：高（输入在模型适用范围内）"), "qjzh-confidence"],
+      warning: [text("qjzh.confidence.detailMedium", "置信度：中（部分输入超出模型适用范围）"), "qjzh-confidence qjzh-confidence-warn"],
+      reject: [text("qjzh.confidence.detailLow", "置信度：低（输入超出模型适用范围，结果不可信）"), "qjzh-confidence qjzh-confidence-err"]
     };
     var entry = map[level] || map.normal;
     badge.textContent = entry[0]; badge.className = entry[1];

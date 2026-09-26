@@ -18,3 +18,5 @@ jobs:
       - run: node generate-knowledge-base-document.js
       - run: git diff --exit-code -- knowledge-base-rules.md
       - run: node verify-deployment.js .
+      - name: Run browser-surface regression tests
+        run: node --test tests/*.test.js

@@ -9,9 +9,36 @@
     { site_id: "QH-HN-004", name: "海南合作社圈舍", altitude_m: 2900, species: "肉牛", calibrated_nh3_ppm: 6.2, risk_level: "正常", sample_count: 36 },
     { site_id: "QH-GL-005", name: "果洛高原圈舍", altitude_m: 3500, species: "犊牦牛", calibrated_nh3_ppm: 21.3, risk_level: "紧急", sample_count: 36 }
   ];
+  var DEMO_NAMES = {
+    en: {
+      "QH-HD-001": "Haidong Demonstration Barn",
+      "QH-XN-002": "Xining Suburban Barn",
+      "QH-HZ-003": "Haibei Pasture Barn",
+      "QH-HN-004": "Hainan Cooperative Barn",
+      "QH-GL-005": "Golog Plateau Barn"
+    },
+    bo: {
+      "QH-HD-001": "མཚོ་ཤར་དཔེ་སྟོན་ཕྱུགས་ཁང",
+      "QH-XN-002": "ཟི་ལིང་ཉེ་འདབས་ཕྱུགས་ཁང",
+      "QH-HZ-003": "མཚོ་བྱང་འབྲོག་ར་ཕྱུགས་ཁང",
+      "QH-HN-004": "མཚོ་ལྷོ་མཉམ་ལས་ཕྱུགས་ཁང",
+      "QH-GL-005": "མགོ་ལོག་མཐོ་སྒང་ཕྱུགས་ཁང"
+    }
+  };
+  var SPECIES_NAMES = {
+    en: { "犊牦牛": "Yak calves", "奶牛": "Dairy cattle", "牦牛": "Yak", "肉牛": "Beef cattle" },
+    bo: { "犊牦牛": "གཡག་ཕྲུག", "奶牛": "འོ་མའི་བ་གླང", "牦牛": "གཡག", "肉牛": "ཤ་ཕྱུགས" }
+  };
   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; }); }
   function read(key) { try { return JSON.parse(root.localStorage.getItem(key) || "null"); } catch (_) { return null; } }
   function language() { return root.document?.documentElement?.dataset?.language || "zh"; }
+  function localizedFields(row, selectedLanguage) {
+    var lang = selectedLanguage || language();
+    return {
+      name: DEMO_NAMES[lang]?.[row.site_id] || row.name || row.site_id || "-",
+      species: SPECIES_NAMES[lang]?.[row.species] || row.species || "-"
+    };
+  }
   function roleLabels() {
     if (language() === "en") return { station: "Livestock station", college: "Agricultural college", cooperative: "Cooperative" };
     if (language() === "bo") return { station: "ཕྱུགས་ལས་ས་ཚིགས", college: "ཞིང་ཕྱུགས་སློབ་གྲྭ", cooperative: "མཉམ་ལས་ཁང" };
@@ -38,7 +65,12 @@
     var term = String(query || "").trim().toLocaleLowerCase();
     if (!term) return rows.slice();
     return rows.filter(function (row) {
-      return [row.site_id, row.name, row.species].some(function (value) { return String(value || "").toLocaleLowerCase().indexOf(term) >= 0; });
+      var values = [row.site_id, row.name, row.species];
+      ["en", "bo"].forEach(function (lang) {
+        var display = localizedFields(row, lang);
+        values.push(display.name, display.species);
+      });
+      return values.some(function (value) { return String(value || "").toLocaleLowerCase().indexOf(term) >= 0; });
     });
   }
   function render() {
@@ -58,12 +90,13 @@
     rows.sort(function (a, b) { return Number(b.calibrated_nh3_ppm || 0) - Number(a.calibrated_nh3_ppm || 0); });
     if (body) body.innerHTML = rows.map(function (r) {
       var snapshot = language() === "en" ? "Demo snapshot" : language() === "bo" ? "དཔེ་སྟོན་མྱུར་བཀོད" : "演示快照";
-      return "<tr><td>" + esc(r.name || r.site_id) + "</td><td>" + esc(Number(r.altitude_m || 0)) + " m</td><td>" + esc(r.species || "-") + "</td><td>" + esc(Number(r.calibrated_nh3_ppm || 0).toFixed(1)) + " ppm</td><td>" + esc(riskLabel(r.risk_level || risk(r.calibrated_nh3_ppm))) + "</td><td>" + esc(r.timestamp || snapshot) + "</td></tr>";
+      var display = localizedFields(r);
+      return "<tr><td>" + esc(display.name) + "</td><td>" + esc(Number(r.altitude_m || 0)) + " m</td><td>" + esc(display.species) + "</td><td>" + esc(Number(r.calibrated_nh3_ppm || 0).toFixed(1)) + " ppm</td><td>" + esc(riskLabel(r.risk_level || risk(r.calibrated_nh3_ppm))) + "</td><td>" + esc(r.timestamp || snapshot) + "</td></tr>";
     }).join("");
     var compliant = rows.filter(function (r) { return Number(r.calibrated_nh3_ppm) < 10; }).length;
     var warnings = rows.filter(function (r) { return Number(r.calibrated_nh3_ppm) >= 10; }).length;
     var average = rows.length ? (rows.reduce(function (s, r) { return s + Number(r.calibrated_nh3_ppm || 0); }, 0) / rows.length).toFixed(1) : "0.0";
-    var species = Array.from(new Set(rows.map(function (r) { return r.species || "未标注"; }))).join("、");
+    var species = Array.from(new Set(rows.map(function (r) { return localizedFields(r).species || "未标注"; }))).join(language() === "en" ? ", " : "、");
     var sampleCount = rows.reduce(function (sum, r) { return sum + Number(r.sample_count || 1); }, 0);
     if (summary) {
       summary.className = "qjzh-data-state qjzh-state";
@@ -116,10 +149,11 @@
   }
   function exportReport() {
     var rows = render();
-    if (q.reportRenderer && q.reportRenderer.renderInstitution) return q.reportRenderer.renderInstitution(rows);
+    var reportRows = rows.map(function (row) { return Object.assign({}, row, localizedFields(row)); });
+    if (q.reportRenderer && q.reportRenderer.renderInstitution) return q.reportRenderer.renderInstitution(reportRows, language());
     return rows;
   }
-  q.institutionView = { demo: demo, getRows: getRows, filterRows: filterRows, render: render, importLocal: importLocal, exportReport: exportReport, esc: esc };
+  q.institutionView = { demo: demo, getRows: getRows, filterRows: filterRows, localizedFields: localizedFields, render: render, importLocal: importLocal, exportReport: exportReport, esc: esc };
   root.addEventListener("DOMContentLoaded", function () {
     render();
     root.document.getElementById("institutionImport")?.addEventListener("click", importLocal);

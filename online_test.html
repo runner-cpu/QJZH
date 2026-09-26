@@ -11,6 +11,7 @@
   <script src="errorHandler.js?v=20260923"></script>
   <script src="csvTemplate.js?v=20260923"></script>
   <script src="dataImport.js?v=20260923"></script>
+  <script src="reportRenderer.js?v=20260927"></script>
   <script src="build_info.js?v=20260924"></script>
   <style>body{max-width:720px;margin:48px auto;padding:0 20px;background:#0b1a2a;color:#e8f0f8;font-family:system-ui}li{margin:10px 0;padding:10px;border-left:4px solid #7a9bb5;background:#10293a}.pass{border-color:#00d4aa}.fail{border-color:#ff4d5e}code{color:#00d4aa}</style>
 </head>
@@ -65,12 +66,27 @@
       report(html.indexOf("confidenceBadge") >= 0, "置信度元素存在");
       report(html.indexOf("getNextSample") >= 0 && html.indexOf("runImportedReplay") >= 0, "主看板导入数据回放链路存在");
       report(html.indexOf("data-i18n=\"qjzh.data.title\"") >= 0 && html.indexOf("data-i18n=\"qjzh.institution.title\"") >= 0, "新增面板三语标记存在");
+      var round8Keys = ["panel.trend", "panel.records", "panel.calibration", "panel.algorithm", "panel.decisionOutput", "panel.reasoning", "panel.knowledgeCatalog", "qjzh.data.downloadTemplate", "qjzh.data.loadSample", "qjzh.data.clear", "qjzh.institution.export", "qjzh.institution.import", "qjzh.report.generate"];
+      report(round8Keys.every(function (key) { return html.indexOf('data-i18n="' + key + '"') >= 0; }), "核心标题与操作按钮具有完整三语标记");
+      report(html.indexOf('data-i18n="view.algorithm.api"') >= 0 && html.indexOf("compensate()") >= 0, "算法标准接口说明存在");
+      report(html.indexOf('data-i18n="view.algorithm.range"') >= 0 && html.indexOf("2200–3500 m") >= 0, "算法适用域说明存在");
       report(html.indexOf("qjzh-scene-toggle") >= 0, "移动端场景预设收起开关存在");
       report(html.indexOf('value="bo"') >= 0 && html.indexOf("qjzh-scene-presets") >= 0, "藏语选项与场景预设存在");
       report(html.indexOf("纯软件环境数据服务演示") >= 0, "页脚源码已是合规声明");
     }).catch(function (error) {
       report(false, "主页面标记读取失败：" + error.message);
     });
+    try {
+      var sampleReport = { language: "zh", startDate: "2026-09-01", endDate: "2026-09-27", noRecords: false, complianceRate: 0.5, averageNh3: 12, maxNh3: 20, temperatureRange: { min: -5, max: 10 }, adviceCount: 2, riskDistribution: { 正常: 1, 关注: 1, 待办: 0, 紧急: 0 }, trendSeries: [{ timestamp: "2026-09-27T08:00:00+08:00", value: 12 }], generatedAt: "2026-09-27", source: "QJZH 本地记录" };
+      var reportHtml = window.QJZH.reportRenderer.buildHtml(sampleReport);
+      var institutionHtml = window.QJZH.reportRenderer.buildHtml(Object.assign({}, sampleReport, { seriesMode: "institution", trendSeries: [{ label: "海东示范圈舍", value: 8.4 }] }));
+      report(reportHtml.indexOf("data-chart='nh3-trend'") >= 0, "报告氨气趋势图标记存在");
+      report(institutionHtml.indexOf("data-chart='nh3-comparison'") >= 0, "机构报告圈舍对比图标记存在");
+      report(reportHtml.indexOf("data-chart='risk-distribution'") >= 0, "报告风险分布图标记存在");
+      report(reportHtml.indexOf("print-color-adjust:exact") >= 0, "报告图表启用打印色彩保真");
+    } catch (error) {
+      report(false, "报告渲染器执行失败：" + error.message);
+    }
   </script>
 </body>
 </html>

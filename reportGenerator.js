@@ -3,8 +3,11 @@
   "use strict";
   var q = root.QJZH = root.QJZH || {};
   function calibrated(r) { if (r.calibrated_nh3_ppm != null) return Number(r.calibrated_nh3_ppm); if (root.compensate) return Number(root.compensate(Number(r.altitude_m), Number(r.temp_c), Number(r.rh_percent), Number(r.raw_nh3_ppm))); return Number(r.raw_nh3_ppm || 0); }
+  function localDate(date) {
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+  }
   function report(options) {
-    options = options || {}; var end = options.endDate ? new Date(options.endDate + "T23:59:59") : new Date(); var start = options.startDate ? new Date(options.startDate) : new Date(end.getTime() - 90 * 86400000);
+    options = options || {}; var end = options.endDate ? new Date(options.endDate + "T23:59:59.999") : new Date(); var start = options.startDate ? new Date(options.startDate + "T00:00:00.000") : new Date(end.getTime() - 90 * 86400000);
     var allRecords = q.dataImport && q.dataImport.getRecords ? q.dataImport.getRecords() : []; var siteIds = Array.isArray(options.siteIds) ? options.siteIds : null; var records = allRecords.filter(function (r) { var t = new Date(r.timestamp || 0); return t >= start && t <= end && (!siteIds || siteIds.indexOf(r.site_id) >= 0); });
     // A fresh demo may contain a historical sample outside the current 90-day window.
     // When the user left both dates blank, make the report useful by covering that sample.
@@ -15,8 +18,13 @@
     var values = records.map(calibrated), sum = values.reduce(function (a, b) { return a + b; }, 0), dist = { 正常: 0, 关注: 0, 待办: 0, 紧急: 0 };
     values.forEach(function (n) { dist[n >= 20 ? "紧急" : n >= 15 ? "待办" : n >= 10 ? "关注" : "正常"]++; });
     var temps = records.map(function (r) { return Number(r.temp_c); }).filter(function (n) { return isFinite(n); });
+    var trendSeries = records.slice().sort(function (a, b) {
+      return new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime();
+    }).slice(-12).map(function (record) {
+      return { timestamp: record.timestamp || "", value: calibrated(record) };
+    }).filter(function (point) { return isFinite(point.value); });
     var language = ["zh", "en", "bo"].indexOf(options.language) >= 0 ? options.language : root.document && root.document.documentElement && root.document.documentElement.dataset.language || "zh";
-    var result = { language: language, startDate: start.toISOString().slice(0, 10), endDate: end.toISOString().slice(0, 10), records: records, noRecords: !records.length, complianceRate: records.length ? values.filter(function (n) { return n < 10; }).length / records.length : 0, averageNh3: records.length ? sum / records.length : 0, maxNh3: values.length ? Math.max.apply(Math, values) : 0, temperatureRange: temps.length ? { min: Math.min.apply(Math, temps), max: Math.max.apply(Math, temps) } : { min: null, max: null }, adviceCount: records.filter(function (r) { return r.advice || r.rule_id || calibrated(r) >= 10; }).length, riskDistribution: dist, generatedAt: new Date().toISOString(), source: "QJZH 本地记录" };
+    var result = { language: language, startDate: options.startDate || localDate(start), endDate: options.endDate || localDate(end), records: records, noRecords: !records.length, complianceRate: records.length ? values.filter(function (n) { return n < 10; }).length / records.length : 0, averageNh3: records.length ? sum / records.length : 0, maxNh3: values.length ? Math.max.apply(Math, values) : 0, temperatureRange: temps.length ? { min: Math.min.apply(Math, temps), max: Math.max.apply(Math, temps) } : { min: null, max: null }, adviceCount: records.filter(function (r) { return r.advice || r.rule_id || calibrated(r) >= 10; }).length, riskDistribution: dist, trendSeries: trendSeries, generatedAt: new Date().toISOString(), source: "QJZH 本地记录" };
     try { root.localStorage.setItem("QJZH_REPORTS", JSON.stringify(result)); } catch (_) {} return result;
   }
   q.reportGenerator = { report: report, generate: report }; q.report = report;

@@ -1258,6 +1258,42 @@
       font-weight: 900;
     }
 
+    .algorithm-credentials {
+      display: grid;
+      gap: 8px;
+      margin: 13px 0 15px;
+    }
+
+    .algorithm-credential {
+      position: relative;
+      margin: 0;
+      padding: 9px 11px 9px 30px;
+      border: 1px solid rgba(22, 214, 176, 0.18);
+      border-radius: 8px;
+      background: linear-gradient(90deg, rgba(22, 214, 176, 0.09), rgba(22, 214, 176, 0.025));
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.55;
+    }
+
+    .algorithm-credential::before {
+      position: absolute;
+      top: 11px;
+      left: 11px;
+      width: 8px;
+      height: 8px;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(22, 214, 176, 0.45);
+      content: "";
+    }
+
+    .algorithm-credential code {
+      color: var(--primary);
+      font-family: var(--mono);
+      font-weight: 800;
+    }
+
     .alarm-list {
       display: grid;
       gap: 8px;
@@ -2912,7 +2948,7 @@
     <noscript><div style="padding:16px;background:#ffe9e9;color:#a33;text-align:center">青境智衡为纯前端演示系统，需要启用 JavaScript 才能运行。</div></noscript>
     <aside class="qjzh-boundary-banner" id="boundaryBanner" role="note">
       <span class="qjzh-boundary-copy"><strong>青境智衡 · 纯软件环境数据服务</strong>：兼容第三方通用传感器、人工录入与公开数据，仅提供校准、分析和决策建议，不生产/销售/控制硬件，不涉及风机控制。</span>
-      <button type="button" id="dismissBoundary" aria-label="关闭边界声明">×</button>
+      <button type="button" id="dismissBoundary" aria-label="关闭边界声明" data-i18n-aria-label="aria.dismissBoundary">×</button>
     </aside>
   <div class="app">
     <header class="topbar glass">
@@ -2944,7 +2980,7 @@
         <button class="control" id="toggleStream" type="button">暂停采集</button>
       </div>
     </header>
-    <nav class="qjzh-main-nav" aria-label="主导航">
+    <nav class="qjzh-main-nav" aria-label="主导航" data-i18n-aria-label="aria.mainNav">
       <a href="#/overview" data-view="overview" class="nav-link active"><span class="nav-icon" aria-hidden="true">01</span><span data-i18n="nav.overview">总览</span></a>
       <a href="#/data" data-view="data" class="nav-link"><span class="nav-icon" aria-hidden="true">02</span><span data-i18n="nav.data">数据接入</span></a>
       <a href="#/algorithm" data-view="algorithm" class="nav-link"><span class="nav-icon" aria-hidden="true">03</span><span data-i18n="nav.algorithm">高原校准</span></a>
@@ -2954,18 +2990,18 @@
     </nav>
     <section class="view" data-view="data" aria-labelledby="dataImportTitle" hidden>
     <section class="qjzh-data-panel glass" id="dataImportPanel" aria-labelledby="dataImportTitle">
-      <div class="panel-head"><div><h2 class="panel-title" id="dataImportTitle" data-i18n="qjzh.data.title">数据接入</h2><p class="panel-note" data-i18n="qjzh.data.note">本系统不做采集端，兼容市面通用传感器与人工录入，做采集后的校准、分析与决策端。</p></div><span class="qjzh-quality-badge" id="dataQualityBadge">尚未评分</span></div>
+      <div class="panel-head"><div><h2 class="panel-title" id="dataImportTitle" data-i18n="qjzh.data.title">数据接入</h2><p class="panel-note" data-i18n="qjzh.data.note">本系统不做采集端，兼容市面通用传感器与人工录入，做采集后的校准、分析与决策端。</p></div><span class="qjzh-quality-badge" id="dataQualityBadge" data-i18n="qjzh.data.qualityPending">尚未评分</span></div>
       <div class="qjzh-data-grid">
-        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.importCsv">第三方传感器导入</h3><p>上传包含 timestamp、site_id、altitude_m、temp_c、rh_percent、raw_nh3_ppm、device_model 的 CSV。</p><input id="csvInput" type="file" accept=".csv,text/csv" aria-label="上传传感器 CSV"><div class="qjzh-button-row"><button class="control secondary" id="downloadCsvTemplate" type="button">下载 CSV 模板</button><button class="control secondary" id="loadSampleData" type="button">加载示例数据</button></div></article>
-        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.manual">人工录入</h3><form id="manualDataForm" class="qjzh-manual-form"><input name="site_id" required placeholder="站点名称"><input name="altitude_m" required type="number" min="2200" max="3500" placeholder="海拔 (m)"><input name="temp_c" required type="number" min="-15" max="25" step="0.1" placeholder="温度 (℃)"><input name="rh_percent" required type="number" min="20" max="85" placeholder="湿度 (%)"><input name="raw_nh3_ppm" required type="number" min="0" max="30" step="0.1" placeholder="原始氨气 (ppm)"><input name="device_model" value="人工录入" placeholder="设备型号"><button class="control" type="submit">接入并校准</button></form></article>
-        <article class="qjzh-data-card qjzh-empty-card" id="dataEmptyState"><h3 data-i18n="qjzh.data.demo">演示模拟数据</h3><p>尚未接入数据，请上传 CSV 或手动录入。</p><button class="control" id="loadDemoSimulation" type="button">加载青海冬季 24 小时演示</button></article>
+        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.importCsv">第三方传感器导入</h3><p data-i18n="qjzh.data.csvNote">上传包含 timestamp、site_id、altitude_m、temp_c、rh_percent、raw_nh3_ppm、device_model 的 CSV。</p><input id="csvInput" type="file" accept=".csv,text/csv" aria-label="上传传感器 CSV" data-i18n-aria-label="aria.csvUpload"><div class="qjzh-button-row"><button class="control secondary" id="downloadCsvTemplate" data-i18n="qjzh.data.downloadTemplate" type="button">下载 CSV 模板</button><button class="control secondary" id="loadSampleData" data-i18n="qjzh.data.loadSample" type="button">加载示例数据</button></div></article>
+        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.manual">人工录入</h3><form id="manualDataForm" class="qjzh-manual-form"><input name="site_id" required placeholder="站点名称" data-i18n-placeholder="qjzh.data.placeholder.site"><input name="altitude_m" required type="number" min="2200" max="3500" placeholder="海拔 (m)" data-i18n-placeholder="qjzh.data.placeholder.altitude"><input name="temp_c" required type="number" min="-15" max="25" step="0.1" placeholder="温度 (℃)" data-i18n-placeholder="qjzh.data.placeholder.temperature"><input name="rh_percent" required type="number" min="20" max="85" placeholder="湿度 (%)" data-i18n-placeholder="qjzh.data.placeholder.humidity"><input name="raw_nh3_ppm" required type="number" min="0" max="30" step="0.1" placeholder="原始氨气 (ppm)" data-i18n-placeholder="qjzh.data.placeholder.ammonia"><input name="device_model" value="manual_entry" placeholder="设备型号" data-i18n-placeholder="qjzh.data.placeholder.device"><button class="control" type="submit" data-i18n="qjzh.data.submit">接入并校准</button></form></article>
+        <article class="qjzh-data-card qjzh-empty-card" id="dataEmptyState"><h3 data-i18n="qjzh.data.demo">演示模拟数据</h3><p data-i18n="qjzh.data.emptyNote">尚未接入数据，请上传 CSV 或手动录入。</p><button class="control" id="loadDemoSimulation" data-i18n="qjzh.data.loadDemo" type="button">加载青海冬季 24 小时演示</button></article>
       </div>
-      <div id="dataImportStatus" class="qjzh-data-state qjzh-state-empty" role="status">尚未接入数据，请上传 CSV 或手动录入。</div>
-      <button class="control secondary" id="clearLocalData" type="button">清除本地数据</button>
+      <div id="dataImportStatus" class="qjzh-data-state qjzh-state-empty" role="status" data-i18n="qjzh.data.emptyStatus">尚未接入数据，请上传 CSV 或手动录入。</div>
+      <button class="control secondary" id="clearLocalData" data-i18n="qjzh.data.clear" type="button">清除本地数据</button>
     </section>
       <section class="qjzh-record-panel glass" aria-labelledby="dataRecordTitle">
         <div class="panel-head"><div><h2 class="panel-title" id="dataRecordTitle" data-i18n="qjzh.data.records">本地记录</h2><p class="panel-note" data-i18n="qjzh.data.recordsNote">按时间显示最近 20 条记录；同一站点与时间戳只保留最新值。</p></div></div>
-        <div class="data-table-scroll"><table class="data-table"><thead><tr><th>时间</th><th>站点</th><th>畜种</th><th>海拔</th><th>原始 NH₃</th><th>数据来源</th></tr></thead><tbody id="dataRecordRows"><tr><td colspan="6">尚无本地记录</td></tr></tbody></table></div>
+        <div class="data-table-scroll"><table class="data-table"><thead><tr><th data-i18n="qjzh.data.table.time">时间</th><th data-i18n="qjzh.data.table.site">站点</th><th data-i18n="qjzh.data.table.species">畜种</th><th data-i18n="qjzh.data.table.altitude">海拔</th><th data-i18n="qjzh.data.table.raw">原始 NH₃</th><th data-i18n="qjzh.data.table.source">数据来源</th></tr></thead><tbody id="dataRecordRows"><tr><td colspan="6" data-i18n="qjzh.data.noRecords">尚无本地记录</td></tr></tbody></table></div>
       </section>
     </section>
 
@@ -2990,10 +3026,10 @@
       <div class="view-heading"><div><h2 id="overviewTitle" data-i18n="view.overview.title">环境总览</h2><p data-i18n="view.overview.note">集中查看当前站点、实时读数、趋势和采样记录，再按链路进入校准与决策界面。</p></div></div>
       <div class="qjzh-replay-site" id="replaySiteLabel" role="status"><strong>当前数据：</strong><span>本地 24 小时模拟；导入数据后将按首个站点独立回放。</span></div>
       <p class="qjzh-tour-hint" data-i18n="view.overview.tourHint">建议演示路径：数据接入 → 高原校准 → 智能决策 → 机构版 → 环境报告</p>
-      <div class="overview-quick-grid" aria-label="快捷入口">
-        <a class="overview-quick" href="#/data" data-goto="data"><span><strong data-i18n="nav.data">数据接入</strong><small>CSV、人工录入与质量评分</small></span><b aria-hidden="true">→</b></a>
-        <a class="overview-quick" href="#/algorithm" data-goto="algorithm"><span><strong data-i18n="nav.algorithm">高原校准</strong><small>模型演示、误差边界与置信度</small></span><b aria-hidden="true">→</b></a>
-        <a class="overview-quick" href="#/decision" data-goto="decision"><span><strong data-i18n="nav.decision">智能决策</strong><small>风险、建议与规则溯源</small></span><b aria-hidden="true">→</b></a>
+      <div class="overview-quick-grid" aria-label="快捷入口" data-i18n-aria-label="aria.quickLinks">
+        <a class="overview-quick" href="#/data" data-goto="data"><span><strong data-i18n="nav.data">数据接入</strong><small data-i18n="view.overview.dataQuick">CSV、人工录入与质量评分</small></span><b aria-hidden="true">→</b></a>
+        <a class="overview-quick" href="#/algorithm" data-goto="algorithm"><span><strong data-i18n="nav.algorithm">高原校准</strong><small data-i18n="view.overview.algorithmQuick">模型演示、误差边界与置信度</small></span><b aria-hidden="true">→</b></a>
+        <a class="overview-quick" href="#/decision" data-goto="decision"><span><strong data-i18n="nav.decision">智能决策</strong><small data-i18n="view.overview.decisionQuick">风险、建议与规则溯源</small></span><b aria-hidden="true">→</b></a>
         <a class="overview-quick" href="#/institution" data-goto="institution"><span><strong data-i18n="nav.institution">机构版</strong><small data-i18n="view.overview.institutionQuick">多圈舍排名、区域汇总与角色视图</small></span><b aria-hidden="true">→</b></a>
         <a class="overview-quick" href="#/report" data-goto="report"><span><strong data-i18n="nav.report">环境报告</strong><small data-i18n="view.overview.reportQuick">日期范围、三语报告与打印导出</small></span><b aria-hidden="true">→</b></a>
       </div>
@@ -3033,8 +3069,8 @@
             <div>
               <div class="meter">
                 <span class="meter-fill" id="range-temperature"></span>
-                <i class="meter-point" style="--x: 16.7%; --marker-color: var(--blue);" title="低温标记 0℃"></i>
-                <i class="meter-point" style="--x: 90%; --marker-color: var(--red);" title="高温标记 22℃"></i>
+                <i class="meter-point" style="--x: 16.7%; --marker-color: var(--blue);" title="低温标记 0℃" data-i18n-title="title.lowTempMarker"></i>
+                <i class="meter-point" style="--x: 90%; --marker-color: var(--red);" title="高温标记 22℃" data-i18n-title="title.highTempMarker"></i>
               </div>
               <div class="meter-labels"><span>-5</span><span class="sensor-reference">0℃ / 22℃</span><span>25</span></div>
             </div>
@@ -3099,7 +3135,7 @@
                 <span>氨气风险指数 ppm</span>
               </div>
             </div>
-            <div class="risk-scale" id="riskScale" aria-label="氨气风险刻度">
+            <div class="risk-scale" id="riskScale" aria-label="氨气风险刻度" data-i18n-aria-label="aria.riskScale">
               <span class="safe"></span>
               <span class="watch"></span>
               <span class="over"></span>
@@ -3118,14 +3154,14 @@
         <section class="panel glass" id="trendPanel">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title">实时趋势曲线</h2>
-              <p class="panel-note">氨气使用左侧 ppm 轴，温度、湿度与光照使用独立坐标轴；红色虚线为 15ppm 风险阈值，悬停任意点可查看该时刻的真实数据。</p>
+              <h2 class="panel-title" data-i18n="panel.trend">实时趋势曲线</h2>
+              <p class="panel-note" data-i18n="panel.trend.note">氨气使用左侧 ppm 轴，温度、湿度与光照使用独立坐标轴；红色虚线为 15ppm 风险阈值，悬停任意点可查看该时刻的真实数据。</p>
             </div>
             <!-- 动态显示当前曲线已接收的样本数，避免“最近60点”与实际点数产生误解。 -->
             <span class="chart-live-count" id="chartPointCount" aria-live="polite">最近 0 / 60 点</span>
           </div>
           <!-- 图表色标与数据集颜色一一对应，便于快速区分多量纲曲线。 -->
-          <div class="trend-key" aria-label="实时曲线颜色说明">
+          <div class="trend-key" aria-label="实时曲线颜色说明" data-i18n-aria-label="aria.trendLegend">
             <span class="trend-key-item" style="--series:#FF6B6B;"><i></i><span class="trend-key-label">补偿 NH₃</span><small>ppm</small></span>
             <span class="trend-key-item raw" style="--series:#A8B2BB;"><i></i><span class="trend-key-label">原始 NH₃</span><small>ppm</small></span>
             <span class="trend-key-item" style="--series:#4A9EFF;"><i></i><span class="trend-key-label">温度</span><small>℃</small></span>
@@ -3136,7 +3172,7 @@
             <canvas id="trendChart"></canvas>
           </div>
           <p class="trend-summary panel-note" id="trendSummary">📊 等待更多采样点生成趋势简评。</p>
-          <div class="chart-insights" aria-label="最近60点统计">
+          <div class="chart-insights" aria-label="最近60点统计" data-i18n-aria-label="aria.chartInsights">
             <div class="insight-card"><span>NH₃ 均值</span><strong id="insightAvgNh3">--</strong></div>
             <div class="insight-card"><span>NH₃ 峰值</span><strong id="insightMaxNh3">--</strong></div>
             <div class="insight-card"><span>温度均值</span><strong id="insightAvgTemp">--</strong></div>
@@ -3147,8 +3183,8 @@
         <section class="panel glass" id="recordsPanel">
           <div class="table-actions">
             <div>
-              <h2 class="panel-title">采样记录</h2>
-              <p class="panel-note">保留最近 8 条采样数据；可手动保存数据快照用于回溯展示。</p>
+              <h2 class="panel-title" data-i18n="panel.records">采样记录</h2>
+              <p class="panel-note" data-i18n="panel.records.note">保留最近 8 条采样数据；可手动保存数据快照用于回溯展示。</p>
             </div>
             <button class="control secondary" id="snapshotButton" type="button">保存数据快照</button>
           </div>
@@ -3170,7 +3206,7 @@
               </tbody>
             </table>
           </div>
-          <div class="snapshot-list" id="snapshotList" aria-label="快照列表"></div>
+          <div class="snapshot-list" id="snapshotList" aria-label="快照列表" data-i18n-aria-label="aria.snapshotList"></div>
         </section>
 
         <!-- 次级推理日志保留在数据明细之后，不占用首屏核心监测与决策空间。 -->
@@ -3205,8 +3241,8 @@
         <section class="panel glass" id="calibrationPanel">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title">采集与补偿状态</h2>
-              <p class="panel-note">模拟高海拔低压环境下的传感器补偿过程。</p>
+              <h2 class="panel-title" data-i18n="panel.calibration">采集与补偿状态</h2>
+              <p class="panel-note" data-i18n="panel.calibration.note">模拟高海拔低压环境下的传感器补偿过程。</p>
             </div>
           </div>
           <div class="calibration-grid">
@@ -3216,7 +3252,7 @@
             <div class="calibration-item"><span>补偿后氨气</span><strong id="correctedAmmoniaValue">--</strong></div>
           </div>
           <!-- 纯 CSS 对比条形图，随每次补偿结果平滑更新。 -->
-          <div class="compensation-compare" aria-label="高原双维度补偿算法效果对比">
+          <div class="compensation-compare" aria-label="高原双维度补偿算法效果对比" data-i18n-aria-label="aria.compensationCompare">
             <p class="compensation-compare-title">高原双维度补偿算法效果对比</p>
             <div class="compensation-bar-row"><span>原始 NH₃</span><div class="compensation-track"><i class="compensation-bar raw" id="compensationRawBar"></i></div><output id="compensationRawValue">--</output></div>
             <div class="compensation-bar-row"><span>补偿 NH₃</span><div class="compensation-track"><i class="compensation-bar corrected" id="compensationCorrectedBar"></i></div><output id="compensationCorrectedValue">--</output></div>
@@ -3224,24 +3260,28 @@
           </div>
         </section>
 
-        <section class="panel glass" id="algorithmPanel" aria-label="算法演示面板">
+        <section class="panel glass" id="algorithmPanel" aria-label="算法演示面板" data-i18n-aria-label="aria.algorithmPanel">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title">算法演示面板</h2>
-              <p class="panel-note">模型 <span class="model-version" id="modelVersion">v--</span> · <span id="modelBoundaryNote">测试误差 0.71%（合成测试集理论推导，待现场实测校准）</span></p>
+              <h2 class="panel-title" data-i18n="panel.algorithm">算法演示面板</h2>
+              <p class="panel-note"><span data-i18n="view.algorithm.modelLabel">模型</span> <span class="model-version" id="modelVersion">v--</span> · <span id="modelBoundaryNote">测试误差 0.71%（合成测试集理论推导，待现场实测校准）</span></p>
             </div>
           </div>
+          <div class="algorithm-credentials" aria-label="算法接口与适用范围" data-i18n-aria-label="aria.algorithmCredentials">
+            <p class="algorithm-credential" data-i18n="view.algorithm.api">校准算法以标准接口 compensate() 提供，可被前端、后端或第三方设备调用；本页为浏览器端直调演示。</p>
+            <p class="algorithm-credential" data-i18n="view.algorithm.range">适用范围：海拔 2200–3500 m，温度 -15–25℃，湿度 20–85%，氨气 0–30 ppm</p>
+          </div>
           <div class="demo-controls">
-            <label class="demo-row"><span>海拔</span><input id="demoAltitude" type="range" min="2200" max="3500" value="2800" step="10" aria-label="算法演示海拔"><output id="demoAltitudeOut">2800 m</output></label>
-            <label class="demo-row"><span>温度</span><input id="demoTemp" type="range" min="-15" max="25" value="10" step="0.5" aria-label="算法演示温度"><output id="demoTempOut">10.0 C</output></label>
-            <label class="demo-row"><span>湿度</span><input id="demoRh" type="range" min="20" max="85" value="60" step="1" aria-label="算法演示湿度"><output id="demoRhOut">60 %RH</output></label>
-            <label class="demo-row"><span>原始NH₃</span><input id="demoRawInput" type="range" min="0" max="30" value="18" step="0.1" aria-label="算法演示原始氨气"><output id="demoRawInputOut">18.0 ppm</output></label>
+            <label class="demo-row"><span>海拔</span><input id="demoAltitude" type="range" min="2200" max="3500" value="2800" step="10" aria-label="算法演示海拔" data-i18n-aria-label="aria.demoAltitude"><output id="demoAltitudeOut">2800 m</output></label>
+            <label class="demo-row"><span>温度</span><input id="demoTemp" type="range" min="-15" max="25" value="10" step="0.5" aria-label="算法演示温度" data-i18n-aria-label="aria.demoTemperature"><output id="demoTempOut">10.0 C</output></label>
+            <label class="demo-row"><span>湿度</span><input id="demoRh" type="range" min="20" max="85" value="60" step="1" aria-label="算法演示湿度" data-i18n-aria-label="aria.demoHumidity"><output id="demoRhOut">60 %RH</output></label>
+            <label class="demo-row"><span>原始NH₃</span><input id="demoRawInput" type="range" min="0" max="30" value="18" step="0.1" aria-label="算法演示原始氨气" data-i18n-aria-label="aria.demoRaw"><output id="demoRawInputOut">18.0 ppm</output></label>
           </div>
           <div class="demo-actions">
             <button class="control" id="demoSimulate" type="button">应用当前参数</button>
             <span class="demo-status" id="demoStatus">等待输入</span>
           </div>
-          <div class="demo-output-grid" aria-label="补偿前后结果">
+          <div class="demo-output-grid" aria-label="补偿前后结果" data-i18n-aria-label="aria.demoOutput">
             <div class="demo-output"><span>补偿前读数</span><strong id="demoRaw">--</strong></div>
             <div class="demo-output"><span>补偿后结果</span><strong id="demoCorrected">--</strong></div>
           </div>
@@ -3250,8 +3290,8 @@
         <section class="panel glass" id="recommendationPanel">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title">决策建议输出</h2>
-              <p class="panel-note">系统只输出决策建议，执行由养殖户既有设备或人工完成，不涉及风机控制。</p>
+              <h2 class="panel-title" data-i18n="panel.decisionOutput">决策建议输出</h2>
+              <p class="panel-note" data-i18n="panel.decisionOutput.note">系统只输出决策建议，执行由养殖户既有设备或人工完成，不涉及风机控制。</p>
             </div>
           </div>
           <div class="actuator-panel">
@@ -3277,7 +3317,7 @@
 
             <code class="command-code" id="commandText">建议：当前窗口可通风 8 分钟</code>
 
-            <div class="alarm-list" id="alarmList" aria-label="建议溯源">
+            <div class="alarm-list" id="alarmList" aria-label="建议溯源" data-i18n-aria-label="aria.adviceTrace">
               <div class="alarm-item"><i class="alarm-dot" style="--alarm-color: var(--primary);"></i><span>建议溯源：规则 ID 与标准出处将在校准后显示</span></div>
             </div>
 
@@ -3296,8 +3336,8 @@
         <section class="panel glass" id="reasoningPanel">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title">本轮推理状态</h2>
-              <p class="panel-note">直接显示当前本地知识库与决策引擎的输出，不在页面内重复实现规则。</p>
+              <h2 class="panel-title" data-i18n="panel.reasoning">本轮推理状态</h2>
+              <p class="panel-note" data-i18n="panel.reasoning.note">直接显示当前本地知识库与决策引擎的输出，不在页面内重复实现规则。</p>
             </div>
           </div>
           <dl class="rule-state-list" aria-live="polite">
@@ -3310,8 +3350,8 @@
         <section class="knowledge-catalog glass" aria-labelledby="knowledgeCatalogTitle">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title" id="knowledgeCatalogTitle">知识库规则卡片</h2>
-              <p class="panel-note">当前推理命中的阈值、运行约束与可追溯依据。</p>
+              <h2 class="panel-title" id="knowledgeCatalogTitle" data-i18n="panel.knowledgeCatalog">知识库规则卡片</h2>
+              <p class="panel-note" data-i18n="panel.knowledgeCatalog.note">当前推理命中的阈值、运行约束与可追溯依据。</p>
             </div>
           </div>
           <div class="knowledge-rule-list" id="knowledgeRuleList" data-ready="false">
@@ -3336,24 +3376,24 @@
     <section class="view" data-view="institution" aria-labelledby="institutionViewHeading" hidden>
       <div class="view-heading"><div><h2 id="institutionViewHeading" data-i18n="view.institution.title">机构版</h2><p data-i18n="view.institution.note">按风险排序查看多圈舍汇总，并可按站点或畜种快速筛选。</p></div></div>
     <section class="qjzh-institution-view panel glass" id="institutionView" aria-labelledby="institutionTitle">
-      <div class="panel-head"><div><h2 class="panel-title" id="institutionTitle" data-i18n="qjzh.institution.title">机构版多圈舍视图</h2><p class="panel-note">默认加载 5 个青海模拟圈舍，可从本地记录导入额外站点。</p></div><label><span data-i18n="qjzh.institution.role">机构角色</span> <select id="institutionRole" aria-label="机构角色"><option value="station">畜牧站</option><option value="college">农牧院校</option><option value="cooperative">合作社</option></select></label></div>
-      <div id="institutionSummary" class="qjzh-data-state qjzh-state-empty">正在加载区域汇总…</div>
+      <div class="panel-head"><div><h2 class="panel-title" id="institutionTitle" data-i18n="qjzh.institution.title">机构版多圈舍视图</h2><p class="panel-note" data-i18n="qjzh.institution.note">默认加载 5 个青海模拟圈舍，可从本地记录导入额外站点。</p></div><label><span data-i18n="qjzh.institution.role">机构角色</span> <select id="institutionRole" aria-label="机构角色" data-i18n-aria-label="aria.institutionRole"><option value="station">畜牧站</option><option value="college">农牧院校</option><option value="cooperative">合作社</option></select></label></div>
+      <div id="institutionSummary" class="qjzh-data-state qjzh-state-empty" data-i18n="qjzh.institution.loading">正在加载区域汇总…</div>
       <p id="institutionRoleDetail" class="qjzh-role-detail">畜牧站角色：区域汇总优先，列表按氨气风险从高到低排列。</p>
-      <label class="qjzh-filter" for="institutionFilter"><span data-i18n="qjzh.institution.filter">筛选</span><input id="institutionFilter" type="search" placeholder="输入站点 ID 或畜种" autocomplete="off"></label>
-      <div class="data-table-scroll"><table class="data-table"><thead><tr><th>站点</th><th>海拔</th><th>畜种</th><th>校准氨气</th><th>风险等级</th><th>最后更新时间</th></tr></thead><tbody id="institutionRows"></tbody></table></div>
-      <div class="qjzh-button-row"><button class="control" id="institutionExport" type="button">导出区域报告</button><button class="control secondary" id="institutionImport" type="button">从本地记录导入</button></div>
+      <label class="qjzh-filter" for="institutionFilter"><span data-i18n="qjzh.institution.filter">筛选</span><input id="institutionFilter" type="search" placeholder="输入站点 ID 或畜种" data-i18n-placeholder="qjzh.institution.filterPlaceholder" autocomplete="off"></label>
+      <div class="data-table-scroll"><table class="data-table"><thead><tr><th data-i18n="qjzh.institution.table.site">站点</th><th data-i18n="qjzh.institution.table.altitude">海拔</th><th data-i18n="qjzh.institution.table.species">畜种</th><th data-i18n="qjzh.institution.table.ammonia">校准氨气</th><th data-i18n="qjzh.institution.table.risk">风险等级</th><th data-i18n="qjzh.institution.table.updated">最后更新时间</th></tr></thead><tbody id="institutionRows"></tbody></table></div>
+      <div class="qjzh-button-row"><button class="control" id="institutionExport" data-i18n="qjzh.institution.export" type="button">导出区域报告</button><button class="control secondary" id="institutionImport" data-i18n="qjzh.institution.import" type="button">从本地记录导入</button></div>
     </section>
     </section>
     <section class="view" data-view="report" aria-labelledby="reportViewHeading" hidden>
       <div class="view-heading"><div><h2 id="reportViewHeading" data-i18n="view.report.title">环境报告</h2><p data-i18n="view.report.note">按日期范围生成三语环境报告，并在新窗口打印或另存为 PDF。</p></div></div>
     <section class="qjzh-report-panel panel glass" id="reportPanel" aria-labelledby="reportTitle">
-      <div class="panel-head"><div><h2 class="panel-title" id="reportTitle" data-i18n="qjzh.report.title">季度环境报告</h2><p class="panel-note">默认统计最近 90 天；报告将在新窗口渲染，可打印或另存为 PDF。</p></div></div>
-      <div class="qjzh-button-row"><label>起始日期 <input id="reportStartDate" type="date"></label><label>结束日期 <input id="reportEndDate" type="date"></label><button class="control" id="generateReport" type="button">生成并打印报告</button></div>
-      <div id="reportStatus" class="qjzh-data-state qjzh-state-empty">选择日期范围后生成报告。</div>
+      <div class="panel-head"><div><h2 class="panel-title" id="reportTitle" data-i18n="qjzh.report.title">季度环境报告</h2><p class="panel-note" data-i18n="qjzh.report.note">默认统计最近 90 天；报告将在新窗口渲染，可打印或另存为 PDF。</p></div></div>
+      <div class="qjzh-button-row"><label><span data-i18n="qjzh.report.start">起始日期</span> <input id="reportStartDate" type="date"></label><label><span data-i18n="qjzh.report.end">结束日期</span> <input id="reportEndDate" type="date"></label><button class="control" id="generateReport" data-i18n="qjzh.report.generate" type="button">生成并打印报告</button></div>
+      <div id="reportStatus" class="qjzh-data-state qjzh-state-empty" data-i18n="qjzh.report.status">选择日期范围后生成报告。</div>
       <p class="qjzh-report-watermark" data-i18n="qjzh.report.watermark">生成报告将带有“演示版・仅用于赛事展示”水印，不作为法定检测或动物诊疗依据。</p>
     </section>
     </section>
-    <div class="qjzh-scene-presets" aria-label="答辩场景预设"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" type="button" aria-expanded="false">演示</button><div class="qjzh-scene-actions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">断网场景</button><button class="control secondary" data-scene="tour" data-i18n="qjzh.scene.tour" type="button" aria-pressed="false">巡览演示</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
+    <div class="qjzh-scene-presets" aria-label="答辩场景预设" data-i18n-aria-label="qjzh.scene.aria"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" data-i18n="qjzh.scene.toggle" type="button" aria-expanded="false">演示</button><div class="qjzh-scene-actions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">断网场景</button><button class="control secondary" data-scene="tour" data-i18n="qjzh.scene.tour" type="button" aria-pressed="false">巡览演示</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
     <footer class="footer">
       <span id="buildVersionText">青境智衡 · 纯软件环境数据服务演示</span>
       <span id="buildDateText">数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议</span>
@@ -3396,12 +3436,17 @@
       en: {
         "sensor.labels": ["Ammonia", "Barn temperature", "Relative humidity", "Illuminance"],
         "sensor.references": ["15 ppm threshold", "0 C / 22 C", "80% high humidity", "Supplemental-light guide"],
-        "qjzh.page.title": "Qingjing Zhiheng · Highland Barn Environmental Data Service", "qjzh.page.subtitle": "Data intake → highland calibration → decision support → recommendation → report", "qjzh.tab.individual": "Individual", "qjzh.tab.institution": "Institution", "qjzh.data.title": "Data intake", "qjzh.data.note": "The system does not provide sensors. It calibrates, analyzes and produces recommendations from third-party or manually entered data.", "qjzh.data.importCsv": "Third-party CSV", "qjzh.data.manual": "Manual entry", "qjzh.data.demo": "Demo data", "qjzh.confidence.wait": "Confidence: waiting for data", "qjzh.confidence.high": "Confidence: high", "qjzh.confidence.medium": "Confidence: medium", "qjzh.confidence.low": "Confidence: low", "qjzh.institution.title": "Institution multi-barn view", "qjzh.institution.role": "Institution role", "qjzh.report.title": "Quarterly environment report", "qjzh.scene.retail": "Individual scene", "qjzh.scene.institution": "Institution scene", "qjzh.scene.offline": "Offline scene", "qjzh.scene.reset": "Reset demo", "qjzh.advice.title": "Decision recommendations", "qjzh.algorithm.title": "Highland calibration demo", "qjzh.pipeline.intake": "Data intake", "qjzh.pipeline.calibrate": "Highland calibration", "qjzh.pipeline.decide": "Decision support", "qjzh.pipeline.output": "Recommendation", "qjzh.footer.product": "Qingjing Zhiheng · software environmental data service demo", "qjzh.footer.boundary": "Local-only data · no animal diagnosis · no hardware control · reference recommendations only", "qjzh.footer.deployed": "Deployed",
+        "qjzh.page.title": "Qingjing Zhiheng · Highland Barn Environmental Data Service", "qjzh.page.subtitle": "Data intake → highland calibration → decision support → recommendation → report", "qjzh.tab.individual": "Individual", "qjzh.tab.institution": "Institution", "qjzh.data.title": "Data intake", "qjzh.data.note": "The system does not provide sensors. It calibrates, analyzes and produces recommendations from third-party or manually entered data.", "qjzh.data.importCsv": "Third-party CSV", "qjzh.data.manual": "Manual entry", "qjzh.data.demo": "Demo data", "qjzh.confidence.wait": "Confidence: waiting for data", "qjzh.confidence.high": "Confidence: high", "qjzh.confidence.medium": "Confidence: medium", "qjzh.confidence.low": "Confidence: low", "qjzh.institution.title": "Institution multi-barn view", "qjzh.institution.role": "Institution role", "qjzh.report.title": "Quarterly environment report", "qjzh.scene.toggle": "Demo", "qjzh.scene.aria": "Presentation scene presets", "qjzh.scene.retail": "Individual scene", "qjzh.scene.institution": "Institution scene", "qjzh.scene.offline": "Offline scene", "qjzh.scene.reset": "Reset demo", "qjzh.advice.title": "Decision recommendations", "qjzh.algorithm.title": "Highland calibration demo", "qjzh.pipeline.intake": "Data intake", "qjzh.pipeline.calibrate": "Highland calibration", "qjzh.pipeline.decide": "Decision support", "qjzh.pipeline.output": "Recommendation", "qjzh.footer.product": "Qingjing Zhiheng · software environmental data service demo", "qjzh.footer.boundary": "Local-only data · no animal diagnosis · no hardware control · reference recommendations only", "qjzh.footer.deployed": "Deployed",
         "nav.overview": "Overview", "nav.data": "Data intake", "nav.algorithm": "Highland calibration", "nav.decision": "Decision support", "nav.institution": "Institution", "nav.report": "Environment report", "nav.next": "Next: {label}",
         "qjzh.scene.tour": "Guided tour", "view.overview.tourHint": "Suggested tour: Data intake → Highland calibration → Decision support → Institution view → Environment report", "view.overview.institutionQuick": "Barn rankings, regional summaries and role views", "view.overview.reportQuick": "Date ranges, trilingual reports and print export",
-        "view.overview.title": "Environment overview", "view.overview.note": "Review the active site, live readings, trends and samples before moving through calibration and decision views.", "view.algorithm.title": "Highland calibration", "view.algorithm.note": "Compare raw and calibrated ammonia, model boundaries and input confidence.", "view.decision.title": "Decision support", "view.decision.note": "Generate risk level, time window, recommendations and traceable local rules.", "view.institution.title": "Institution view", "view.institution.note": "Review barns by risk and filter by site or species.", "view.report.title": "Environment report", "view.report.note": "Generate a localized report for a date range and print or save it as PDF.",
-        "qjzh.data.records": "Local records", "qjzh.data.recordsNote": "Shows the latest 20 records; the newest value wins for the same site and timestamp.", "qjzh.data.noRecords": "No local records", "qjzh.data.partialImport": "Some records were not imported", "qjzh.data.imported": "Imported and deduplicated {count} records; the overview will replay one site.", "qjzh.data.sampleLoaded": "Demo data replaced ({sites} barns, {count} records)", "qjzh.data.quality": "Data quality {quality} · confidence {confidence}", "qjzh.data.cleared": "Local data cleared", "qjzh.data.demoReplay": "Qinghai winter demo loaded; the overview will replay one site in time order.",
-        "qjzh.institution.filter": "Filter", "qjzh.report.watermark": "Generated reports include a demo-only watermark and are not statutory measurements or animal diagnoses.",
+        "view.overview.title": "Environment overview", "view.overview.note": "Review the active site, live readings, trends and samples before moving through calibration and decision views.", "view.algorithm.title": "Highland calibration", "view.algorithm.note": "Compare raw and calibrated ammonia, model boundaries and input confidence.", "view.algorithm.modelLabel": "Model", "view.algorithm.api": "The calibration algorithm is exposed through the standard compensate() interface for front ends, back ends and third-party devices; this page calls it directly in the browser.", "view.algorithm.range": "Operating range: altitude 2200–3500 m, temperature -15–25℃, humidity 20–85%, ammonia 0–30 ppm", "view.decision.title": "Decision support", "view.decision.note": "Generate risk level, time window, recommendations and traceable local rules.", "view.institution.title": "Institution view", "view.institution.note": "Review barns by risk and filter by site or species.", "view.report.title": "Environment report", "view.report.note": "Generate a localized report for a date range and print or save it as PDF.",
+        "panel.trend": "Real-time trend", "panel.trend.note": "NH₃ uses the left ppm axis; temperature, humidity and light use independent axes. The red dashed line marks the 15 ppm risk threshold; hover any point for its measured values.", "panel.records": "Sampling records", "panel.records.note": "Keeps the latest eight samples; save snapshots for traceable review.", "panel.calibration": "Collection and compensation", "panel.calibration.note": "Simulates sensor compensation under high-altitude, low-pressure conditions.", "panel.algorithm": "Algorithm demonstration", "panel.decisionOutput": "Decision recommendations", "panel.decisionOutput.note": "The system provides recommendations only. Farmers act through existing equipment or manual work; no fan is controlled.", "panel.reasoning": "Current inference", "panel.reasoning.note": "Displays outputs from the local knowledge base and decision engine without duplicating rules in this page.", "panel.knowledgeCatalog": "Knowledge-base rule catalog", "panel.knowledgeCatalog.note": "Thresholds, operating constraints and traceable evidence matched in the current inference.",
+        "view.overview.dataQuick": "CSV, manual entry and quality scoring", "view.overview.algorithmQuick": "Model demo, error boundaries and confidence", "view.overview.decisionQuick": "Risk, recommendations and rule traceability",
+        "qjzh.data.records": "Local records", "qjzh.data.recordsNote": "Shows the latest 20 records; the newest value wins for the same site and timestamp.", "qjzh.data.noRecords": "No local records", "qjzh.data.partialImport": "Some records were not imported", "qjzh.data.imported": "Imported and deduplicated {count} records; the overview will replay one site.", "qjzh.data.sampleLoaded": "Demo data replaced ({sites} barns, {count} records)", "qjzh.data.quality": "Data quality {quality} · confidence {confidence}", "qjzh.data.qualityPending": "Not scored", "qjzh.data.cleared": "Local data cleared", "qjzh.data.demoReplay": "Qinghai winter demo loaded; the overview will replay one site in time order.",
+        "qjzh.data.csvNote": "Upload a CSV containing timestamp, site_id, altitude_m, temp_c, rh_percent, raw_nh3_ppm and device_model.", "qjzh.data.downloadTemplate": "Download CSV template", "qjzh.data.loadSample": "Load sample data", "qjzh.data.clear": "Clear local data", "qjzh.data.submit": "Import and calibrate", "qjzh.data.emptyNote": "No data has been connected. Upload a CSV or enter a reading manually.", "qjzh.data.loadDemo": "Load Qinghai winter 24-hour demo", "qjzh.data.emptyStatus": "No data has been connected. Upload a CSV or enter a reading manually.", "qjzh.data.placeholder.site": "Site name", "qjzh.data.placeholder.altitude": "Altitude (m)", "qjzh.data.placeholder.temperature": "Temperature (℃)", "qjzh.data.placeholder.humidity": "Humidity (%)", "qjzh.data.placeholder.ammonia": "Raw ammonia (ppm)", "qjzh.data.placeholder.device": "Device model", "qjzh.data.table.time": "Time", "qjzh.data.table.site": "Site", "qjzh.data.table.species": "Species", "qjzh.data.table.altitude": "Altitude", "qjzh.data.table.raw": "Raw NH₃", "qjzh.data.table.source": "Source",
+        "qjzh.data.manualSaved": "Reading imported and saved", "qjzh.data.notEvaluated": "Not evaluated", "qjzh.validation.number": "{field} must be numeric", "qjzh.validation.rangeWarning": "{field} is slightly outside the operating range (warning)", "qjzh.validation.rangeReject": "{field} is outside the model operating range", "qjzh.validation.missing": "Missing field: {field}", "qjzh.validation.csvEmpty": "CSV is empty", "qjzh.confidence.levelHigh": "high", "qjzh.confidence.levelMedium": "medium", "qjzh.confidence.levelLow": "low",
+        "qjzh.institution.filter": "Filter", "qjzh.institution.note": "Loads five Qinghai demo barns by default; local records can add more sites.", "qjzh.institution.loading": "Loading regional summary…", "qjzh.institution.filterPlaceholder": "Enter a site ID or species", "qjzh.institution.table.site": "Site", "qjzh.institution.table.altitude": "Altitude", "qjzh.institution.table.species": "Species", "qjzh.institution.table.ammonia": "Calibrated NH₃", "qjzh.institution.table.risk": "Risk level", "qjzh.institution.table.updated": "Last update", "qjzh.institution.export": "Export regional report", "qjzh.institution.import": "Import local records", "qjzh.report.note": "Uses the latest 90 days by default; the report opens in a new window for printing or PDF export.", "qjzh.report.start": "Start date", "qjzh.report.end": "End date", "qjzh.report.generate": "Generate and print report", "qjzh.report.status": "Choose a date range to generate a report.", "qjzh.report.watermark": "Generated reports include a demo-only watermark and are not statutory measurements or animal diagnoses.",
+        "recommendation.riskName": "Risk level", "recommendation.riskDesc": "Based on calibrated ammonia and local knowledge-base rules", "recommendation.actionName": "Response recommendation", "recommendation.actionDesc": "The system only advises; farmers act with existing equipment or manual work", "recommendation.command": "Recommendation: {advice} (window {window})", "recommendation.trace": "Traceability: {rule} · {standard}", "recommendation.noHardware": "{advice}. No control command is sent to a fan or other hardware.", "recommendation.output": "Recommendation: {level}", "recommendation.suggestion.normal": "Continue routine inspection", "recommendation.suggestion.watch": "Use short ventilation and inspect the north air outlet", "recommendation.suggestion.todo": "Use short ventilation, inspect the air outlet and recheck ammonia", "recommendation.suggestion.emergency": "Organize ventilation promptly, remove manure and recheck ammonia",
         "qjzh.scene.retailStatus": "Individual scene: replaying QH-HD-001 and generating a noon short-ventilation recommendation.", "qjzh.scene.institutionStatus": "Institution scene: five demo barns ranked by calibrated-ammonia risk.", "qjzh.scene.offlineStatus": "Offline demo: {count} local records · calibration and decision scripts available ({ppm} ppm) · Canvas fallback {fallback}", "qjzh.scene.active": "active", "qjzh.scene.available": "available",
         "qjzh.replay.active": "Replaying {site}: {count} records (one of {sites} sites)", "qjzh.replay.complete": "Replay complete: {site}, {count} records ({other} other sites; open Institution view)", "qjzh.replay.local": "Current data: local 24-hour simulation; imported data replays one site at a time.", "qjzh.replay.source": "Imported data · {site}", "qjzh.stream.importedRunning": "Imported-data replay running", "qjzh.stream.importedComplete": "Imported-data replay complete",
         "status.lowTemp": "Low temperature", "status.watch": "Watch", "status.normal": "Normal", "status.high": "High", "status.low": "Low", "status.severe": "Severe", "status.exceeded": "Above limit", "status.night": "Night",
@@ -3427,17 +3472,24 @@
         "simulation.running": "24-hour simulation running", "simulation.pause": "Pause simulation", "simulation.complete": "24-hour simulation complete", "simulation.restart": "Run simulation again", "simulation.paused": "Simulation paused", "simulation.resume": "Resume simulation", "simulation.time": "Simulation time: {time}", "simulation.data": "Local simulation data", "simulation.fanRun": "Recommend short ventilation / {duration} min", "simulation.standby": "Recommendation pending", "marker.vent": "Ventilation recommendation",
         "scenario.running": "Scenario simulation: {name}",
         "static.scenarioAria": "Scenario simulation", "static.statusAria": "System status and demo controls", "static.themeAria": "Display theme", "static.languageAria": "Language selection", "static.pipelineAria": "Data intake to recommendation output process", "static.sensorAria": "Live sensor readings", "static.decisionAria": "Local decision advice", "static.triggerAria": "Current trigger conditions", "static.match": "Rule match chain · priority check", "static.waitSample": "Waiting for sample", "static.waitSampleDesc": "The rule matching process will appear after the current sensor sample is received.", "static.ventWindow": "Ventilation window 12:00-14:00", "static.waitDecision": "Waiting for decision", "static.ruleState": ["Matched rule", "Recommendation", "Traceable basis"], "static.catalogNote": "Current thresholds, operating constraints and traceable basis from the local rule catalog.", "static.catalogLoading": "Loading the local knowledge-base rule catalog.", "static.library": "View complete rule-library document", "static.libraryRules": ["Level-one alert: NH3 > 20 ppm. Recommend organizing ventilation and move livestock to a safe area. Basis: NY/T 388-1999.", "Warning: NH3 > 15 ppm. Recommend 5-10 minutes of short ventilation from 12:00-14:00; temperature change must not exceed 3 C.", "Combined alert: humidity > 80% and NH3 > 10 ppm. Clean manure, replace bedding and extend noon ventilation to 15 minutes.", "Low-temperature notice: temperature < 0 C. Recommend insulation and limit ventilation to 3-5 minutes.", "Normal: no risk condition is active. Continue inspection and offline local decision-making."],
-        "static.calibrationLabels": ["Estimated pressure", "Compensation factor", "Raw NH3", "Compensated NH3"], "static.compareTitle": "Highland dual-variable compensation comparison", "static.compareLabels": ["Raw NH3", "Compensated NH3"], "static.compareNote": "A pressure-temperature-humidity nonlinear model corrects sensor drift in high-altitude low pressure; theoretical error is reduced from 35%-40% to within 10%.", "static.ventLabels": ["Risk level", "Recommendation"], "static.alarmWaiting": "Waiting for a traceable recommendation.", "static.ruleStateNote": "Displays current outputs from the local knowledge base and decision engine without duplicating the rules in this page.", "static.compensationNote": "Simulates sensor compensation under high-altitude, low-pressure conditions.", "static.executionNote": "Shows decision recommendations and their traceable basis; execution remains with existing equipment or people.", "static.modelNote": "test error 0.71% (synthetic theoretical test; field calibration pending)"
+        "static.calibrationLabels": ["Estimated pressure", "Compensation factor", "Raw NH3", "Compensated NH3"], "static.compareTitle": "Highland dual-variable compensation comparison", "static.compareLabels": ["Raw NH3", "Compensated NH3"], "static.compareNote": "A pressure-temperature-humidity nonlinear model corrects sensor drift in high-altitude low pressure; theoretical error is reduced from 35%-40% to within 10%.", "static.ventLabels": ["Risk level", "Recommendation"], "static.alarmWaiting": "Waiting for a traceable recommendation.", "static.ruleStateNote": "Displays current outputs from the local knowledge base and decision engine without duplicating the rules in this page.", "static.compensationNote": "Simulates sensor compensation under high-altitude, low-pressure conditions.", "static.executionNote": "Shows decision recommendations and their traceable basis; execution remains with existing equipment or people.", "static.modelNote": "test error 0.71% (synthetic theoretical test; field calibration pending)",
+        "aria.dismissBoundary": "Dismiss service boundary notice", "aria.mainNav": "Primary navigation", "aria.quickLinks": "Module shortcuts", "aria.csvUpload": "Upload sensor CSV", "aria.riskScale": "Ammonia risk scale", "aria.trendLegend": "Live trend color legend", "aria.chartInsights": "Statistics for the latest 60 points", "aria.snapshotList": "Saved snapshots", "aria.compensationCompare": "Highland dual-variable compensation comparison", "aria.algorithmPanel": "Algorithm demonstration panel", "aria.algorithmCredentials": "Algorithm interface and operating range", "aria.demoAltitude": "Algorithm demo altitude", "aria.demoTemperature": "Algorithm demo temperature", "aria.demoHumidity": "Algorithm demo humidity", "aria.demoRaw": "Algorithm demo raw ammonia", "aria.demoOutput": "Raw and compensated results", "aria.adviceTrace": "Recommendation traceability", "aria.institutionRole": "Institution role",
+        "title.lowTempMarker": "Low-temperature marker 0℃", "title.highTempMarker": "High-temperature marker 22℃", "qjzh.confidence.detailHigh": "Confidence: high (input is within the model operating range)", "qjzh.confidence.detailMedium": "Confidence: medium (some inputs are outside the model operating range)", "qjzh.confidence.detailLow": "Confidence: low (input is outside the model operating range; result is unreliable)"
       },
       bo: {
         "sensor.labels": ["ཨམ་མོ་ནི་ཡ", "ཁང་པའི་དྲོད་ཚད", "བརླན་ཚད", "འོད་ཀྱི་སྟུག་ཚད"],
         "sensor.references": ["15 ppm ཚད་ཐིག", "0 C / 22 C", "80% བརླན་ཚད་མཐོ", "ཁ་གསབ་འོད་ཀྱི་གཞི་འཛིན"],
-        "qjzh.page.title": "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ", "qjzh.page.subtitle": "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ", "qjzh.tab.individual": "ཁྱིམ་ཚང་ཐོན་སྐྱེད", "qjzh.tab.institution": "སྒྲིག་འཛུགས", "qjzh.data.title": "གཞི་གྲངས་འཇུག་པ", "qjzh.data.note": "མ་ལག་འདིས་བསྡུ་ལེན་སྒྲིག་ཆས་མི་བཟོ། ཕྱིའི་གཞི་གྲངས་ལ་ཁ་གསབ་དང་དཔྱད་ཞིབ། བསམ་འཆར་སྤྲོད།", "qjzh.data.importCsv": "CSV ནང་འདྲེན", "qjzh.data.manual": "ལག་བྲིས་ནང་འཇུག", "qjzh.data.demo": "དཔེ་སྟོན་གཞི་གྲངས", "qjzh.confidence.wait": "ཡིད་ཆེས། གཞི་གྲངས་སྒུག", "qjzh.confidence.high": "ཡིད་ཆེས་མཐོ", "qjzh.confidence.medium": "ཡིད་ཆེས་འབྲིང", "qjzh.confidence.low": "ཡིད་ཆེས་དམའ", "qjzh.institution.title": "སྒྲིག་འཛུགས་ཕྱུགས་ཁང་མང་པོའི་མཐོང་རིས", "qjzh.institution.role": "སྒྲིག་འཛུགས་ལས་འགན", "qjzh.report.title": "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", "qjzh.scene.retail": "ཁྱིམ་ཚང་རྣམ་པ", "qjzh.scene.institution": "སྒྲིག་འཛུགས་རྣམ་པ", "qjzh.scene.offline": "དྲ་མེད་རྣམ་པ", "qjzh.scene.reset": "དཔེ་སྟོན་བསྐྱར་སྒྲིག", "qjzh.advice.title": "ཐག་གཅོད་བསམ་འཆར", "qjzh.algorithm.title": "མཐོ་སྒང་ཁ་གསབ་དཔེ་སྟོན", "qjzh.pipeline.intake": "གཞི་གྲངས་འཇུག", "qjzh.pipeline.calibrate": "མཐོ་སྒང་ཁ་གསབ", "qjzh.pipeline.decide": "ཐག་གཅོད", "qjzh.pipeline.output": "བསམ་འཆར", "qjzh.footer.product": "མཐོ་སྒང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ་དཔེ་སྟོན", "qjzh.footer.boundary": "གཞི་གྲངས་ས་གནས་སུ་ཉར · སྨན་བཅོས་མིན · སྲ་ཆས་མི་ཚོད", "qjzh.footer.deployed": "འགྲེམས་སྤེལ་དུས་ཚོད",
+        "qjzh.page.title": "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ", "qjzh.page.subtitle": "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ", "qjzh.tab.individual": "ཁྱིམ་ཚང་ཐོན་སྐྱེད", "qjzh.tab.institution": "སྒྲིག་འཛུགས", "qjzh.data.title": "གཞི་གྲངས་འཇུག་པ", "qjzh.data.note": "མ་ལག་འདིས་བསྡུ་ལེན་སྒྲིག་ཆས་མི་བཟོ། ཕྱིའི་གཞི་གྲངས་ལ་ཁ་གསབ་དང་དཔྱད་ཞིབ། བསམ་འཆར་སྤྲོད།", "qjzh.data.importCsv": "CSV ནང་འདྲེན", "qjzh.data.manual": "ལག་བྲིས་ནང་འཇུག", "qjzh.data.demo": "དཔེ་སྟོན་གཞི་གྲངས", "qjzh.confidence.wait": "ཡིད་ཆེས། གཞི་གྲངས་སྒུག", "qjzh.confidence.high": "ཡིད་ཆེས་མཐོ", "qjzh.confidence.medium": "ཡིད་ཆེས་འབྲིང", "qjzh.confidence.low": "ཡིད་ཆེས་དམའ", "qjzh.institution.title": "སྒྲིག་འཛུགས་ཕྱུགས་ཁང་མང་པོའི་མཐོང་རིས", "qjzh.institution.role": "སྒྲིག་འཛུགས་ལས་འགན", "qjzh.report.title": "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", "qjzh.scene.toggle": "དཔེ་སྟོན", "qjzh.scene.aria": "འགྲེམས་སྟོན་རྣམ་པའི་སྔོན་སྒྲིག", "qjzh.scene.retail": "ཁྱིམ་ཚང་རྣམ་པ", "qjzh.scene.institution": "སྒྲིག་འཛུགས་རྣམ་པ", "qjzh.scene.offline": "དྲ་མེད་རྣམ་པ", "qjzh.scene.reset": "དཔེ་སྟོན་བསྐྱར་སྒྲིག", "qjzh.advice.title": "ཐག་གཅོད་བསམ་འཆར", "qjzh.algorithm.title": "མཐོ་སྒང་ཁ་གསབ་དཔེ་སྟོན", "qjzh.pipeline.intake": "གཞི་གྲངས་འཇུག", "qjzh.pipeline.calibrate": "མཐོ་སྒང་ཁ་གསབ", "qjzh.pipeline.decide": "ཐག་གཅོད", "qjzh.pipeline.output": "བསམ་འཆར", "qjzh.footer.product": "མཐོ་སྒང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ་དཔེ་སྟོན", "qjzh.footer.boundary": "གཞི་གྲངས་ས་གནས་སུ་ཉར · སྨན་བཅོས་མིན · སྲ་ཆས་མི་ཚོད", "qjzh.footer.deployed": "འགྲེམས་སྤེལ་དུས་ཚོད",
         "nav.overview": "སྙིང་བསྡུས", "nav.data": "གཞི་གྲངས", "nav.algorithm": "ཁ་གསབ", "nav.decision": "ཐག་གཅོད", "nav.institution": "སྒྲིག་འཛུགས", "nav.report": "སྙན་ཞུ", "nav.next": "རྗེས་མ། {label}",
         "qjzh.scene.tour": "ལྟ་སྐོར་དཔེ་སྟོན", "view.overview.tourHint": "དཔེ་སྟོན་གྱི་ལམ་རིམ། གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → རིག་ནུས་ཐག་གཅོད → སྒྲིག་འཛུགས → ཁོར་ཡུག་སྙན་ཞུ", "view.overview.institutionQuick": "ཕྱུགས་ཁང་གོ་རིམ་དང་ས་ཁུལ་སྙིང་བསྡུས། ལས་འགན་མཐོང་རིས།", "view.overview.reportQuick": "དུས་ཡུན་དང་སྐད་གསུམ་སྙན་ཞུ། པར་འདེབས།",
-        "view.overview.title": "ཁོར་ཡུག་སྙིང་བསྡུས", "view.overview.note": "ད་ལྟའི་ས་ཚིགས་དང་ཚད་གྲངས། འཕེལ་ཕྱོགས། དཔེ་ཚད་ལ་ལྟ་བ།", "view.algorithm.title": "མཐོ་སྒང་ཁ་གསབ", "view.algorithm.note": "ཐོག་མའི་ཨམ་མོ་ནི་ཡ་དང་ཁ་གསབ་འབྲས་བུ་བསྡུར་བ།", "view.decision.title": "རིག་ནུས་ཐག་གཅོད", "view.decision.note": "ཉེན་ཁ་དང་དུས་སྐབས། བསམ་འཆར། ཁུངས་འདེད་སྒྲིག་གཞི་སྟོན།", "view.institution.title": "སྒྲིག་འཛུགས་མཐོང་རིས", "view.institution.note": "ཕྱུགས་ཁང་མང་པོ་ཉེན་ཁ་ལྟར་སྒྲིག", "view.report.title": "ཁོར་ཡུག་སྙན་ཞུ", "view.report.note": "དུས་ཡུན་ལྟར་སྙན་ཞུ་བཟོས་ནས་ PDF དུ་ཉར།",
-        "qjzh.data.records": "ས་གནས་ཟིན་ཐོ", "qjzh.data.recordsNote": "ཉེ་བའི་ཟིན་ཐོ་20 སྟོན།", "qjzh.data.noRecords": "ས་གནས་ཟིན་ཐོ་མེད", "qjzh.data.partialImport": "ཟིན་ཐོ་ཁ་ཤས་ནང་འདྲེན་མ་བྱས", "qjzh.data.imported": "ཟིན་ཐོ {count} ནང་འདྲེན་དང་བསྐྱར་ཟློས་སེལ", "qjzh.data.sampleLoaded": "དཔེ་སྟོན་གཞི་གྲངས་བརྗེས། ཕྱུགས་ཁང {sites} · ཟིན་ཐོ {count}", "qjzh.data.quality": "གཞི་གྲངས་སྤུས་ཚད {quality} · ཡིད་ཆེས {confidence}", "qjzh.data.cleared": "ས་གནས་གཞི་གྲངས་བསུབས", "qjzh.data.demoReplay": "མཚོ་སྔོན་དགུན་དུས་དཔེ་སྟོན་ནང་འདྲེན་བྱས།",
-        "qjzh.institution.filter": "འཚོལ་བ", "qjzh.report.watermark": "སྙན་ཞུར་དཔེ་སྟོན་ཆུ་རྟགས་ཡོད། ཁྲིམས་མཐུན་ཚད་འཇལ་ལམ་སྨན་བཅོས་གཞི་འཛིན་མིན།",
+        "view.overview.title": "ཁོར་ཡུག་སྙིང་བསྡུས", "view.overview.note": "ད་ལྟའི་ས་ཚིགས་དང་ཚད་གྲངས། འཕེལ་ཕྱོགས། དཔེ་ཚད་ལ་ལྟ་བ།", "view.algorithm.title": "མཐོ་སྒང་ཁ་གསབ", "view.algorithm.note": "ཐོག་མའི་ཨམ་མོ་ནི་ཡ་དང་ཁ་གསབ་འབྲས་བུ་བསྡུར་བ།", "view.algorithm.modelLabel": "མ་དཔེ", "view.algorithm.api": "ཁ་གསབ་རྩིས་ཐབས་ནི་ཚད་ལྡན་མཐུད་ཁ compensate() བརྒྱུད་མདུན་སྣེ་དང་རྒྱབ་སྣེ། ཕྱིའི་སྒྲིག་ཆས་ཀྱིས་འབོད་ཆོག", "view.algorithm.range": "སྤྱོད་ཁོངས། མཚོ་ངོས་ 2200–3500 m། དྲོད་ཚད -15–25℃། བརླན་ཚད 20–85%། ཨམ་མོ་ནི་ཡ 0–30 ppm", "view.decision.title": "རིག་ནུས་ཐག་གཅོད", "view.decision.note": "ཉེན་ཁ་དང་དུས་སྐབས། བསམ་འཆར། ཁུངས་འདེད་སྒྲིག་གཞི་སྟོན།", "view.institution.title": "སྒྲིག་འཛུགས་མཐོང་རིས", "view.institution.note": "ཕྱུགས་ཁང་མང་པོ་ཉེན་ཁ་ལྟར་སྒྲིག", "view.report.title": "ཁོར་ཡུག་སྙན་ཞུ", "view.report.note": "དུས་ཡུན་ལྟར་སྙན་ཞུ་བཟོས་ནས་ PDF དུ་ཉར།",
+        "panel.trend": "དངོས་དུས་འཕེལ་ཕྱོགས", "panel.trend.note": "NH₃ ལ་གཡོན་གྱི ppm ཚད་ཐིག་སྤྱོད། དམར་པོའི་ཚད་ཐིག་ནི 15 ppm ཉེན་ཁའི་ཚད་ཡིན།", "panel.records": "དཔེ་འཇལ་ཟིན་ཐོ", "panel.records.note": "ཉེ་བའི་དཔེ་འཇལ་ 8 ཉར་ཞིང་མྱུར་བཀོད་ཉར་ཆོག", "panel.calibration": "བསྡུ་ལེན་དང་ཁ་གསབ", "panel.calibration.note": "མཐོ་སྒང་གནོན་ཤུགས་དམའ་བའི་ཚོར་ཆས་ཁ་གསབ་ལས་རིམ་དཔེ་སྟོན།", "panel.algorithm": "རྩིས་ཐབས་དཔེ་སྟོན", "panel.decisionOutput": "ཐག་གཅོད་བསམ་འཆར", "panel.decisionOutput.note": "མ་ལག་གིས་བསམ་འཆར་ཁོ་ན་སྤྲོད། སྲ་ཆས་ལ་ཚོད་འཛིན་མི་བྱེད།", "panel.reasoning": "ད་ཐེངས་ཀྱི་རྟོག་ཞིབ", "panel.reasoning.note": "ས་གནས་ཤེས་བྱ་དང་ཐག་གཅོད་འཕྲུལ་ཆས་ཀྱི་འབྲས་བུ་སྟོན།", "panel.knowledgeCatalog": "ཤེས་བྱའི་སྒྲིག་གཞི", "panel.knowledgeCatalog.note": "ད་ལྟ་མཐུན་པའི་ཚད་གཞི་དང་བཀོལ་སྤྱོད་ཚད། ཁུངས་འདེད་གཞི་འཛིན།",
+        "view.overview.dataQuick": "CSV དང་ལག་བྲིས་ནང་འཇུག སྤུས་ཚད་སྐར་གྲངས", "view.overview.algorithmQuick": "མ་དཔེ་དཔེ་སྟོན་དང་ནོར་འཁྲུལ་མཚམས། ཡིད་ཆེས་ཚད།", "view.overview.decisionQuick": "ཉེན་ཁ་དང་བསམ་འཆར། སྒྲིག་གཞི་ཁུངས་འདེད།",
+        "qjzh.data.records": "ས་གནས་ཟིན་ཐོ", "qjzh.data.recordsNote": "ཉེ་བའི་ཟིན་ཐོ་20 སྟོན།", "qjzh.data.noRecords": "ས་གནས་ཟིན་ཐོ་མེད", "qjzh.data.partialImport": "ཟིན་ཐོ་ཁ་ཤས་ནང་འདྲེན་མ་བྱས", "qjzh.data.imported": "ཟིན་ཐོ {count} ནང་འདྲེན་དང་བསྐྱར་ཟློས་སེལ", "qjzh.data.sampleLoaded": "དཔེ་སྟོན་གཞི་གྲངས་བརྗེས། ཕྱུགས་ཁང {sites} · ཟིན་ཐོ {count}", "qjzh.data.quality": "གཞི་གྲངས་སྤུས་ཚད {quality} · ཡིད་ཆེས {confidence}", "qjzh.data.qualityPending": "སྐར་གྲངས་མ་བཀོད", "qjzh.data.cleared": "ས་གནས་གཞི་གྲངས་བསུབས", "qjzh.data.demoReplay": "མཚོ་སྔོན་དགུན་དུས་དཔེ་སྟོན་ནང་འདྲེན་བྱས།",
+        "qjzh.data.csvNote": "timestamp、site_id、altitude_m、temp_c、rh_percent、raw_nh3_ppm、device_model ཡོད་པའི CSV ཡར་འཇུག", "qjzh.data.downloadTemplate": "CSV དཔེ་གཞི་ཕབ་ལེན", "qjzh.data.loadSample": "དཔེ་གྲངས་འཇུག", "qjzh.data.clear": "ས་གནས་གཞི་གྲངས་བསུབ", "qjzh.data.submit": "ནང་འཇུག་དང་ཁ་གསབ", "qjzh.data.emptyNote": "གཞི་གྲངས་མ་མཐུད། CSV ཡར་འཇུག་གམ་ལག་བྲིས་ནང་འཇུག་བྱོས།", "qjzh.data.loadDemo": "མཚོ་སྔོན་དགུན་དུས་ཆུ་ཚོད་ 24 དཔེ་སྟོན", "qjzh.data.emptyStatus": "གཞི་གྲངས་མ་མཐུད། CSV ཡར་འཇུག་གམ་ལག་བྲིས་ནང་འཇུག་བྱོས།", "qjzh.data.placeholder.site": "ས་ཚིགས་མིང", "qjzh.data.placeholder.altitude": "མཚོ་ངོས་མཐོ་ཚད (m)", "qjzh.data.placeholder.temperature": "དྲོད་ཚད (℃)", "qjzh.data.placeholder.humidity": "བརླན་ཚད (%)", "qjzh.data.placeholder.ammonia": "ཐོག་མའི་ཨམ་མོ་ནི་ཡ (ppm)", "qjzh.data.placeholder.device": "སྒྲིག་ཆས་དཔེ་རྟགས", "qjzh.data.table.time": "དུས་ཚོད", "qjzh.data.table.site": "ས་ཚིགས", "qjzh.data.table.species": "ཕྱུགས་རིགས", "qjzh.data.table.altitude": "མཚོ་ངོས", "qjzh.data.table.raw": "ཐོག་མའི NH₃", "qjzh.data.table.source": "གཞི་གྲངས་ཁུངས",
+        "qjzh.data.manualSaved": "གཞི་གྲངས་ནང་འཇུག་དང་ཉར་ཚགས་བྱས།", "qjzh.data.notEvaluated": "དཔྱད་ཞིབ་མ་བྱས", "qjzh.validation.number": "{field} གྲངས་ཀ་ཡིན་དགོས།", "qjzh.validation.rangeWarning": "{field} སྤྱོད་ཁོངས་ལས་ཅུང་ཟད་བརྒལ།", "qjzh.validation.rangeReject": "{field} མ་དཔེའི་སྤྱོད་ཁོངས་ལས་བརྒལ།", "qjzh.validation.missing": "ཞིང་ཁ་མི་འདང་། {field}", "qjzh.validation.csvEmpty": "CSV ནང་གཞི་གྲངས་མེད།", "qjzh.confidence.levelHigh": "མཐོ", "qjzh.confidence.levelMedium": "འབྲིང", "qjzh.confidence.levelLow": "དམའ",
+        "qjzh.institution.filter": "འཚོལ་བ", "qjzh.institution.note": "སྔོན་སྒྲིག་ཏུ་མཚོ་སྔོན་དཔེ་སྟོན་ཕྱུགས་ཁང་ 5 འཇུག", "qjzh.institution.loading": "ས་ཁུལ་སྙིང་བསྡུས་འཇུག་བཞིན་པ…", "qjzh.institution.filterPlaceholder": "ས་ཚིགས ID ཡང་ན་ཕྱུགས་རིགས་འཇུག", "qjzh.institution.table.site": "ས་ཚིགས", "qjzh.institution.table.altitude": "མཚོ་ངོས", "qjzh.institution.table.species": "ཕྱུགས་རིགས", "qjzh.institution.table.ammonia": "ཁ་གསབ NH₃", "qjzh.institution.table.risk": "ཉེན་ཁའི་རིམ་པ", "qjzh.institution.table.updated": "མཇུག་མཐའི་དུས་ཚོད", "qjzh.institution.export": "ས་ཁུལ་སྙན་ཞུ་ཕྱིར་འདྲེན", "qjzh.institution.import": "ས་གནས་ཟིན་ཐོ་ནང་འདྲེན", "qjzh.report.note": "སྔོན་སྒྲིག་ཉིན་ 90 བསྡོམས། སྙན་ཞུ་པར་འདེབས་སམ PDF དུ་ཉར་ཆོག", "qjzh.report.start": "འགོ་ཚུགས་ཉིན", "qjzh.report.end": "མཇུག་ཉིན", "qjzh.report.generate": "སྙན་ཞུ་བཟོ་ཞིང་པར་འདེབས", "qjzh.report.status": "དུས་ཡུན་བདམས་ནས་སྙན་ཞུ་བཟོས།", "qjzh.report.watermark": "སྙན་ཞུར་དཔེ་སྟོན་ཆུ་རྟགས་ཡོད། ཁྲིམས་མཐུན་ཚད་འཇལ་ལམ་སྨན་བཅོས་གཞི་འཛིན་མིན།",
+        "recommendation.riskName": "ཉེན་ཁའི་རིམ་པ", "recommendation.riskDesc": "ཁ་གསབ་ཨམ་མོ་ནི་ཡ་དང་ས་གནས་ཤེས་བྱའི་སྒྲིག་གཞི་ལ་གཞིར་བཞག", "recommendation.actionName": "ཐག་གཅོད་བསམ་འཆར", "recommendation.actionDesc": "མ་ལག་གིས་བསམ་འཆར་ཁོ་ན་སྤྲོད", "recommendation.command": "བསམ་འཆར། {advice}（{window}）", "recommendation.trace": "ཁུངས་འདེད། {rule} · {standard}", "recommendation.noHardware": "{advice} སྲ་ཆས་ལ་ཚོད་འཛིན་བཀའ་མི་གཏོང་།", "recommendation.output": "བསམ་འཆར། {level}", "recommendation.suggestion.normal": "རྒྱུན་ལྡན་གྱི་སྐོར་ཞིབ་མུ་མཐུད།", "recommendation.suggestion.watch": "དུས་ཐུང་རླུང་འགྲོ་བྱས་ནས་བྱང་ཕྱོགས་ཀྱི་རླུང་ཁ་ཞིབ་བཤེར་བྱེད།", "recommendation.suggestion.todo": "དུས་ཐུང་རླུང་འགྲོ་དང་རླུང་ཁ་ཞིབ་བཤེར། ཨམ་མོ་ནི་ཡ་བསྐྱར་འཇལ་བྱེད།", "recommendation.suggestion.emergency": "མྱུར་དུ་རླུང་འགྲོ་སྒྲིག་འཛུགས་དང་ལྕི་བ་གཙང་སེལ། ཨམ་མོ་ནི་ཡ་བསྐྱར་འཇལ་བྱེད།",
         "qjzh.scene.retailStatus": "ཁྱིམ་ཚང་རྣམ་པ། QH-HD-001 ས་ཚིགས་གཅིག་བསྐྱར་སྟོན།", "qjzh.scene.institutionStatus": "སྒྲིག་འཛུགས་རྣམ་པ། ཕྱུགས་ཁང་5 ཉེན་ཁ་ལྟར་སྒྲིག", "qjzh.scene.offlineStatus": "དྲ་མེད་དཔེ་སྟོན། ས་གནས་ཟིན་ཐོ {count} · ཁ་གསབ {ppm} ppm · Canvas {fallback}", "qjzh.scene.active": "ལས་འགན་ཁུར", "qjzh.scene.available": "སྤྱོད་རུང",
         "qjzh.replay.active": "{site} བསྐྱར་སྟོན། ཟིན་ཐོ {count} · ས་ཚིགས {sites} ནས་གཅིག", "qjzh.replay.complete": "བསྐྱར་སྟོན་གྲུབ། {site} · ཟིན་ཐོ {count} · ས་ཚིགས་གཞན {other}", "qjzh.replay.local": "ད་ལྟའི་གཞི་གྲངས། ས་གནས་ཆུ་ཚོད་24 དཔེ་མཚོན།", "qjzh.replay.source": "ནང་འདྲེན་གཞི་གྲངས · {site}", "qjzh.stream.importedRunning": "ནང་འདྲེན་བསྐྱར་སྟོན་འགྲོ་བཞིན", "qjzh.stream.importedComplete": "ནང་འདྲེན་བསྐྱར་སྟོན་གྲུབ",
         "status.lowTemp": "དྲོད་ཚད་དམའ", "status.watch": "དོ་སྣང", "status.normal": "རྒྱུན་ལྡན", "status.high": "མཐོ", "status.low": "དམའ", "status.severe": "ཚབས་ཆེ", "status.exceeded": "ཚད་བརྒལ", "status.night": "མཚན་མོ",
@@ -3449,6 +3501,116 @@
         "simulation.running": "ཆུ་ཚོད་24 ཡི་དཔེ་མཚོན་འགྲོ་བཞིན", "simulation.pause": "དཔེ་མཚོན་མཚམས་འཇོག", "simulation.complete": "ཆུ་ཚོད་24 ཡི་དཔེ་མཚོན་ལེགས་འགྲུབ", "simulation.restart": "དཔེ་མཚོན་ཡང་བསྐྱར", "simulation.paused": "དཔེ་མཚོན་མཚམས་བཞག", "simulation.resume": "དཔེ་མཚོན་མུ་མཐུད", "simulation.time": "དཔེ་མཚོན་དུས་ཚོད། {time}", "simulation.data": "ས་གནས་དཔེ་མཚོན་གཞི་གྲངས", "marker.vent": "རླུང་འགྲོ་འགོ་འཛུགས", "scenario.running": "གནས་ཚུལ་དཔེ་མཚོན། {name}"
       }
     };
+
+    // 藏语动态文案与英文键保持一一对应，避免规则刷新后回退成英文。
+    Object.assign(uiCopy.bo, {
+      "step.critical.1": "མྱུར་དུ་རླུང་འགྲོ་སྒྲིག་འཛུགས་བྱས་ཏེ་ཕྱུགས་ཕྲུག་བདེ་འཇགས་ས་ཁུལ་དུ་སྤོ་བའི་བསམ་འཆར།",
+      "step.critical.2": "ཕྱུགས་ཁང་གི་སྦྱར་མཚམས་ཞིབ་བཤེར་དང་ལྕི་བ་གསོག་ས་འཚོལ།",
+      "step.critical.3": "NH₃ མར་ཆག་པར་ལྟ་ཞིབ་བྱས་ཏེ་སྐར་མ་ 2 རེར་ཚད་འཇལ་ཟིན་ཐོ་འགོད།",
+      "step.warning.1": "12:00–14:00 དུས་སྐབས་སུ་སྐར་མ་ 5–10 རིང་དལ་བུའི་རླུང་འགྲོ་བྱེད།",
+      "step.warning.2": "གདན་རློན་པ་ཡོད་མེད་ཞིབ་བཤེར་དང་བརྗེ་བའི་ཐེངས་གྲངས་མང་དུ་གཏོང་།",
+      "step.warning.3": "དྲོད་ཚད་འགྱུར་བར་ལྟ་ཞིབ་བྱས་ཏེ་མར་ཆག་ཚད 3℃ ནང་དུ་འཛིན།",
+      "step.alert.1": "ལྕི་བ་དུས་ཐོག་ཏུ་གཙང་སེལ་བྱས་ནས་ཨམ་མོ་ནི་ཡའི་ཁུངས་ཉུང་དུ་གཏོང་།",
+      "step.alert.2": "ཉིན་དགུང་རླུང་འགྲོའི་དུས་ཚོད་སྐར་མ་ 15 བར་རིང་དུ་གཏོང་།",
+      "step.alert.3": "བརླན་ཚད་ཉུང་དུ་གཏོང་ཆེད་སྐམ་པའི་གདན་ཁ་སྣོན།",
+      "step.caution.1": "དྲོད་སྒྲོན་ནམ་གདན་ཁ་སྣོན་གྱི་བསམ་འཆར།",
+      "step.caution.2": "རླུང་འགྲོ་ཐེངས་རེ་སྐར་མ་ 3–5 ནང་དུ་ཚད་འཛིན།",
+      "step.caution.3": "ཕྱུགས་ཚོགས་དྲགས་ཡོད་མེད་ལྟ་ཞིབ་དང་དགོས་སྐབས་དྲོད་སྲུང་ཁ་སྣོན།",
+      "step.normal.1": "ད་ལྟའི་དོ་དམ་བྱ་ཐབས་རྒྱུན་འཁྱོངས།",
+      "step.normal.2": "སྒྲིག་ཆས་ཀྱི་ལས་སྟངས་རྒྱུན་དུ་ཞིབ་བཤེར།",
+      "step.normal.3": "ཉིན་དགུང་དུས་སྐབས་ལ་དོ་སྣང་དང་འཚམ་པོ་ཡོད་ན་དུས་ཐུང་རླུང་འགྲོ་ཞིབ་བཤེར།",
+      "status.riskPending": "ཉེན་ཁ་ཞིབ་དཔྱད་སྒུག",
+      "status.todo": "བྱ་དགོས",
+      "status.urgent": "ཛ་དྲག",
+      "status.recommendation": "བསམ་འཆར་སྒུག",
+      "status.recommendInsulation": "དྲོད་སྲུང་བསམ་འཆར",
+      "advice.pending": "བསམ་འཆར། ཁ་གསབ་གཞི་གྲངས་སྒུག",
+      "advice.critical": "འཕྲལ་དུ་ཐག་གཅོད་དགོས། ལྕི་བ་གཙང་སེལ་དང་རླུང་ཁ་ཤར་གཏོང་། ཕྱུགས་ཀྱི་བདེ་འཇགས་སྲུང་།",
+      "advice.warning": "ཨམ་མོ་ནི་ཡར་དོ་སྣང་དགོས། གཙང་སེལ་སྒྲིག་འཛུགས་དང་ཉིན་དགུང་རླུང་འགྲོ་བྱས་ཏེ་དྲོད་ཚད་འགྱུར་བ་ཚད་འཛིན།",
+      "advice.alert": "བསམ་འཆར། ལྕི་བ་གཙང་སེལ་དང་གདན་བརྗེས་རྗེས་རླུང་འགྲོ་བྱེད།",
+      "advice.caution": "བསམ་འཆར། དྲོད་སྲུང་ཁ་སྣོན་དང་རླུང་འགྲོའི་དུས་ཚོད་ཐུང་དུ་གཏོང་།",
+      "alarm.critical": "NH₃ {ammonia} ppm། མྱུར་དུ་རླུང་འགྲོ་སྒྲིག་འཛུགས་དང་བསྐྱར་འཇལ་བྱེད།",
+      "alarm.warning": "NH₃ {ammonia} ppm། ཉིན་དགུང་དུས་ཐུང་རླུང་འགྲོ་ཞིབ་བཤེར་བྱེད།",
+      "alarm.alert": "བརླན་ཚད {humidity}% + NH₃ {ammonia} ppm། ལྕི་བ་གཙང་སེལ་དང་གདན་བརྗེ་བའི་བསམ་འཆར།",
+      "alarm.caution": "དྲོད་ཚད {temperature}℃། བསམ་འཆར། {heater}",
+      "alarm.normal": "ཁོར་ཡུག་རྒྱུན་ལྡན། རྒྱུན་ལྡན་སྐོར་ཞིབ་མུ་མཐུད།",
+      "alarm.recommendation": "ཉེན་ཁ {fan}། {command}",
+      "pipeline.collect": "{time} · ཕྱིའི་ཚོར་ཆས་དང་མཐུན",
+      "pipeline.compensate": "{pressure} kPa · NH₃ {raw} → {corrected}",
+      "pipeline.execute": "བསམ་འཆར་ཕྱིར་འདོན",
+      "trigger.time": "དུས་ཚོད",
+      "trigger.ammonia": "ཨམ་མོ་ནི་ཡ",
+      "trigger.humidity": "བརླན་ཚད",
+      "trigger.temperature": "དྲོད་ཚད",
+      "trigger.light": "འོད་ཚད",
+      "trigger.tempDrop": "དྲོད་ཚད་མར་ཆག",
+      "vent.inside": "དུས་སྐབས་ནང",
+      "vent.outside": "དུས་སྐབས་ཕྱི",
+      "vent.high": "ཨམ་མོ་ནི་ཡ་ཚད་ལས་བརྒལ། 12:00–14:00 བར་སྐར་མ་ 5–10 དུས་ཐུང་རླུང་འགྲོ་དང་དྲོད་ཚད་འགྱུར་བ 3℃ ནང་ཚད་འཛིན།",
+      "vent.normal": "ད་ལྟ་རང་འགུལ་རླུང་འགྲོའི་བསམ་འཆར་མེད། ཨམ་མོ་ནི་ཡ་གསོག་ཚུལ་ལྟ་ཞིབ་མུ་མཐུད།",
+      "vent.active": "བསམ་འཆར་བཟོས་ཟིན། སྐར་མ་ {duration} དུས་ཐུང་རླུང་འགྲོ་དང་དྲོད་ཚད་མར་ཆག་ལྟ་ཞིབ།",
+      "vent.alertOnly": "བསམ་འཆར་ཁོ་ན། མིས་བསྐྱར་ཞིབ་བྱེད།",
+      "vent.standby": "རྒྱུན་ལྡན་སྐོར་ཞིབ་དང་ལྟ་ཞིབ་མུ་མཐུད།",
+      "rule.basis": "ཐག་གཅོད་གཞི་འཛིན། སྒྲིག་གཞི {index} - {condition}{engineRule}",
+      "rule.engine": " · མ་ལག་སྒྲིག་གཞི {ruleId}",
+      "rule.matched": "མཐུན་ཟིན",
+      "rule.unmet": "མ་མཐུན",
+      "rule.names": ["རིམ་པ་དང་པོའི་ཉེན་བརྡ", "ཉེན་བརྡ", "མཉམ་འདྲེས་ཉེན་བརྡ", "དྲོད་ཚད་དམའ་བའི་དོ་སྣང", "རྒྱུན་ལྡན"],
+      "rule.conditions": ["NH₃ > 20 ppm", "NH₃ > 15 ppm", "བརླན་ཚད > 80% དང NH₃ > 10 ppm", "དྲོད་ཚད < 0℃", "གོང་གི་ཆ་རྐྱེན་མ་མཐུན"],
+      "factor.up": "ཁ་གསབ་ཡར་སྣོན",
+      "factor.down": "ཁ་གསབ་མར་ཆག",
+      "factor.steady": "ཁ་གསབ་དོ་མཉམ",
+      "snapshot": "NH₃ {ammonia} ppm · དྲོད་ཚད {temperature}℃ · བརླན་ཚད {humidity}% · འོད་ཚད {light} Lux",
+      "chart.points": "ཉེ་བའི་གནས་ཚད {count} / {max}",
+      "threshold": "NH₃ 15 ppm ཉེན་ཁའི་ཚད",
+      "knowledge.empty": "ས་གནས་ཤེས་བྱའི་མཛོད་ལ་སྟོན་རུང་སྒྲིག་གཞི་མེད།",
+      "knowledge.untitled": "མིང་མེད་སྒྲིག་གཞི",
+      "knowledge.condition": "ཆ་རྐྱེན་ཤེས་བྱའི་མཛོད་ཀྱིས་གཏན་འབེབས།",
+      "knowledge.local": "ས་གནས་ཤེས་བྱའི་མཛོད",
+      "knowledge.activeVent": "བསམ་འཆར། སྐར་མ་ {duration} དུས་ཐུང་རླུང་འགྲོ",
+      "knowledge.alertOnly": "བསམ་འཆར་བཟོས་ཟིན། མིས་བསྐྱར་ཞིབ་བྱེད།",
+      "knowledge.standby": "རྒྱུན་ལྡན་སྐོར་ཞིབ་དང་ལྟ་ཞིབ་མུ་མཐུད།",
+      "advice.info": "བརླན་ཚད་དང་ཨམ་མོ་ནི་ཡ་མཉམ་དུ་ལྟ་ཞིབ། རློན་པའི་གདན་བརྗེས་ཏེ་ཉིན་དགུང་ཞིབ་བཤེར་སྒྲིག་འཛུགས།",
+      "advice.normal": "ཁོར་ཡུག་ཚོད་འཛིན་རུང་། རྒྱུན་ལྡན་དོ་དམ་དང་སྒྲིག་ཆས་ཞིབ་བཤེར་མུ་མཐུད།",
+      "simulation.fanRun": "དུས་ཐུང་རླུང་འགྲོའི་བསམ་འཆར / སྐར་མ་ {duration}",
+      "simulation.standby": "བསམ་འཆར་སྒུག་བཞིན",
+      "static.scenarioAria": "གནས་ཚུལ་དཔེ་སྟོན",
+      "static.statusAria": "མ་ལག་གནས་ཚུལ་དང་དཔེ་སྟོན་ཚོད་འཛིན",
+      "static.themeAria": "མཐོང་རིས་ཁ་དོག",
+      "static.languageAria": "སྐད་ཡིག་བདམས་པ",
+      "static.pipelineAria": "གཞི་གྲངས་འཇུག་པ་ནས་བསམ་འཆར་ཕྱིར་འདོན་བར་གྱི་ལས་རིམ",
+      "static.sensorAria": "དངོས་དུས་ཚོར་ཆས་ཚད་གྲངས",
+      "static.decisionAria": "ས་གནས་ཐག་གཅོད་བསམ་འཆར",
+      "static.triggerAria": "ད་ལྟའི་སྐུལ་རྐྱེན",
+      "static.match": "སྒྲིག་གཞི་མཐུན་སྦྱོར་རིམ་པ · སྔོན་ཐོབ་ལྟར་ཞིབ་བཤེར",
+      "static.waitSample": "དཔེ་འཇལ་སྒུག་བཞིན",
+      "static.waitSampleDesc": "ད་ལྟའི་ཚོར་ཆས་དཔེ་འཇལ་འབྱོར་རྗེས་སྒྲིག་གཞི་མཐུན་སྦྱོར་སྟོན།",
+      "static.ventWindow": "རླུང་འགྲོའི་དུས་སྐབས 12:00–14:00",
+      "static.waitDecision": "ཐག་གཅོད་སྒུག་བཞིན",
+      "static.ruleState": ["མཐུན་པའི་སྒྲིག་གཞི", "བསམ་འཆར", "ཁུངས་འདེད་གཞི་འཛིན"],
+      "static.catalogNote": "ད་ལྟའི་སྒྲིག་གཞི་དཀར་ཆག་གི་ཚད་གཞི་དང་ལས་སྤྱོད་ཚད། ཁུངས་འདེད་གཞི་འཛིན།",
+      "static.catalogLoading": "ས་གནས་ཤེས་བྱའི་སྒྲིག་གཞི་དཀར་ཆག་འཇུག་བཞིན།",
+      "static.library": "སྒྲིག་གཞི་མཛོད་ཡོངས་རྫོགས་ལྟ་བ",
+      "static.libraryRules": [
+        "རིམ་པ་དང་པོའི་ཉེན་བརྡ། NH₃ > 20 ppm། རླུང་འགྲོ་སྒྲིག་འཛུགས་དང་ཕྱུགས་བདེ་འཇགས་སར་སྤོ་བའི་བསམ་འཆར། གཞི་འཛིན། NY/T 388-1999།",
+        "ཉེན་བརྡ། NH₃ > 15 ppm། 12:00–14:00 བར་སྐར་མ་ 5–10 རླུང་འགྲོ་དང་དྲོད་ཚད་མར་ཆག 3℃ ལས་མི་བརྒལ།",
+        "མཉམ་འདྲེས་ཉེན་བརྡ། བརླན་ཚད > 80% དང NH₃ > 10 ppm། ལྕི་བ་གཙང་སེལ་དང་གདན་བརྗེས་ཏེ་ཉིན་དགུང་རླུང་འགྲོ་སྐར་མ་ 15 བར་རིང་དུ་གཏོང་།",
+        "དྲོད་ཚད་དམའ་བའི་དོ་སྣང་། དྲོད་ཚད < 0℃། དྲོད་སྲུང་དང་རླུང་འགྲོ་ཐེངས་རེ་སྐར་མ་ 3–5 བར་ཚད་འཛིན།",
+        "རྒྱུན་ལྡན། ཉེན་ཁའི་ཆ་རྐྱེན་མ་མཐུན། སྐོར་ཞིབ་དང་དྲ་མེད་ས་གནས་ཐག་གཅོད་མུ་མཐུད།"
+      ],
+      "static.calibrationLabels": ["རྩིས་དཔག་གནོན་ཤུགས", "ཁ་གསབ་བསྡུར་ཚད", "ཐོག་མའི NH₃", "ཁ་གསབ་རྗེས་ཀྱི NH₃"],
+      "static.compareTitle": "མཐོ་སྒང་འགྱུར་ཚད་གཉིས་ཀྱི་ཁ་གསབ་བསྡུར་བ",
+      "static.compareLabels": ["ཐོག་མའི NH₃", "ཁ་གསབ NH₃"],
+      "static.compareNote": "གནོན་ཤུགས་དང་དྲོད་ཚད། བརླན་ཚད་ཀྱི་མི་ཐིག་གི་ཁ་གསབ་མ་དཔེས་མཐོ་སྒང་གནོན་ཤུགས་དམའ་བའི་ཚོར་ཆས་འཁྱོག་ཚད་བཅོས། རྩིས་དཔག་ནོར་ཚད 35%–40% ནས 10% ནང་དུ་ཆག",
+      "static.ventLabels": ["ཉེན་ཁའི་རིམ་པ", "ཐག་གཅོད་བསམ་འཆར"],
+      "static.alarmWaiting": "ཁུངས་འདེད་རུང་བའི་བསམ་འཆར་སྒུག་བཞིན།",
+      "static.ruleStateNote": "ས་གནས་ཤེས་བྱའི་མཛོད་དང་ཐག་གཅོད་འཕྲུལ་ཆས་ཀྱི་ད་ལྟའི་འབྲས་བུ་སྟོན་ཞིང་ཤོག་ངོས་སུ་སྒྲིག་གཞི་བསྐྱར་བཟོ་མི་བྱེད།",
+      "static.compensationNote": "མཐོ་སྒང་གནོན་ཤུགས་དམའ་བའི་ཚོར་ཆས་ཁ་གསབ་ལས་རིམ་དཔེ་སྟོན།",
+      "static.executionNote": "ཐག་གཅོད་བསམ་འཆར་དང་ཁུངས་འདེད་གཞི་འཛིན་སྟོན། ལག་བསྟར་ནི་ཡོད་ཟིན་སྒྲིག་ཆས་སམ་མིས་བྱེད།",
+      "static.modelNote": "ཚོད་ལྟའི་ནོར་ཚད 0.71%（རྩིས་འཁོར་མཉམ་བསྲེས་ཚོད་ལྟ། ས་གནས་སུ་ཁ་གསབ་བྱ་རྒྱུ）",
+      "aria.dismissBoundary": "ཞབས་ཞུའི་མཚམས་ཐིག་བརྡ་ཐོ་ཁ་རྒྱག", "aria.mainNav": "གཙོ་བོའི་ཕྱོགས་སྟོན", "aria.quickLinks": "ནུས་པའི་མགྱོགས་འཇུག", "aria.csvUpload": "ཚོར་ཆས་ CSV ཡར་འཇུག", "aria.riskScale": "ཨམ་མོ་ནི་ཡའི་ཉེན་ཁའི་ཚད", "aria.trendLegend": "དངོས་དུས་འཕེལ་ཕྱོགས་ཁ་དོག་གསལ་བཤད", "aria.chartInsights": "ཉེ་བའི་གནས་ཚད་ 60 ཡི་བསྡོམས་རྩིས", "aria.snapshotList": "མྱུར་བཀོད་རེའུ་མིག", "aria.compensationCompare": "མཐོ་སྒང་འགྱུར་ཚད་གཉིས་ཀྱི་ཁ་གསབ་བསྡུར་བ", "aria.algorithmPanel": "རྩིས་ཐབས་དཔེ་སྟོན་ངོས", "aria.algorithmCredentials": "རྩིས་ཐབས་མཐུད་ཁ་དང་སྤྱོད་ཁོངས", "aria.demoAltitude": "རྩིས་ཐབས་དཔེ་སྟོན་མཚོ་ངོས", "aria.demoTemperature": "རྩིས་ཐབས་དཔེ་སྟོན་དྲོད་ཚད", "aria.demoHumidity": "རྩིས་ཐབས་དཔེ་སྟོན་བརླན་ཚད", "aria.demoRaw": "རྩིས་ཐབས་དཔེ་སྟོན་ཐོག་མའི་ཨམ་མོ་ནི་ཡ", "aria.demoOutput": "ཐོག་མ་དང་ཁ་གསབ་འབྲས་བུ", "aria.adviceTrace": "བསམ་འཆར་ཁུངས་འདེད", "aria.institutionRole": "སྒྲིག་འཛུགས་ལས་འགན",
+      "title.lowTempMarker": "དྲོད་ཚད་དམའ་བའི་རྟགས་ 0℃", "title.highTempMarker": "དྲོད་ཚད་མཐོ་བའི་རྟགས་ 22℃", "qjzh.confidence.detailHigh": "ཡིད་ཆེས་མཐོ（ནང་འཇུག་མ་དཔེའི་སྤྱོད་ཁོངས་ནང་ཡོད）", "qjzh.confidence.detailMedium": "ཡིད་ཆེས་འབྲིང（ནང་འཇུག་ཁ་ཤས་མ་དཔེའི་སྤྱོད་ཁོངས་ལས་བརྒལ）", "qjzh.confidence.detailLow": "ཡིད་ཆེས་དམའ（ནང་འཇུག་མ་དཔེའི་སྤྱོད་ཁོངས་ལས་བརྒལ་ཞིང་འབྲས་བུར་ཡིད་ཆེས་མི་རུང）"
+    });
 
     /**
      * 读取当前界面语言的展示文本；规则、模型与采集数值不参与翻译。
@@ -3825,7 +3987,7 @@
           levelClass: "critical",
           icon: "🔴",
           title: "一级警报",
-          advice: "氨气浓度严重超标！立即启动最大通风，疏散幼畜至安全区域。氨气浓度超过20ppm将严重损害幼畜呼吸道黏膜，持续30分钟以上可导致不可逆损伤。【参考国标NY/T 388-1999】"
+          advice: "氨气浓度严重超标！建议立即组织通风，并将幼畜转移至安全区域。氨气浓度超过20ppm将严重损害幼畜呼吸道黏膜，持续30分钟以上可导致不可逆损伤。【参考国标NY/T 388-1999】"
         };
       }
 
@@ -4435,6 +4597,7 @@
       const nextLanguage = ["zh", "en", "bo"].includes(language) ? language : "zh";
       const copy = languageCopy[nextLanguage];
       languageState.current = nextLanguage;
+      window.QJZH_LANGUAGE = nextLanguage;
       document.documentElement.dataset.language = nextLanguage;
       document.documentElement.lang = nextLanguage === "bo" ? "bo" : nextLanguage === "en" ? "en" : "zh-CN";
       if (els.languageSelect) els.languageSelect.value = nextLanguage;
@@ -4460,13 +4623,10 @@
       restoreOrSet(".knowledge-result-label", copy?.localKb);
       restoreOrSet("#adviceHistoryTitle", copy?.history);
       restoreOrSet(".advice-history-empty", copy?.historyEmpty);
-      restoreOrSet(".left-col > .panel .panel-title", [copy?.trendTitle, copy?.records]);
-      restoreOrSet(".left-col > .panel .panel-note", [copy?.trendNote, null, copy?.recordsNote]);
       restoreOrSet(".insight-card span", copy?.chartStats);
       restoreOrSet(".trend-key-label", copy?.trendLegend);
       restoreOrSet("#snapshotButton", copy?.snapshot);
-      restoreOrSet(".data-table th", copy?.tableHeaders);
-      restoreOrSet(".right-col .panel-title", [copy?.collection, copy?.algorithm, copy?.vent, copy?.ruleState]);
+      restoreOrSet("#recordsPanel .data-table th", copy?.tableHeaders);
       restoreOrSet(".demo-row > span", [copy?.altitude, copy?.temperature, copy?.humidity, copy?.rawNh3]);
       restoreOrSet("#demoSimulate", copy?.applyParams);
       restoreOrSet("#demoStatus", copy?.waitingInput);
@@ -4474,7 +4634,6 @@
       restoreOrSet(".actuator-name", [copy?.fan, copy?.heater]);
       restoreOrSet(".actuator-desc", [copy?.fanDesc, copy?.heaterDesc]);
       restoreOrSet(".timeline-labels span", copy?.timeline);
-      restoreOrSet("#knowledgeCatalogTitle", copy?.knowledgeCatalog);
       restoreOrSet(".status-strip .control", copy?.pause);
       // 静态面板也统一走语言包，防止只切换顶部文案而留下中文说明。
       const localize = (selector, key, zhFallback, index) => {
@@ -4488,6 +4647,21 @@
       document.querySelectorAll("[data-i18n]").forEach((element) => {
         const fallback = originalLanguageText.get(element) || element.textContent;
         setLocalizedText(element, tr(element.dataset.i18n, fallback));
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+        const fallback = element.dataset.i18nPlaceholderZh || element.getAttribute("placeholder") || "";
+        if (!element.dataset.i18nPlaceholderZh) element.dataset.i18nPlaceholderZh = fallback;
+        element.setAttribute("placeholder", tr(element.dataset.i18nPlaceholder, fallback));
+      });
+      document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+        const fallback = element.dataset.i18nAriaLabelZh || element.getAttribute("aria-label") || "";
+        if (!element.dataset.i18nAriaLabelZh) element.dataset.i18nAriaLabelZh = fallback;
+        element.setAttribute("aria-label", tr(element.dataset.i18nAriaLabel, fallback));
+      });
+      document.querySelectorAll("[data-i18n-title]").forEach((element) => {
+        const fallback = element.dataset.i18nTitleZh || element.getAttribute("title") || "";
+        if (!element.dataset.i18nTitleZh) element.dataset.i18nTitleZh = fallback;
+        element.setAttribute("title", tr(element.dataset.i18nTitle, fallback));
       });
       localize(".sensor-label", "sensor.labels", ["氨气浓度", "圈舍温度", "相对湿度", "光照强度"], 0);
       localize(".sensor-reference", "sensor.references", ["15ppm阈值", "0℃ / 22℃", "80%高湿", "补光参考"], 0);
@@ -4508,10 +4682,6 @@
       localize(".actuator-name", "static.ventLabels", ["风险等级", "处置建议"], 0);
       localize(".vent-row > span:first-child", "static.ventWindow", "通风窗口 12:00-14:00");
       localize(".rule-state-list dt", "static.ruleState", ["命中规则", "建议事项", "可追溯依据"], 0);
-      localize("#calibrationPanel .panel-note", "static.compensationNote", "模拟高海拔低压环境下的传感器补偿过程。");
-      localize("#recommendationPanel .panel-note", "static.executionNote", "展示决策建议与可追溯依据，执行由既有设备或人工完成。");
-      localize("#reasoningPanel .panel-note", "static.ruleStateNote", "直接显示当前本地知识库与决策引擎的输出，不在页面内重复实现规则。");
-      localize(".knowledge-catalog .panel-note", "static.catalogNote", "当前推理命中的阈值、运行约束与可追溯依据。");
       localize(".rule-library-details > summary", "static.library", "📄 查看完整规则库文档");
       localize(".rule-library-content article", "static.libraryRules", ["一级警报：氨气 > 20 ppm，建议立即组织通风并转移至安全区域。依据：NY/T 388-1999。", "警告：氨气 > 15 ppm，建议在 12:00-14:00 通风 5-10 分钟，温度降幅不超过 3℃。", "复合预警：湿度 > 80% 且氨气 > 10 ppm，建议优先清粪、换干燥垫料并延长午间通风至 15 分钟。", "低温注意：温度 < 0℃，建议开启保温，缩短单次通风至 3-5 分钟并观察幼畜状态。", "正常：未触发以上风险条件，建议保持管理措施并持续巡检。"], 0);
       document.querySelectorAll(".rule-library-content article").forEach((article) => { article.textContent = window.QJZH?.mapAdvice ? window.QJZH.mapAdvice(article.textContent) : article.textContent; });
@@ -4839,13 +5009,23 @@
           condition: rule.condition || "条件由知识库定义",
           source: rule.source || "本地知识库"
         };
-        const entries = {
-          "KB-NH3-START": ["Ammonia high-risk start", "NH3 >= 15.5 ppm", "NY/T 388-1999 Livestock and Poultry Farm Environmental Quality Standard"],
-          "KB-NH3-COMFORT": ["Ammonia comfort zone", "NH3 < 10 ppm", "NY/T 388-1999 Livestock and Poultry Farm Environmental Quality Standard"],
-          "KB-NH3-HYSTERESIS": ["Ammonia hysteresis protection", "Start 15.5 ppm / stop 9.5 ppm", "Local knowledge-base rule to prevent frequent fan switching"],
-          "KB-WINTER-VENT-WINDOW": ["Winter ventilation window", "Active ventilation only from 12:00-14:00", "Local winter operation rule"],
-          "KB-TEMP-DROP-3C": ["Temperature-drop safety stop", "Stop ventilation when one-event drop is >= 3 C", "Local temperature-drop safety rule"]
+        const entriesByLanguage = {
+          en: {
+            "KB-NH3-START": ["Ammonia high-risk start", "NH3 >= 15.5 ppm", "NY/T 388-1999 Livestock and Poultry Farm Environmental Quality Standard"],
+            "KB-NH3-COMFORT": ["Ammonia comfort zone", "NH3 < 10 ppm", "NY/T 388-1999 Livestock and Poultry Farm Environmental Quality Standard"],
+            "KB-NH3-HYSTERESIS": ["Ammonia hysteresis protection", "Start 15.5 ppm / stop 9.5 ppm", "Local knowledge-base rule to prevent frequent recommendation switching"],
+            "KB-WINTER-VENT-WINDOW": ["Winter ventilation window", "Ventilation is recommended only from 12:00-14:00", "Local winter operation rule"],
+            "KB-TEMP-DROP-3C": ["Temperature-drop safety limit", "Pause ventilation when one-event drop is >= 3 C", "Local temperature-drop safety rule"]
+          },
+          bo: {
+            "KB-NH3-START": ["ཨམ་མོ་ནི་ཡ་ཉེན་ཁ་མཐོ་བའི་འགོ་ཚུགས", "NH₃ >= 15.5 ppm", "NY/T 388-1999 ཕྱུགས་རིགས་གསོ་སྤེལ་ར་བའི་ཁོར་ཡུག་སྤུས་ཚད"],
+            "KB-NH3-COMFORT": ["ཨམ་མོ་ནི་ཡ་བདེ་འཇགས་ཁུལ", "NH₃ < 10 ppm", "NY/T 388-1999 ཕྱུགས་རིགས་གསོ་སྤེལ་ར་བའི་ཁོར་ཡུག་སྤུས་ཚད"],
+            "KB-NH3-HYSTERESIS": ["ཨམ་མོ་ནི་ཡའི་ཕྱིར་འགྱངས་སྲུང་སྐྱོབ", "15.5 ppm ལ་འགོ་ཚུགས / 9.5 ppm ལ་མཚམས་འཇོག", "བསམ་འཆར་ཡང་ཡང་འགྱུར་བ་འགོག་པའི་ས་གནས་སྒྲིག་གཞི"],
+            "KB-WINTER-VENT-WINDOW": ["དགུན་དུས་རླུང་འགྲོའི་དུས་སྐབས", "12:00–14:00 བར་ཁོ་ནར་རླུང་འགྲོའི་བསམ་འཆར", "ས་གནས་དགུན་དུས་ལས་སྤྱོད་སྒྲིག་གཞི"],
+            "KB-TEMP-DROP-3C": ["དྲོད་ཚད་མར་ཆག་གི་བདེ་འཇགས་ཚད", "ཐེངས་གཅིག་གི་མར་ཆག >= 3℃ ཡིན་ན་རླུང་འགྲོ་རེ་ཞིག་མཚམས་འཇོག", "ས་གནས་དྲོད་ཚད་མར་ཆག་བདེ་འཇགས་སྒྲིག་གཞི"]
+          }
         };
+        const entries = entriesByLanguage[languageState.current] || entriesByLanguage.en;
         const item = entries[id] || [tr("knowledge.untitled", "未命名规则"), tr("knowledge.condition", "条件由知识库定义"), tr("knowledge.local", "本地知识库")];
         return { title: item[0], condition: item[1], source: item[2] };
       }
