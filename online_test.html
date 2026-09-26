@@ -52,12 +52,14 @@
       report(html.indexOf("qjzh-boundary-banner") >= 0, "边界声明 Banner 标记（主页面）");
       report(html.indexOf("dataImportPanel") >= 0, "数据接入面板标记（主页面）");
       report(html.indexOf("pipeline-strip") >= 0, "可导航流程步骤条标记（主页面）");
+      report(html.indexOf('id="pipelineNext"') >= 0, "链路'下一步'按钮存在");
+      report((html.match(/class="overview-quick"/g) || []).length >= 5, "总览快捷卡覆盖全部五个模块入口");
       report(html.indexOf("institutionView") >= 0 && html.indexOf("reportPanel") >= 0, "机构视图与季度报告标记（主页面）");
       report((html.match(/class="view(?: active)?" data-view=/g) || []).length === 6, "六个 Hash 视图容器存在");
       report(html.indexOf("qjzh-main-nav") >= 0 && html.indexOf('data-view="institution"') >= 0, "六项主导航与机构视图入口存在");
       report(html.indexOf('class="qjzh-tabs"') < 0 && html.indexOf('querySelectorAll(".qjzh-tab")') < 0, "旧页签 DOM 与点击绑定已移除");
       report(html.indexOf("replaySiteLabel") >= 0, "回放站点标识存在");
-      report(html.indexOf('src="viewRouter.js?v=20260924"') >= 0, "六视图路由脚本已加载");
+      report(html.indexOf('src="viewRouter.js?v=20260926"') >= 0, "六视图路由脚本已加载");
       report(html.indexOf("动态通风调控执行") < 0, "原'动态通风调控执行'已从源码移除");
       report(html.indexOf("数据接入") >= 0 && html.indexOf("指令待下发") < 0, "流水线已改为'数据接入→高原校准→智能决策→建议输出'");
       report(html.indexOf("confidenceBadge") >= 0, "置信度元素存在");

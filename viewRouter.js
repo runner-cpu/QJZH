@@ -5,6 +5,9 @@
   var q = root.QJZH = root.QJZH || {};
   var VIEW_ORDER = ["overview", "data", "algorithm", "decision", "institution", "report"];
   var NEXT_VIEW = { overview: "data", data: "algorithm", algorithm: "decision" };
+  var lastView = null;
+  var tourTimer = null;
+  var tourView = null;
   var LABELS = {
     overview: ["nav.overview", "总览"],
     data: ["nav.data", "数据接入"],
@@ -34,6 +37,8 @@
 
   function apply() {
     var view = current();
+    var changed = view !== lastView;
+    lastView = view;
     root.document.querySelectorAll(".view").forEach(function (element) {
       var active = element.dataset.view === view;
       element.classList.toggle("active", active);
@@ -54,13 +59,49 @@
     updateNext(view);
     if (view === "institution" && q.institutionView && q.institutionView.render) q.institutionView.render();
     if (view === "data" && q.dataImport && q.dataImport.renderRecordList) q.dataImport.renderRecordList();
-    if (typeof root.scrollTo === "function") root.scrollTo(0, 0);
-    else root.document.documentElement.scrollTop = 0;
+    if (changed) {
+      if (typeof root.scrollTo === "function") root.scrollTo(0, 0);
+      else root.document.documentElement.scrollTop = 0;
+      // The data view has a panel title instead of a .view-heading wrapper.
+      var heading = root.document.querySelector && root.document.querySelector('.view[data-view="' + view + '"] h2');
+      if (heading) {
+        if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+        heading.focus({ preventScroll: true });
+      }
+    }
     try { root.dispatchEvent(new CustomEvent("qjzh:view-change", { detail: { view: view } })); } catch (_) {}
+    if (changed && q.simulatorControl) {
+      if (view === "overview") q.simulatorControl.restart();
+      else q.simulatorControl.stop();
+    }
     return view;
   }
 
-  function go(view) {
+  function stopTour() {
+    if (tourTimer !== null) root.clearInterval(tourTimer);
+    tourTimer = null;
+    tourView = null;
+    var button = root.document.querySelector && root.document.querySelector('[data-scene="tour"]');
+    if (button) button.setAttribute("aria-pressed", "false");
+  }
+
+  function startTour() {
+    stopTour();
+    var order = VIEW_ORDER.slice(1);
+    var index = 0;
+    function advance() {
+      tourView = order[index];
+      index = (index + 1) % order.length;
+      go(tourView, true);
+    }
+    tourTimer = root.setInterval(advance, 4000);
+    var button = root.document.querySelector('[data-scene="tour"]');
+    if (button) button.setAttribute("aria-pressed", "true");
+    advance();
+  }
+
+  function go(view, fromTour) {
+    if (!fromTour) stopTour();
     var target = VIEW_ORDER.indexOf(view) >= 0 ? view : "overview";
     var hash = "#/" + target;
     if (root.location.hash === hash) apply();
@@ -85,13 +126,20 @@
   }
 
   mountViews();
-  root.addEventListener("hashchange", apply);
+  root.addEventListener("hashchange", function () {
+    if (tourTimer !== null && current() !== tourView) stopTour();
+    apply();
+  });
   root.addEventListener("dashboard:language-change", apply);
+  root.addEventListener("dashboard:scenario-change", stopTour);
   root.document.addEventListener("click", function (event) {
-    var target = event.target && event.target.closest ? event.target.closest("[data-goto]") : null;
-    if (!target || !target.dataset.goto) return;
-    if (target.tagName !== "A") event.preventDefault();
-    go(target.dataset.goto);
+    var target = event.target && event.target.closest ? event.target.closest("[data-goto], .qjzh-main-nav .nav-link") : null;
+    if (!target) return;
+    if (target.tagName === "A" && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
+    var view = target.dataset.goto || target.dataset.view;
+    if (!view) return;
+    event.preventDefault();
+    go(view);
   });
   root.document.addEventListener("keydown", function (event) {
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -103,5 +151,5 @@
   if (root.document.readyState === "loading") root.document.addEventListener("DOMContentLoaded", apply);
   else apply();
 
-  q.viewRouter = { VIEW_ORDER: VIEW_ORDER.slice(), current: current, apply: apply, go: go, mountViews: mountViews };
+  q.viewRouter = { VIEW_ORDER: VIEW_ORDER.slice(), current: current, apply: apply, go: go, mountViews: mountViews, startTour: startTour, stopTour: stopTour };
 })(window);

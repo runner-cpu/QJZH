@@ -3,3 +3,4 @@
 [2026-08-05] node --check 通过：model_weights.js compensator_engine.js simulator.js ui_interactions.js knowledgeBase.js decisionEngine.js。
 [2026-08-05] compensate(2800,10,60,30) = 21.787617 ppm。
 [2026-09-24] 数据流打通+多语言+安全修复，gh-pages 发布实现提交 42716f3ec0ac09e1ea0a969e93a4c8201aa4266c。
+[2026-09-26] 65570d6 六视图拆分落地核验；补：模拟暂停与从头回放、五模块快捷卡、标题焦点管理、旧样式与打印清理、Chart.js CDN SHA-384、三语浏览器标题、巡览演示及三语路径提示。

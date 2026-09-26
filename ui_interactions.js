@@ -5,6 +5,16 @@
 (function () {
   "use strict";
   window.QJZH = window.QJZH || {};
+  function updateDocumentTitle() {
+    var titles = {
+      zh: "青境智衡 · 高原圈舍环境数据服务系统",
+      en: "Qingjing Zhiheng · Plateau Barn Environment Data Service",
+      bo: "ཆིངས་ཅིང་ཀྲི་ཧེང་ · མཐོ་སྒང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ"
+    };
+    document.title = titles[document.documentElement.dataset.language] || titles.zh;
+  }
+  updateDocumentTitle();
+  window.addEventListener("dashboard:language-change", updateDocumentTitle);
   function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character]; }); }
   function translate(key, fallback, values) { return window.QJZH.translate ? window.QJZH.translate(key, fallback, values || {}) : fallback; }
   window.QJZH.calibrate = function (input) {
@@ -156,6 +166,8 @@
     document.querySelectorAll("[data-scene]").forEach(function (button) {
       button.addEventListener("click", function () {
         var scene = button.dataset.scene;
+        window.QJZH.viewRouter?.stopTour();
+        if (scene === "tour") window.QJZH.viewRouter?.startTour();
         var status = document.getElementById("dataImportStatus");
         if (scene === "retail") {
           window.location.hash = "#/overview";
@@ -177,6 +189,7 @@
           if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = translate("qjzh.scene.offlineStatus", "断网演示：本地 {count} 条记录可查看 · 校准/决策脚本正常（{ppm} ppm）· Canvas 回退{fallback}", { count: records.length, ppm: Number(probe?.calibrated_nh3_ppm || 0).toFixed(1), fallback: fallbackActive ? translate("qjzh.scene.active", "已接管") : translate("qjzh.scene.available", "可用") }); }
         }
         document.querySelector(".qjzh-scene-presets")?.classList.remove("expanded");
+        document.getElementById("scenePresetToggle")?.setAttribute("aria-expanded", "false");
       });
     });
     document.getElementById("scenePresetToggle")?.addEventListener("click", function () {
@@ -185,6 +198,6 @@
       var expanded = presets.classList.toggle("expanded");
       this.setAttribute("aria-expanded", String(expanded));
     });
-    document.getElementById("resetDemoData")?.addEventListener("click", function () { window.location.hash = "#/overview"; window.QJZH?.demoReset?.reset?.(); });
+    document.getElementById("resetDemoData")?.addEventListener("click", function () { window.QJZH.viewRouter?.stopTour(); window.location.hash = "#/overview"; window.QJZH?.demoReset?.reset?.(); });
   });
 })();

@@ -34,7 +34,7 @@
   <script src="demoReset.js?v=20260923"></script>
   <!-- Chart.js 负责绘制五条实时数据曲线与多量纲坐标轴。 -->
   <!-- 使用同步加载：Chart.js 成功时优先使用正式图表，网络失败时再由下方 Canvas 回退接管。 -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" integrity="sha384-9MhbyIRcBVQiiC7FSd7T38oJNj2Zh+EfxS7/vjhBi4OOT78NlHSnzM31EZRWR1LZ" crossorigin="anonymous"></script>
   <script>
     // CDN 不可用时启用轻量 Canvas 回退，保证离线演示仍有曲线、坐标和点位 Tooltip。
     (function installChartFallback() {
@@ -2883,11 +2883,10 @@
     }
   </style>
   <style id="qjzh-feature-styles">
-    .qjzh-boundary-banner{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;gap:16px;align-items:center;padding:10px 18px;background:#e8f4ef;color:#123a34;border:1px solid #86c9b5;border-radius:12px;font-size:.9rem;line-height:1.5}.qjzh-boundary-banner button{border:0;background:transparent;font-size:1.5rem;cursor:pointer;color:inherit}.qjzh-tabs{display:flex;gap:8px;margin:16px 0}.qjzh-tab{padding:9px 18px;border:1px solid rgba(102,190,169,.4);border-radius:999px;background:transparent;color:inherit;cursor:pointer}.qjzh-tab.active{background:#16d6b0;color:#08231f}.qjzh-data-panel{margin:0 0 18px;padding:18px}.qjzh-data-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.qjzh-data-card{padding:14px;border:1px solid rgba(150,190,200,.25);border-radius:12px;background:rgba(7,20,31,.18)}.qjzh-data-card h3{margin:0 0 8px}.qjzh-data-card p{font-size:.85rem;line-height:1.5;min-height:46px}.qjzh-data-card input{width:100%;box-sizing:border-box;margin:4px 0;padding:8px;border-radius:8px;border:1px solid rgba(150,190,200,.35);background:transparent;color:inherit}.qjzh-button-row{display:flex;gap:8px;flex-wrap:wrap}.qjzh-manual-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.qjzh-manual-form input,.qjzh-manual-form button{min-width:0}.qjzh-manual-form button{grid-column:1/-1}.qjzh-quality-badge{padding:5px 10px;border-radius:999px;background:rgba(255,217,61,.15);color:#ffd93d;white-space:nowrap}.qjzh-data-state{margin:12px 0;padding:10px 12px;border-radius:8px}.qjzh-state-empty{background:rgba(120,150,170,.16)}.qjzh-state-loading{background:rgba(74,158,255,.16)}.qjzh-state-warning{background:rgba(245,124,0,.17);color:#ffd59c}.qjzh-state-error{background:rgba(211,47,47,.17);color:#ffb4b4}.qjzh-institution-view{display:none}.qjzh-institution-view.active{display:block}.qjzh-report-panel{margin:18px 0;padding:18px}.qjzh-scene-presets{position:fixed;right:18px;bottom:18px;z-index:15;display:flex;gap:8px;flex-wrap:wrap;max-width:300px}.qjzh-scene-presets button{font-size:.8rem}.qjzh-report-preview{background:#fff;color:#17232d;padding:20px;border-radius:10px}.qjzh-confidence{margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(22,214,176,.12);color:#8ff1dd}.qjzh-footer-compliance{display:block;margin-top:8px;font-size:.78rem;opacity:.8}@media(max-width:900px){.qjzh-data-grid{grid-template-columns:1fr}.qjzh-boundary-banner{position:relative;align-items:flex-start;font-size:.8rem}}
+    .qjzh-boundary-banner{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;gap:16px;align-items:center;padding:10px 18px;background:#e8f4ef;color:#123a34;border:1px solid #86c9b5;border-radius:12px;font-size:.9rem;line-height:1.5}.qjzh-boundary-banner button{border:0;background:transparent;font-size:1.5rem;cursor:pointer;color:inherit}.qjzh-data-panel{margin:0 0 18px;padding:18px}.qjzh-data-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.qjzh-data-card{padding:14px;border:1px solid rgba(150,190,200,.25);border-radius:12px;background:rgba(7,20,31,.18)}.qjzh-data-card h3{margin:0 0 8px}.qjzh-data-card p{font-size:.85rem;line-height:1.5;min-height:46px}.qjzh-data-card input{width:100%;box-sizing:border-box;margin:4px 0;padding:8px;border-radius:8px;border:1px solid rgba(150,190,200,.35);background:transparent;color:inherit}.qjzh-button-row{display:flex;gap:8px;flex-wrap:wrap}.qjzh-manual-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.qjzh-manual-form input,.qjzh-manual-form button{min-width:0}.qjzh-manual-form button{grid-column:1/-1}.qjzh-quality-badge{padding:5px 10px;border-radius:999px;background:rgba(255,217,61,.15);color:#ffd93d;white-space:nowrap}.qjzh-data-state{margin:12px 0;padding:10px 12px;border-radius:8px}.qjzh-state-empty{background:rgba(120,150,170,.16)}.qjzh-state-loading{background:rgba(74,158,255,.16)}.qjzh-state-warning{background:rgba(245,124,0,.17);color:#ffd59c}.qjzh-state-error{background:rgba(211,47,47,.17);color:#ffb4b4}.qjzh-institution-view{display:none}.qjzh-institution-view.active{display:block}.qjzh-report-panel{margin:18px 0;padding:18px}.qjzh-scene-presets{position:fixed;right:18px;bottom:18px;z-index:15;display:flex;gap:8px;flex-wrap:wrap;max-width:300px}.qjzh-scene-presets button{font-size:.8rem}.qjzh-report-preview{background:#fff;color:#17232d;padding:20px;border-radius:10px}.qjzh-confidence{margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(22,214,176,.12);color:#8ff1dd}.qjzh-footer-compliance{display:block;margin-top:8px;font-size:.78rem;opacity:.8}@media(max-width:900px){.qjzh-data-grid{grid-template-columns:1fr}.qjzh-boundary-banner{position:relative;align-items:flex-start;font-size:.8rem}}
     .qjzh-confidence-warn{background:rgba(245,124,0,.15);color:#ffd59c}.qjzh-confidence-err{background:rgba(211,47,47,.17);color:#ffb4b4}.qjzh-scene-toggle{display:none}.qjzh-role-detail{margin:-4px 0 12px;font-size:.86rem;opacity:.82}
     html[data-theme="light"] .qjzh-data-card{background:rgba(7,20,31,.05);border-color:rgba(7,20,31,.15)}html[data-theme="light"] .qjzh-data-card input{background:#fff;color:#17232d}html[data-theme="light"] .qjzh-boundary-banner{background:#eef7f2;border-color:#9ad5c2}html[data-theme="light"] .qjzh-quality-badge{background:rgba(245,124,0,.12);color:#9a5200}html[data-theme="light"] .qjzh-state-empty{background:rgba(120,150,170,.12)}html[data-theme="light"] .qjzh-confidence{background:rgba(22,214,176,.1);color:#0e7a64}html[data-theme="light"] .qjzh-institution-view table{color:#17232d}
     @media(max-width:900px){.qjzh-scene-presets{position:static;display:block;max-width:100%;margin:14px 0 18px}.qjzh-scene-toggle{display:inline-flex}.qjzh-scene-actions{display:none;gap:8px;max-width:100%;overflow-x:auto;padding:8px 0 4px;scrollbar-width:thin}.qjzh-scene-presets.expanded .qjzh-scene-actions{display:flex}.qjzh-scene-actions button{flex:0 0 auto}}
-    @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-tabs,.qjzh-boundary-banner,button{display:none!important}.main-grid,#decisionPanel,#reportPanel{display:block!important}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
   </style>
   <style id="qjzh-router-styles">
     .view{display:none;min-height:420px;animation:view-enter .24s ease-out}.view.active{display:block}.view[hidden],.qjzh-view-source{display:none!important}
@@ -2897,6 +2896,7 @@
     .qjzh-main-nav .nav-link:hover,.qjzh-main-nav .nav-link:focus-visible{color:var(--text);background:rgba(22,214,176,.08);outline:2px solid transparent}.qjzh-main-nav .nav-link:focus-visible{box-shadow:0 0 0 2px var(--primary)}.qjzh-main-nav .nav-link:active{transform:translateY(1px)}.qjzh-main-nav .nav-link.active{color:#06251f;background:var(--primary);box-shadow:0 8px 22px rgba(22,214,176,.2)}
     .qjzh-main-nav .nav-icon{font-family:var(--mono);font-size:.72rem;opacity:.78}
     .view-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:8px 0 16px}.view-heading h2{margin:0;font-size:clamp(1.3rem,2.4vw,2rem);letter-spacing:-.035em;text-wrap:balance}.view-heading p{max-width:62ch;margin:5px 0 0;color:var(--muted);line-height:1.65;text-wrap:pretty}
+    .view h2[tabindex="-1"]:focus{outline:none}.qjzh-tour-hint{margin:-6px 0 16px;color:var(--muted);font-size:.84rem;line-height:1.65}.qjzh-scene-actions [aria-pressed="true"]{border-color:var(--primary);color:var(--primary)}
     .view-layout{display:grid;gap:18px}.view-layout>.left-col,.view-layout>.right-col{display:grid;gap:18px;min-width:0}.overview-quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 16px}.overview-quick{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border:1px solid rgba(102,190,169,.2);border-radius:12px;background:rgba(7,20,31,.24);color:inherit;text-decoration:none;transition:border-color .2s ease,transform .2s ease,background .2s ease}.overview-quick:hover,.overview-quick:focus-visible{border-color:rgba(22,214,176,.62);background:rgba(22,214,176,.08);transform:translateY(-2px);outline:none}.overview-quick strong{display:block;margin-bottom:3px}.overview-quick small{color:var(--muted)}.overview-quick b{color:var(--primary);font-size:1.15rem}
     .qjzh-replay-site{display:flex;align-items:center;gap:9px;margin:0 0 16px;padding:10px 13px;border-left:3px solid var(--primary);border-radius:6px;background:rgba(22,214,176,.08);color:var(--muted);font-size:.86rem}.qjzh-replay-site strong{color:var(--text)}
     .pipeline-strip{grid-template-columns:repeat(3,minmax(0,1fr)) auto!important;align-items:stretch}.pipeline-step[data-goto]{cursor:pointer;border:1px solid transparent;border-radius:10px;transition:border-color .2s ease,background .2s ease,transform .2s ease}.pipeline-step[data-goto]:hover,.pipeline-step[data-goto]:focus-visible{border-color:rgba(22,214,176,.45);background:rgba(22,214,176,.06);outline:none}.pipeline-step[data-goto].active{border-color:var(--primary);background:rgba(22,214,176,.1)}.pipeline-step[data-goto]:active{transform:scale(.99)}.pipeline-next{align-self:center;white-space:nowrap}.pipeline-value+.pipeline-value{margin-top:2px}
@@ -2904,7 +2904,7 @@
     .qjzh-institution-view{display:block}.qjzh-report-panel{margin:0}.compat-anchor-note{display:none}
     html[data-theme="light"] .qjzh-main-nav{background:rgba(247,251,251,.92);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-main-nav .nav-link.active{color:#fff;background:#0f9079}html[data-theme="light"] .overview-quick{background:rgba(255,255,255,.76);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-filter input{background:#fff;color:#17232d}
     @media(max-width:900px){body{padding-bottom:78px}.qjzh-main-nav{position:fixed;inset:auto 0 0;z-index:30;grid-template-columns:repeat(6,minmax(72px,1fr));gap:2px;margin:0;padding:5px 8px calc(5px + env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:0;overflow-x:auto;box-shadow:0 -10px 30px rgba(0,19,28,.22)}.qjzh-main-nav .nav-link{min-height:52px;flex-direction:column;gap:1px;padding:5px 7px;font-size:.7rem}.qjzh-main-nav .nav-icon{font-size:.66rem}.view-heading{align-items:flex-start;flex-direction:column}.overview-quick-grid{grid-template-columns:1fr}.pipeline-strip{grid-template-columns:1fr!important}.pipeline-next{width:100%}.view-layout>.left-col,.view-layout>.right-col{grid-template-columns:minmax(0,1fr)}.qjzh-scene-presets{margin-bottom:10px}.footer{padding-bottom:18px}}
-    @media print{.qjzh-main-nav,.pipeline-strip,.view:not([data-view="report"]){display:none!important}.view[data-view="report"]{display:block!important}}
+    @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-boundary-banner,.pipeline-strip,button,.view:not([data-view="report"]){display:none!important}body{padding:0;background:#fff;color:#17232d}.app{max-width:none;margin:0;padding:0}.view[data-view="report"]{display:block!important;animation:none;min-height:0}.qjzh-report-panel{border:0;box-shadow:none;background:#fff}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
     @media(prefers-reduced-motion:reduce){.view,.qjzh-main-nav .nav-link,.overview-quick{animation:none;transition:none}}
   </style>
 </head>
@@ -2989,10 +2989,13 @@
     <section class="view active" data-view="overview" aria-labelledby="overviewTitle">
       <div class="view-heading"><div><h2 id="overviewTitle" data-i18n="view.overview.title">环境总览</h2><p data-i18n="view.overview.note">集中查看当前站点、实时读数、趋势和采样记录，再按链路进入校准与决策界面。</p></div></div>
       <div class="qjzh-replay-site" id="replaySiteLabel" role="status"><strong>当前数据：</strong><span>本地 24 小时模拟；导入数据后将按首个站点独立回放。</span></div>
+      <p class="qjzh-tour-hint" data-i18n="view.overview.tourHint">建议演示路径：数据接入 → 高原校准 → 智能决策 → 机构版 → 环境报告</p>
       <div class="overview-quick-grid" aria-label="快捷入口">
         <a class="overview-quick" href="#/data" data-goto="data"><span><strong data-i18n="nav.data">数据接入</strong><small>CSV、人工录入与质量评分</small></span><b aria-hidden="true">→</b></a>
         <a class="overview-quick" href="#/algorithm" data-goto="algorithm"><span><strong data-i18n="nav.algorithm">高原校准</strong><small>模型演示、误差边界与置信度</small></span><b aria-hidden="true">→</b></a>
         <a class="overview-quick" href="#/decision" data-goto="decision"><span><strong data-i18n="nav.decision">智能决策</strong><small>风险、建议与规则溯源</small></span><b aria-hidden="true">→</b></a>
+        <a class="overview-quick" href="#/institution" data-goto="institution"><span><strong data-i18n="nav.institution">机构版</strong><small data-i18n="view.overview.institutionQuick">多圈舍排名、区域汇总与角色视图</small></span><b aria-hidden="true">→</b></a>
+        <a class="overview-quick" href="#/report" data-goto="report"><span><strong data-i18n="nav.report">环境报告</strong><small data-i18n="view.overview.reportQuick">日期范围、三语报告与打印导出</small></span><b aria-hidden="true">→</b></a>
       </div>
       <div class="view-layout"><section class="left-col" id="overviewMount"></section></div>
     </section>
@@ -3330,8 +3333,8 @@
     </main>
     </div>
 
-    <section class="view" data-view="institution" aria-labelledby="institutionTitle" hidden>
-      <div class="view-heading"><div><h2 data-i18n="view.institution.title">机构版</h2><p data-i18n="view.institution.note">按风险排序查看多圈舍汇总，并可按站点或畜种快速筛选。</p></div></div>
+    <section class="view" data-view="institution" aria-labelledby="institutionViewHeading" hidden>
+      <div class="view-heading"><div><h2 id="institutionViewHeading" data-i18n="view.institution.title">机构版</h2><p data-i18n="view.institution.note">按风险排序查看多圈舍汇总，并可按站点或畜种快速筛选。</p></div></div>
     <section class="qjzh-institution-view panel glass" id="institutionView" aria-labelledby="institutionTitle">
       <div class="panel-head"><div><h2 class="panel-title" id="institutionTitle" data-i18n="qjzh.institution.title">机构版多圈舍视图</h2><p class="panel-note">默认加载 5 个青海模拟圈舍，可从本地记录导入额外站点。</p></div><label><span data-i18n="qjzh.institution.role">机构角色</span> <select id="institutionRole" aria-label="机构角色"><option value="station">畜牧站</option><option value="college">农牧院校</option><option value="cooperative">合作社</option></select></label></div>
       <div id="institutionSummary" class="qjzh-data-state qjzh-state-empty">正在加载区域汇总…</div>
@@ -3341,8 +3344,8 @@
       <div class="qjzh-button-row"><button class="control" id="institutionExport" type="button">导出区域报告</button><button class="control secondary" id="institutionImport" type="button">从本地记录导入</button></div>
     </section>
     </section>
-    <section class="view" data-view="report" aria-labelledby="reportTitle" hidden>
-      <div class="view-heading"><div><h2 data-i18n="view.report.title">环境报告</h2><p data-i18n="view.report.note">按日期范围生成三语环境报告，并在新窗口打印或另存为 PDF。</p></div></div>
+    <section class="view" data-view="report" aria-labelledby="reportViewHeading" hidden>
+      <div class="view-heading"><div><h2 id="reportViewHeading" data-i18n="view.report.title">环境报告</h2><p data-i18n="view.report.note">按日期范围生成三语环境报告，并在新窗口打印或另存为 PDF。</p></div></div>
     <section class="qjzh-report-panel panel glass" id="reportPanel" aria-labelledby="reportTitle">
       <div class="panel-head"><div><h2 class="panel-title" id="reportTitle" data-i18n="qjzh.report.title">季度环境报告</h2><p class="panel-note">默认统计最近 90 天；报告将在新窗口渲染，可打印或另存为 PDF。</p></div></div>
       <div class="qjzh-button-row"><label>起始日期 <input id="reportStartDate" type="date"></label><label>结束日期 <input id="reportEndDate" type="date"></label><button class="control" id="generateReport" type="button">生成并打印报告</button></div>
@@ -3350,7 +3353,7 @@
       <p class="qjzh-report-watermark" data-i18n="qjzh.report.watermark">生成报告将带有“演示版・仅用于赛事展示”水印，不作为法定检测或动物诊疗依据。</p>
     </section>
     </section>
-    <div class="qjzh-scene-presets" aria-label="答辩场景预设"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" type="button" aria-expanded="false">演示</button><div class="qjzh-scene-actions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">断网场景</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
+    <div class="qjzh-scene-presets" aria-label="答辩场景预设"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" type="button" aria-expanded="false">演示</button><div class="qjzh-scene-actions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">断网场景</button><button class="control secondary" data-scene="tour" data-i18n="qjzh.scene.tour" type="button" aria-pressed="false">巡览演示</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
     <footer class="footer">
       <span id="buildVersionText">青境智衡 · 纯软件环境数据服务演示</span>
       <span id="buildDateText">数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议</span>
@@ -3395,6 +3398,7 @@
         "sensor.references": ["15 ppm threshold", "0 C / 22 C", "80% high humidity", "Supplemental-light guide"],
         "qjzh.page.title": "Qingjing Zhiheng · Highland Barn Environmental Data Service", "qjzh.page.subtitle": "Data intake → highland calibration → decision support → recommendation → report", "qjzh.tab.individual": "Individual", "qjzh.tab.institution": "Institution", "qjzh.data.title": "Data intake", "qjzh.data.note": "The system does not provide sensors. It calibrates, analyzes and produces recommendations from third-party or manually entered data.", "qjzh.data.importCsv": "Third-party CSV", "qjzh.data.manual": "Manual entry", "qjzh.data.demo": "Demo data", "qjzh.confidence.wait": "Confidence: waiting for data", "qjzh.confidence.high": "Confidence: high", "qjzh.confidence.medium": "Confidence: medium", "qjzh.confidence.low": "Confidence: low", "qjzh.institution.title": "Institution multi-barn view", "qjzh.institution.role": "Institution role", "qjzh.report.title": "Quarterly environment report", "qjzh.scene.retail": "Individual scene", "qjzh.scene.institution": "Institution scene", "qjzh.scene.offline": "Offline scene", "qjzh.scene.reset": "Reset demo", "qjzh.advice.title": "Decision recommendations", "qjzh.algorithm.title": "Highland calibration demo", "qjzh.pipeline.intake": "Data intake", "qjzh.pipeline.calibrate": "Highland calibration", "qjzh.pipeline.decide": "Decision support", "qjzh.pipeline.output": "Recommendation", "qjzh.footer.product": "Qingjing Zhiheng · software environmental data service demo", "qjzh.footer.boundary": "Local-only data · no animal diagnosis · no hardware control · reference recommendations only", "qjzh.footer.deployed": "Deployed",
         "nav.overview": "Overview", "nav.data": "Data intake", "nav.algorithm": "Highland calibration", "nav.decision": "Decision support", "nav.institution": "Institution", "nav.report": "Environment report", "nav.next": "Next: {label}",
+        "qjzh.scene.tour": "Guided tour", "view.overview.tourHint": "Suggested tour: Data intake → Highland calibration → Decision support → Institution view → Environment report", "view.overview.institutionQuick": "Barn rankings, regional summaries and role views", "view.overview.reportQuick": "Date ranges, trilingual reports and print export",
         "view.overview.title": "Environment overview", "view.overview.note": "Review the active site, live readings, trends and samples before moving through calibration and decision views.", "view.algorithm.title": "Highland calibration", "view.algorithm.note": "Compare raw and calibrated ammonia, model boundaries and input confidence.", "view.decision.title": "Decision support", "view.decision.note": "Generate risk level, time window, recommendations and traceable local rules.", "view.institution.title": "Institution view", "view.institution.note": "Review barns by risk and filter by site or species.", "view.report.title": "Environment report", "view.report.note": "Generate a localized report for a date range and print or save it as PDF.",
         "qjzh.data.records": "Local records", "qjzh.data.recordsNote": "Shows the latest 20 records; the newest value wins for the same site and timestamp.", "qjzh.data.noRecords": "No local records", "qjzh.data.partialImport": "Some records were not imported", "qjzh.data.imported": "Imported and deduplicated {count} records; the overview will replay one site.", "qjzh.data.sampleLoaded": "Demo data replaced ({sites} barns, {count} records)", "qjzh.data.quality": "Data quality {quality} · confidence {confidence}", "qjzh.data.cleared": "Local data cleared", "qjzh.data.demoReplay": "Qinghai winter demo loaded; the overview will replay one site in time order.",
         "qjzh.institution.filter": "Filter", "qjzh.report.watermark": "Generated reports include a demo-only watermark and are not statutory measurements or animal diagnoses.",
@@ -3430,6 +3434,7 @@
         "sensor.references": ["15 ppm ཚད་ཐིག", "0 C / 22 C", "80% བརླན་ཚད་མཐོ", "ཁ་གསབ་འོད་ཀྱི་གཞི་འཛིན"],
         "qjzh.page.title": "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ", "qjzh.page.subtitle": "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ", "qjzh.tab.individual": "ཁྱིམ་ཚང་ཐོན་སྐྱེད", "qjzh.tab.institution": "སྒྲིག་འཛུགས", "qjzh.data.title": "གཞི་གྲངས་འཇུག་པ", "qjzh.data.note": "མ་ལག་འདིས་བསྡུ་ལེན་སྒྲིག་ཆས་མི་བཟོ། ཕྱིའི་གཞི་གྲངས་ལ་ཁ་གསབ་དང་དཔྱད་ཞིབ། བསམ་འཆར་སྤྲོད།", "qjzh.data.importCsv": "CSV ནང་འདྲེན", "qjzh.data.manual": "ལག་བྲིས་ནང་འཇུག", "qjzh.data.demo": "དཔེ་སྟོན་གཞི་གྲངས", "qjzh.confidence.wait": "ཡིད་ཆེས། གཞི་གྲངས་སྒུག", "qjzh.confidence.high": "ཡིད་ཆེས་མཐོ", "qjzh.confidence.medium": "ཡིད་ཆེས་འབྲིང", "qjzh.confidence.low": "ཡིད་ཆེས་དམའ", "qjzh.institution.title": "སྒྲིག་འཛུགས་ཕྱུགས་ཁང་མང་པོའི་མཐོང་རིས", "qjzh.institution.role": "སྒྲིག་འཛུགས་ལས་འགན", "qjzh.report.title": "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", "qjzh.scene.retail": "ཁྱིམ་ཚང་རྣམ་པ", "qjzh.scene.institution": "སྒྲིག་འཛུགས་རྣམ་པ", "qjzh.scene.offline": "དྲ་མེད་རྣམ་པ", "qjzh.scene.reset": "དཔེ་སྟོན་བསྐྱར་སྒྲིག", "qjzh.advice.title": "ཐག་གཅོད་བསམ་འཆར", "qjzh.algorithm.title": "མཐོ་སྒང་ཁ་གསབ་དཔེ་སྟོན", "qjzh.pipeline.intake": "གཞི་གྲངས་འཇུག", "qjzh.pipeline.calibrate": "མཐོ་སྒང་ཁ་གསབ", "qjzh.pipeline.decide": "ཐག་གཅོད", "qjzh.pipeline.output": "བསམ་འཆར", "qjzh.footer.product": "མཐོ་སྒང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ་དཔེ་སྟོན", "qjzh.footer.boundary": "གཞི་གྲངས་ས་གནས་སུ་ཉར · སྨན་བཅོས་མིན · སྲ་ཆས་མི་ཚོད", "qjzh.footer.deployed": "འགྲེམས་སྤེལ་དུས་ཚོད",
         "nav.overview": "སྙིང་བསྡུས", "nav.data": "གཞི་གྲངས", "nav.algorithm": "ཁ་གསབ", "nav.decision": "ཐག་གཅོད", "nav.institution": "སྒྲིག་འཛུགས", "nav.report": "སྙན་ཞུ", "nav.next": "རྗེས་མ། {label}",
+        "qjzh.scene.tour": "ལྟ་སྐོར་དཔེ་སྟོན", "view.overview.tourHint": "དཔེ་སྟོན་གྱི་ལམ་རིམ། གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → རིག་ནུས་ཐག་གཅོད → སྒྲིག་འཛུགས → ཁོར་ཡུག་སྙན་ཞུ", "view.overview.institutionQuick": "ཕྱུགས་ཁང་གོ་རིམ་དང་ས་ཁུལ་སྙིང་བསྡུས། ལས་འགན་མཐོང་རིས།", "view.overview.reportQuick": "དུས་ཡུན་དང་སྐད་གསུམ་སྙན་ཞུ། པར་འདེབས།",
         "view.overview.title": "ཁོར་ཡུག་སྙིང་བསྡུས", "view.overview.note": "ད་ལྟའི་ས་ཚིགས་དང་ཚད་གྲངས། འཕེལ་ཕྱོགས། དཔེ་ཚད་ལ་ལྟ་བ།", "view.algorithm.title": "མཐོ་སྒང་ཁ་གསབ", "view.algorithm.note": "ཐོག་མའི་ཨམ་མོ་ནི་ཡ་དང་ཁ་གསབ་འབྲས་བུ་བསྡུར་བ།", "view.decision.title": "རིག་ནུས་ཐག་གཅོད", "view.decision.note": "ཉེན་ཁ་དང་དུས་སྐབས། བསམ་འཆར། ཁུངས་འདེད་སྒྲིག་གཞི་སྟོན།", "view.institution.title": "སྒྲིག་འཛུགས་མཐོང་རིས", "view.institution.note": "ཕྱུགས་ཁང་མང་པོ་ཉེན་ཁ་ལྟར་སྒྲིག", "view.report.title": "ཁོར་ཡུག་སྙན་ཞུ", "view.report.note": "དུས་ཡུན་ལྟར་སྙན་ཞུ་བཟོས་ནས་ PDF དུ་ཉར།",
         "qjzh.data.records": "ས་གནས་ཟིན་ཐོ", "qjzh.data.recordsNote": "ཉེ་བའི་ཟིན་ཐོ་20 སྟོན།", "qjzh.data.noRecords": "ས་གནས་ཟིན་ཐོ་མེད", "qjzh.data.partialImport": "ཟིན་ཐོ་ཁ་ཤས་ནང་འདྲེན་མ་བྱས", "qjzh.data.imported": "ཟིན་ཐོ {count} ནང་འདྲེན་དང་བསྐྱར་ཟློས་སེལ", "qjzh.data.sampleLoaded": "དཔེ་སྟོན་གཞི་གྲངས་བརྗེས། ཕྱུགས་ཁང {sites} · ཟིན་ཐོ {count}", "qjzh.data.quality": "གཞི་གྲངས་སྤུས་ཚད {quality} · ཡིད་ཆེས {confidence}", "qjzh.data.cleared": "ས་གནས་གཞི་གྲངས་བསུབས", "qjzh.data.demoReplay": "མཚོ་སྔོན་དགུན་དུས་དཔེ་སྟོན་ནང་འདྲེན་བྱས།",
         "qjzh.institution.filter": "འཚོལ་བ", "qjzh.report.watermark": "སྙན་ཞུར་དཔེ་སྟོན་ཆུ་རྟགས་ཡོད། ཁྲིམས་མཐུན་ཚད་འཇལ་ལམ་སྨན་བཅོས་གཞི་འཛིན་མིན།",
@@ -4432,7 +4437,6 @@
       languageState.current = nextLanguage;
       document.documentElement.dataset.language = nextLanguage;
       document.documentElement.lang = nextLanguage === "bo" ? "bo" : nextLanguage === "en" ? "en" : "zh-CN";
-      document.title = tr("qjzh.page.title", "青境智衡 · 高原圈舍环境数据服务系统");
       if (els.languageSelect) els.languageSelect.value = nextLanguage;
       try { localStorage.setItem("qjzh-language", nextLanguage); } catch (error) { console.warn("[语言切换] 无法保存语言偏好", error); }
 
@@ -5089,8 +5093,19 @@
         return { stop: function () { stopped = true; window.clearTimeout(timer); }, done, siteId };
       }
 
-      function beginSimulation(engine) {
+      function stopSimulation() {
         if (controller) controller.stop();
+        controller = null;
+        state.running = false;
+        els.streamStatus.textContent = tr("simulation.paused", "模拟已暂停");
+        els.toggleStream.textContent = tr("simulation.resume", "继续模拟");
+      }
+
+      function beginSimulation(engine) {
+        stopSimulation();
+        // boot/import/storage/scenario events can also arrive outside overview.
+        const view = window.QJZH?.viewRouter?.current?.() || String(window.location.hash).replace(/^#\/?/, "").split(/[?&]/)[0];
+        if (["data", "algorithm", "decision", "institution", "report"].includes(view)) return;
         clearDashboardData();
         configureDecisionMarkers();
         const useImported = Boolean(window.QJZH?.dataImport?.useImported?.());
@@ -5108,7 +5123,10 @@
         els.streamStatus.textContent = useImported ? tr("qjzh.stream.importedRunning", "导入数据回放中") : tr("simulation.running", "24小时模拟中");
         els.toggleStream.textContent = tr("simulation.pause", "暂停模拟");
         controller = useImported ? runImportedReplay(engine, updateKnowledgeUI) : window.LocalSimulator.runSimulation(engine, updateKnowledgeUI);
-        controller.done.then(() => {
+        const activeController = controller;
+        activeController.done.then(() => {
+          if (controller !== activeController) return;
+          controller = null;
           if (state.running) {
             state.running = false;
             els.streamStatus.textContent = useImported ? tr("qjzh.stream.importedComplete", "导入数据回放完成") : tr("simulation.complete", "24小时模拟完成");
@@ -5156,12 +5174,11 @@
           }
           setRunning = function (nextRunning) {
             if (nextRunning) beginSimulation(engine);
-            else if (controller) {
-              controller.stop();
-              state.running = false;
-              els.streamStatus.textContent = tr("simulation.paused", "模拟已暂停");
-              els.toggleStream.textContent = tr("simulation.resume", "继续模拟");
-            }
+            else stopSimulation();
+          };
+          window.QJZH.simulatorControl = {
+            stop: stopSimulation,
+            restart: function () { if (!controller) beginSimulation(engine); }
           };
           beginSimulation(engine);
         } catch (error) {
@@ -5172,7 +5189,7 @@
       boot();
     })();
   </script>
-  <script src="ui_interactions.js?v=20260924"></script>
-  <script src="viewRouter.js?v=20260924"></script>
+  <script src="ui_interactions.js?v=20260926"></script>
+  <script src="viewRouter.js?v=20260926"></script>
 </body>
 </html>
