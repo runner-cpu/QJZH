@@ -5,6 +5,9 @@
   var MIN = { altitude_m: 2200, temp_c: -15, rh_percent: 20, raw_nh3_ppm: 0 };
   var MAX = { altitude_m: 3500, temp_c: 25, rh_percent: 85, raw_nh3_ppm: 30 };
   var REQUIRED = ["timestamp", "site_id", "altitude_m", "temp_c", "rh_percent", "raw_nh3_ppm", "device_model"];
+  var ACCEPTED_FIELDS = REQUIRED.concat(["species", "age_days", "stocking_density", "barn_area"]);
+  var SITE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{1,63}$/;
+  var RESERVED_SITE_IDS = new Set(["__proto__", "prototype", "constructor"]);
   var memory = root.__QJZH_MEM__ = root.__QJZH_MEM__ || {};
   var storageMode = "localStorage";
   var cursor = 0;
@@ -12,6 +15,25 @@
   function read(key) { try { var value = store().getItem(key); return value ? JSON.parse(value) : null; } catch (_) { return null; } }
   function write(key, value) { try { store().setItem(key, JSON.stringify(value)); return { ok: true, mode: storageMode }; } catch (_) { storageMode = "memory"; memory[key] = JSON.stringify(value); return { ok: true, mode: storageMode, warning: "当前会话可用，刷新后数据丢失" }; } }
   function number(value) { return value === "" || value == null ? NaN : Number(value); }
+  function validateSiteId(value) {
+    var id = String(value == null ? "" : value).trim();
+    return SITE_ID_PATTERN.test(id) && !RESERVED_SITE_IDS.has(id.toLowerCase());
+  }
+  function validateTimestamp(value) {
+    var raw = String(value == null ? "" : value).trim();
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(raw)) return false;
+    var time = new Date(raw).getTime();
+    return Number.isFinite(time) && time <= Date.now() + 5 * 60 * 1000;
+  }
+  function normalizeRecord(record, provenance) {
+    var clean = {};
+    record = record || {};
+    ACCEPTED_FIELDS.forEach(function (key) {
+      if (record[key] != null) clean[key] = record[key];
+    });
+    clean.provenance = provenance || record.provenance || "manual-entry";
+    return clean;
+  }
   function check(record) {
     var issues = [], fields = ["altitude_m", "temp_c", "rh_percent", "raw_nh3_ppm"], warning = false, reject = false;
     fields.forEach(function (field) {
@@ -39,6 +61,14 @@
         reject = true;
       }
     });
+    if (record.site_id != null && String(record.site_id).trim() !== "" && !validateSiteId(record.site_id)) {
+      issues.push(text("qjzh.validation.siteId", "site_id 仅支持 2–64 位字母、数字、下划线或连字符"));
+      reject = true;
+    }
+    if (record.timestamp != null && String(record.timestamp).trim() !== "" && !validateTimestamp(record.timestamp)) {
+      issues.push(text("qjzh.validation.timestamp", "timestamp 必须为带时区且不晚于当前时间的 ISO 8601 时间"));
+      reject = true;
+    }
     var quality = reject ? "C" : warning ? "B" : "A";
     var level = reject ? "reject" : warning ? "warning" : "normal";
     var confidence = level === "reject"
@@ -67,17 +97,17 @@
     if (row.trim() !== "") rows.push(row);
     return rows;
   }
-  function parseCsv(csvText) { var lines = splitRows(csvText); if (!lines.length) return { records: [], errors: [{ row: 1, message: text("qjzh.validation.csvEmpty", "CSV 为空") }], warnings: [] }; var headers = parseLine(lines[0]).map(function (h) { return h.trim(); }), missing = REQUIRED.filter(function (h) { return headers.indexOf(h) < 0; }); if (missing.length) return { records: [], errors: [{ row: 1, field: "header", message: text("qjzh.validation.missing", "缺少字段：{field}", { field: missing.join(", ") }) }], warnings: [] }; var records = [], errors = [], warnings = []; lines.slice(1).forEach(function (line, offset) { var values = parseLine(line), record = {}; headers.forEach(function (key, i) { record[key] = (values[i] == null ? "" : values[i]).trim(); }); var result = check(record); if (result.valid) { records.push(record); if (result.level === "warning") warnings.push({ row: offset + 2, issues: result.issues }); } else errors.push({ row: offset + 2, issues: result.issues, message: result.issues.join("；") }); }); return { records: records, errors: errors, warnings: warnings }; }
+  function parseCsv(csvText, options) { var lines = splitRows(csvText); options = options || {}; if (!lines.length) return { records: [], errors: [{ row: 1, message: text("qjzh.validation.csvEmpty", "CSV 为空") }], warnings: [] }; var headers = parseLine(lines[0]).map(function (h) { return h.trim(); }), missing = REQUIRED.filter(function (h) { return headers.indexOf(h) < 0; }); if (missing.length) return { records: [], errors: [{ row: 1, field: "header", message: text("qjzh.validation.missing", "缺少字段：{field}", { field: missing.join(", ") }) }], warnings: [] }; var records = [], errors = [], warnings = []; lines.slice(1).forEach(function (line, offset) { var values = parseLine(line), raw = {}; headers.forEach(function (key, i) { if (ACCEPTED_FIELDS.indexOf(key) >= 0) raw[key] = (values[i] == null ? "" : values[i]).trim(); }); var record = normalizeRecord(raw, options.provenance || "user-import"); var result = check(record); if (result.valid) { records.push(record); if (result.level === "warning") warnings.push({ row: offset + 2, issues: result.issues }); } else errors.push({ row: offset + 2, issues: result.issues, message: result.issues.join("；") }); }); return { records: records, errors: errors, warnings: warnings }; }
   function recordKey(record) { return String(record.site_id || "unknown") + "\u0000" + String(record.timestamp || ""); }
   function save(records, options) {
     options = options || {};
-    var bySite = {};
-    records.forEach(function (record) { var id = record.site_id || "unknown"; (bySite[id] = bySite[id] || []).push(record); });
+    var bySite = new Map();
+    records.forEach(function (input) { var record = normalizeRecord(input, input && input.provenance); var id = record.site_id || "unknown"; if (!bySite.has(id)) bySite.set(id, []); bySite.get(id).push(record); });
     var known = read("QJZH_SITES") || [];
-    Object.keys(bySite).forEach(function (id) {
+    bySite.forEach(function (siteRecords, id) {
       var old = options.replaceSites ? [] : (read("QJZH_RECORDS_" + id) || []);
       var merged = new Map();
-      old.concat(bySite[id]).forEach(function (record) { merged.set(recordKey(record), record); });
+      old.concat(siteRecords).forEach(function (record) { merged.set(recordKey(record), record); });
       var ordered = Array.from(merged.values()).sort(function (a, b) { return new Date(a.timestamp || 0) - new Date(b.timestamp || 0); }).slice(-1000);
       write("QJZH_RECORDS_" + id, ordered);
       if (known.indexOf(id) < 0) known.push(id);
@@ -102,7 +132,7 @@
     var badge = root.document && root.document.getElementById("confidenceBadge");
     if (badge) { badge.textContent = text("qjzh.confidence.wait", "置信度：待接入数据后评估"); badge.className = "qjzh-confidence"; }
   }
-  var api = q.dataImport = { MIN: MIN, MAX: MAX, REQUIRED: REQUIRED.slice(), storage: function () { store(); return storageMode; }, validate: check, validateManual: function (record) { var result = check(record || {}); if (result.valid) save([record]); return result; }, parseCsv: parseCsv, importCsv: function (text, options) { var result = parseCsv(text); if (result.records.length) save(result.records, options); result.level = qualityFor(result); return result; }, save: save, getRecords: function (siteId) { if (siteId) return read("QJZH_RECORDS_" + siteId) || []; var ids = read("QJZH_SITES") || []; return ids.reduce(function (all, id) { return all.concat(read("QJZH_RECORDS_" + id) || []); }, []); }, importedRecords: function (siteId) { return api.getRecords(siteId).slice().sort(function (a, b) { return new Date(a.timestamp) - new Date(b.timestamp); }); }, replaySummary: function () { var all = api.importedRecords(); var siteIds = Array.from(new Set(all.map(function (record) { return record.site_id || "unknown"; }))); var siteId = siteIds[0] || ""; return { siteId: siteId, recordCount: siteId ? all.filter(function (record) { return record.site_id === siteId; }).length : 0, siteCount: siteIds.length, totalCount: all.length }; }, nextRecord: function (siteId) { var list = api.importedRecords(siteId); if (!list.length) return null; var record = list[cursor % list.length]; cursor += 1; return record; }, useImported: function () { return api.importedRecords().length > 0; }, resetCursor: function () { cursor = 0; }, clearData: function () { var ids = read("QJZH_SITES") || []; ids.forEach(function (id) { store().removeItem("QJZH_RECORDS_" + id); }); store().removeItem("QJZH_SITES"); cursor = 0; resetConfidence(); return true; }, loadDemo: function (text) { var result = api.importCsv(text || api.demoCsv, { replaceSites: true }); result.replaced = true; updateConfidence(result); return result; }, updateConfidence: updateConfidence, resetConfidence: resetConfidence, qualityFor: qualityFor, parseLine: parseLine, splitRows: splitRows };
+  var api = q.dataImport = { MIN: MIN, MAX: MAX, REQUIRED: REQUIRED.slice(), ACCEPTED_FIELDS: ACCEPTED_FIELDS.slice(), storage: function () { store(); return storageMode; }, validate: check, validateSiteId: validateSiteId, validateTimestamp: validateTimestamp, normalizeRecord: normalizeRecord, validateManual: function (record) { var clean = normalizeRecord(record || {}, "manual-entry"); var result = check(clean); result.record = clean; if (result.valid) save([clean]); return result; }, parseCsv: parseCsv, importCsv: function (csvText, options) { options = options || {}; var result = parseCsv(csvText, options); if (result.records.length) save(result.records, options); result.level = qualityFor(result); return result; }, save: save, getRecords: function (siteId) { if (siteId) return read("QJZH_RECORDS_" + siteId) || []; var ids = read("QJZH_SITES") || []; return ids.reduce(function (all, id) { return all.concat(read("QJZH_RECORDS_" + id) || []); }, []); }, importedRecords: function (siteId) { return api.getRecords(siteId).slice().sort(function (a, b) { return new Date(a.timestamp) - new Date(b.timestamp); }); }, replaySummary: function () { var all = api.importedRecords(); var siteIds = Array.from(new Set(all.map(function (record) { return record.site_id || "unknown"; }))); var siteId = siteIds[0] || ""; return { siteId: siteId, recordCount: siteId ? all.filter(function (record) { return record.site_id === siteId; }).length : 0, siteCount: siteIds.length, totalCount: all.length }; }, nextRecord: function (siteId) { var list = api.importedRecords(siteId); if (!list.length) return null; var record = list[cursor % list.length]; cursor += 1; return record; }, useImported: function () { return api.importedRecords().length > 0; }, resetCursor: function () { cursor = 0; }, clearData: function () { var ids = read("QJZH_SITES") || []; ids.forEach(function (id) { store().removeItem("QJZH_RECORDS_" + id); }); store().removeItem("QJZH_SITES"); cursor = 0; resetConfidence(); return true; }, loadDemo: function (csvText) { var result = api.importCsv(csvText || api.demoCsv, { replaceSites: true, provenance: "sample" }); result.replaced = true; updateConfidence(result); return result; }, updateConfidence: updateConfidence, resetConfidence: resetConfidence, qualityFor: qualityFor, parseLine: parseLine, splitRows: splitRows };
   api.demoCsv = [
     "timestamp,site_id,altitude_m,temp_c,rh_percent,raw_nh3_ppm,device_model,species,age_days,stocking_density,barn_area",
     "2026-01-15T08:00:00+08:00,QH-HD-001,2620,-5,62,18.6,generic_sensor,yak_calf,45,1.2,180",
