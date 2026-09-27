@@ -98,6 +98,23 @@ function loadReportStack({ records = [], compensate = () => 8 } = {}) {
   });
 }
 
+function sampleRecords() {
+  return [validRecord({ timestamp: "2026-09-15T08:00:00+08:00", provenance: "user-import" })];
+}
+
+function minimalReport() {
+  return {
+    language: "zh",
+    startDate: "2026-09-01",
+    endDate: "2026-09-30",
+    noRecords: true,
+    riskDistribution: {},
+    trendSeries: [],
+    generatedAt: "2026-09-27T00:00:00Z",
+    source: "QJZH 本地记录"
+  };
+}
+
 test("CSV drops system-derived fields and stamps provenance", () => {
   const { window } = loadDataImport();
   const csv = [
@@ -240,4 +257,53 @@ test("calibration describes aggregate evaluation without a point-error promise",
   assert.match(result.evaluation_note, /单点不确定度尚未评估/);
 });
 
-module.exports = { createStorage, loadScript, loadDataImport, loadReportStack, validRecord, seed, throwingStorage };
+test("reports reject reversed ranges and never expand an empty range", () => {
+  const report = loadReportStack({ records: sampleRecords() }).window.QJZH.reportGenerator;
+
+  assert.equal(report.generate({ startDate: "2026-10-01", endDate: "2026-09-01" }).errorCode, "INVALID_RANGE");
+  assert.equal(report.generate({ startDate: "2026-08-01", endDate: "2026-08-31" }).records.length, 0);
+});
+
+test("report cache excludes raw records and includes provenance metadata", () => {
+  const { window } = loadReportStack({ records: sampleRecords() });
+  const result = window.QJZH.reportGenerator.generate({
+    startDate: "2026-09-01",
+    endDate: "2026-09-30"
+  });
+  const cached = JSON.parse(window.localStorage.getItem("QJZH_REPORTS"));
+
+  assert.equal(cached.records, undefined);
+  assert.equal(cached.trendSeries, undefined);
+  assert.ok(result.modelVersion && result.ruleVersion);
+  assert.equal(result.timezone, "Asia/Shanghai");
+  assert.equal(result.siteCount, 1);
+  assert.equal(result.sampleCount, 1);
+  assert.equal(result.provenance["user-import"], 1);
+});
+
+test("blocked print popup returns reusable HTML", () => {
+  const { window } = loadScript("reportRenderer.js", { open() { return null; } });
+
+  const result = window.QJZH.reportRenderer.render(minimalReport());
+
+  assert.equal(result.opened, false);
+  assert.match(result.html, /<!doctype html>/);
+  assert.equal(result.window, null);
+});
+
+test("institution reports use record dates and label undated snapshots", () => {
+  const { window } = loadScript("reportRenderer.js", { open() { return null; } });
+  const dated = window.QJZH.reportRenderer.renderInstitution([
+    { site_id: "A", name: "A", timestamp: "2026-01-03T08:00:00+08:00", calibrated_nh3_ppm: 8 },
+    { site_id: "B", name: "B", timestamp: "2026-01-01T08:00:00+08:00", calibrated_nh3_ppm: 12 }
+  ], "en");
+  const snapshot = window.QJZH.reportRenderer.renderInstitution([
+    { site_id: "A", name: "A", calibrated_nh3_ppm: 8 }
+  ], "en");
+
+  assert.match(dated.html, /2026-01-01/);
+  assert.match(dated.html, /2026-01-03/);
+  assert.match(snapshot.html, /demo snapshot/i);
+});
+
+module.exports = { createStorage, loadScript, loadDataImport, loadReportStack, minimalReport, sampleRecords, validRecord, seed, throwingStorage };

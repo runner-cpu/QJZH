@@ -167,7 +167,7 @@ test("report renderer builds localized English and Tibetan documents", () => {
   const tibetan = window.QJZH.reportRenderer.buildHtml({ ...report, language: "bo" });
 
   assert.match(english, /Quarterly Environment Report/);
-  assert.match(english, /Ammonia compliance rate/);
+  assert.match(english, /Project comfort-zone share/);
   assert.match(tibetan, /ཁོར་ཡུག/);
   assert.doesNotMatch(english, /季度环境报告/);
 });
