@@ -5,6 +5,7 @@ const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
+const extractElement = (html, id) => (html.match(new RegExp('<[^>]+id="' + id + '"[^>]*>')) || [""])[0];
 
 test("the routed document has one main landmark and a skip link", () => {
   const html = read("index.html");
@@ -27,4 +28,25 @@ test("all manual fields have visible labels and described help", () => {
     assert.match(html, new RegExp('id="manual-' + name + '"[^>]+aria-describedby="manual-' + name + '-help"'));
     assert.match(html, new RegExp('id="manual-' + name + '-help"[^>]+class="field-help"'));
   }
+});
+
+test("high-frequency readings are not live regions and snapshots are a list", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(extractElement(html, "chartPointCount"), /aria-live/);
+  assert.doesNotMatch(extractElement(html, "streamStatus"), /aria-live/);
+  assert.match(html, /id="snapshotList"[^>]+role="list"/);
+  assert.doesNotMatch(html, /id="snapshotList"[^>]+aria-label=/);
+});
+
+test("language changes refresh stream and chart count immediately", () => {
+  const html = read("index.html");
+  assert.match(html, /function refreshDynamicLanguage\(/);
+  assert.match(html, /updateChartPointCount\(\)/);
+  assert.match(html, /refreshStreamStatus\(\)/);
+});
+
+test("Tibetan has a dedicated font stack and readable line height", () => {
+  const html = read("index.html");
+  assert.match(html, /html\[data-language="bo"\][^{]*\{[^}]*line-height:\s*1\.6/);
+  assert.match(html, /Noto Sans Tibetan/);
 });

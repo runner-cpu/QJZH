@@ -16,6 +16,7 @@
   updateDocumentTitle();
   window.addEventListener("dashboard:language-change", function () {
     updateDocumentTitle();
+    window.QJZH.refreshDynamicLanguage?.();
     renderRecommendationPanel();
   });
   function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character]; }); }

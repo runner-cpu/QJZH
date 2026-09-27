@@ -2946,11 +2946,12 @@
     .pipeline-strip{grid-template-columns:repeat(3,minmax(0,1fr)) auto!important;align-items:stretch}.pipeline-step[data-goto]{width:100%;cursor:pointer;color:inherit;font:inherit;text-align:left;border:1px solid transparent;border-radius:10px;transition:border-color .2s ease,background .2s ease,transform .2s ease}.pipeline-step[data-goto]:hover,.pipeline-step[data-goto]:focus-visible{border-color:rgba(22,214,176,.45);background:rgba(22,214,176,.06);outline:none}.pipeline-step[data-goto]:focus-visible{box-shadow:0 0 0 3px rgba(22,214,176,.24)}.pipeline-step[data-goto].active{border-color:var(--primary);background:rgba(22,214,176,.1)}.pipeline-step[data-goto]:active{transform:scale(.99)}.pipeline-copy,.pipeline-name,.pipeline-value{display:block}.pipeline-next{align-self:center;white-space:nowrap}.pipeline-next[hidden] { display: none !important; }.pipeline-value+.pipeline-value{margin-top:2px}
     .qjzh-manual-form .field-group{display:grid;align-content:start;gap:5px;min-width:0;padding:9px 10px;border:1px solid rgba(150,190,200,.18);border-radius:10px;background:rgba(7,20,31,.16)}.field-group label{font-size:.78rem;font-weight:800;color:var(--text)}.field-group .field-help{font-size:.72rem;line-height:1.45;color:var(--muted)}.qjzh-manual-form .field-group input{margin:0;min-height:44px}.qjzh-manual-form>button{min-height:44px}
     .qjzh-boundary-banner button,.theme-option,.control,.scenario-select,.language-switch select,#institutionRole,#reportStartDate,#reportEndDate{min-height:44px}.qjzh-boundary-banner button{min-width:44px;display:grid;place-items:center}.theme-option,#institutionRole,#reportStartDate,#reportEndDate{min-width:44px}input[type="range"]{min-height:44px;cursor:pointer}
+    html[data-language="bo"]{font-family:"Noto Sans Tibetan","Microsoft Himalaya",Jomolhari,system-ui,sans-serif;line-height:1.65;letter-spacing:0}html[data-language="bo"] button,html[data-language="bo"] input,html[data-language="bo"] select{font-family:inherit;line-height:1.55;letter-spacing:0}html[data-language="bo"] .control,html[data-language="bo"] .nav-link,html[data-language="bo"] .data-table{font-size:max(.8rem,12px)}
     .qjzh-data-panel{margin:0;padding:18px}.qjzh-record-panel{margin-top:16px;padding:18px}.qjzh-record-panel .data-table-scroll{max-height:360px}.qjzh-filter{display:flex;align-items:center;gap:8px;min-width:min(100%,310px)}.qjzh-filter input{width:100%;padding:9px 11px;border:1px solid rgba(150,190,200,.35);border-radius:8px;background:rgba(7,20,31,.3);color:inherit}.qjzh-report-watermark{margin:12px 0 0;padding:10px 12px;border:1px dashed rgba(224,180,81,.6);border-radius:8px;color:#ffd98a;background:rgba(224,180,81,.08);font-size:.84rem}
     .qjzh-institution-view{display:block}.qjzh-report-panel{margin:0}.compat-anchor-note{display:none}
     html[data-theme="light"] .qjzh-main-nav{background:rgba(247,251,251,.92);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-main-nav .nav-link.active{color:#fff;background:#0f9079}html[data-theme="light"] .overview-quick{background:rgba(255,255,255,.76);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-filter input{background:#fff;color:#17232d}
     @media(max-width:900px){body{padding-bottom:78px}.qjzh-main-nav{position:fixed;inset:auto 0 0;z-index:30;grid-template-columns:repeat(6,minmax(72px,1fr));gap:2px;margin:0;padding:5px 8px calc(5px + env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:0;overflow-x:auto;box-shadow:0 -10px 30px rgba(0,19,28,.22)}.qjzh-main-nav .nav-link{min-height:52px;flex-direction:column;gap:1px;padding:5px 7px;font-size:.7rem}.qjzh-main-nav .nav-icon{font-size:.66rem}.view-heading{align-items:flex-start;flex-direction:column}.overview-quick-grid{grid-template-columns:1fr}.pipeline-strip{grid-template-columns:1fr!important}.pipeline-next{width:100%}.view-layout>.left-col,.view-layout>.right-col{grid-template-columns:minmax(0,1fr)}.qjzh-scene-presets{margin-bottom:10px}.footer{padding-bottom:18px}}
-    @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-boundary-banner,.pipeline-strip,button,.view:not([data-view="report"]){display:none!important}body{padding:0;background:#fff;color:#17232d}.app{max-width:none;margin:0;padding:0}.view[data-view="report"]{display:block!important;animation:none;min-height:0}.qjzh-report-panel{border:0;box-shadow:none;background:#fff}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
+    @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-boundary-banner,.pipeline-strip,button,.view:not([data-view="report"]){display:none!important}html,body{font-size:11pt;line-height:1.55}html[data-language="bo"],html[data-language="bo"] body{font-size:11.5pt;line-height:1.65}.data-table{font-size:9pt}body{padding:0;background:#fff;color:#17232d}.app{max-width:none;margin:0;padding:0}.view[data-view="report"]{display:block!important;animation:none;min-height:0}.qjzh-report-panel{border:0;box-shadow:none;background:#fff}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
     @media(prefers-reduced-motion:reduce){.view,.qjzh-main-nav .nav-link,.overview-quick{animation:none;transition:none}}
   </style>
 </head>
@@ -3065,7 +3066,7 @@
               <div class="sensor-name"><span class="sensor-icon">NH₃</span><span class="sensor-label">氨气浓度</span></div>
               <span class="badge normal" id="status-ammonia">正常</span>
             </div>
-            <div class="sensor-value" aria-live="polite"><strong id="value-ammonia">--</strong><span>ppm</span></div>
+            <div class="sensor-value"><strong id="value-ammonia">--</strong><span>ppm</span></div>
             <div>
               <div class="meter"><span class="meter-fill" id="range-ammonia"></span></div>
               <div class="meter-labels"><span>0</span><span class="sensor-reference">15ppm阈值</span><span>30</span></div>
@@ -3077,7 +3078,7 @@
               <div class="sensor-name"><span class="sensor-icon">℃</span><span class="sensor-label">圈舍温度</span></div>
               <span class="badge normal" id="status-temperature">正常</span>
             </div>
-            <div class="sensor-value" aria-live="polite"><strong id="value-temperature">--</strong><span>℃</span></div>
+            <div class="sensor-value"><strong id="value-temperature">--</strong><span>℃</span></div>
             <div>
               <div class="meter">
                 <span class="meter-fill" id="range-temperature"></span>
@@ -3093,7 +3094,7 @@
               <div class="sensor-name"><span class="sensor-icon">RH</span><span class="sensor-label">相对湿度</span></div>
               <span class="badge normal" id="status-humidity">正常</span>
             </div>
-            <div class="sensor-value" aria-live="polite"><strong id="value-humidity">--</strong><span>%</span></div>
+            <div class="sensor-value"><strong id="value-humidity">--</strong><span>%</span></div>
             <div>
               <div class="meter"><span class="meter-fill" id="range-humidity"></span></div>
               <div class="meter-labels"><span>40</span><span class="sensor-reference">80%高湿</span><span>90</span></div>
@@ -3105,7 +3106,7 @@
               <div class="sensor-name"><span class="sensor-icon">☼</span><span class="sensor-label">光照强度</span></div>
               <span class="badge normal" id="status-light">正常</span>
             </div>
-            <div class="sensor-value" aria-live="polite"><strong id="value-light">--</strong><span>Lux</span></div>
+            <div class="sensor-value"><strong id="value-light">--</strong><span>Lux</span></div>
             <div>
               <div class="meter"><span class="meter-fill" id="range-light"></span></div>
               <div class="meter-labels"><span>0</span><span class="sensor-reference">补光参考</span><span>1000</span></div>
@@ -3134,8 +3135,8 @@
             <!-- 首屏默认折叠，展开后仍可查看完整的规则核验过程。 -->
             <details class="rule-match-chain">
               <summary>规则匹配链 · 按优先级核验</summary>
-              <div class="rule-match-list" id="ruleMatchList" aria-live="polite">
-                <div class="rule-match-item"><span class="rule-match-index">--</span><div class="rule-match-copy"><strong>等待采样</strong><span>系统将在获得当前传感器数据后显示规则匹配过程。</span></div><span class="rule-match-state">--</span></div>
+              <div class="rule-match-list" id="ruleMatchList" role="list">
+                <div class="rule-match-item" role="listitem"><span class="rule-match-index">--</span><div class="rule-match-copy"><strong>等待采样</strong><span>系统将在获得当前传感器数据后显示规则匹配过程。</span></div><span class="rule-match-state">--</span></div>
               </div>
             </details>
           </div>
@@ -3170,7 +3171,7 @@
               <p class="panel-note" data-i18n="panel.trend.note">氨气使用左侧 ppm 轴，温度、湿度与光照使用独立坐标轴；红色虚线为 15ppm 风险阈值，悬停任意点可查看该时刻的真实数据。</p>
             </div>
             <!-- 动态显示当前曲线已接收的样本数，避免“最近60点”与实际点数产生误解。 -->
-            <span class="chart-live-count" id="chartPointCount" aria-live="polite">最近 0 / 60 点</span>
+            <span class="chart-live-count" id="chartPointCount">最近 0 / 60 点</span>
           </div>
           <!-- 图表色标与数据集颜色一一对应，便于快速区分多量纲曲线。 -->
           <div class="trend-key" aria-label="实时曲线颜色说明" data-i18n-aria-label="aria.trendLegend">
@@ -3218,11 +3219,11 @@
               </tbody>
             </table>
           </div>
-          <div class="snapshot-list" id="snapshotList" aria-label="快照列表" data-i18n-aria-label="aria.snapshotList"></div>
+          <div class="snapshot-list" id="snapshotList" role="list"></div>
         </section>
 
         <!-- 次级推理日志保留在数据明细之后，不占用首屏核心监测与决策空间。 -->
-        <section class="knowledge-result" id="decision-result" data-action="stop" data-urgency="normal" aria-live="polite">
+        <section class="knowledge-result" id="decision-result" data-action="stop" data-urgency="normal">
           <div class="expert-advice-head">
             <span class="knowledge-result-label">LOCAL EXPERT KB</span>
             <span class="urgency-badge" id="adviceUrgencyBadge">常规状态</span>
@@ -3243,7 +3244,7 @@
             <h3 class="advice-history-title" id="adviceHistoryTitle">历史建议日志</h3>
             <span class="advice-history-count" id="adviceHistoryCount">0 / 24</span>
           </div>
-          <div class="advice-history-log" id="adviceHistoryLog" role="log" aria-live="polite">
+          <div class="advice-history-log" id="adviceHistoryLog" role="list">
             <div class="advice-history-empty">重要建议将在模拟推进后记录。</div>
           </div>
         </section>
@@ -3352,7 +3353,7 @@
               <p class="panel-note" data-i18n="panel.reasoning.note">直接显示当前本地知识库与决策引擎的输出，不在页面内重复实现规则。</p>
             </div>
           </div>
-          <dl class="rule-state-list" aria-live="polite">
+          <dl class="rule-state-list">
             <div><dt>命中规则</dt><dd><code id="activeRuleId">等待首次推理</code></dd></div>
             <div><dt>建议事项</dt><dd id="activeRuleAction">等待决策引擎输出</dd></div>
             <div><dt>可追溯依据</dt><dd id="activeRuleCitation">等待本地知识库加载</dd></div>
@@ -3401,7 +3402,7 @@
     <section class="qjzh-report-panel panel glass" id="reportPanel" aria-labelledby="reportTitle">
       <div class="panel-head"><div><h2 class="panel-title" id="reportTitle" data-i18n="qjzh.report.title">季度环境报告</h2><p class="panel-note" data-i18n="qjzh.report.note">默认统计最近 90 天；报告将在新窗口渲染，可打印或另存为 PDF。</p></div></div>
       <div class="qjzh-button-row"><label><span data-i18n="qjzh.report.start">起始日期</span> <input id="reportStartDate" type="date"></label><label><span data-i18n="qjzh.report.end">结束日期</span> <input id="reportEndDate" type="date"></label><button class="control" id="generateReport" data-i18n="qjzh.report.generate" type="button">生成并打印报告</button></div>
-      <div id="reportStatus" class="qjzh-data-state qjzh-state-empty" data-i18n="qjzh.report.status">选择日期范围后生成报告。</div>
+      <div id="reportStatus" class="qjzh-data-state qjzh-state-empty" role="status" aria-live="polite" aria-atomic="true" data-i18n="qjzh.report.status">选择日期范围后生成报告。</div>
       <section class="qjzh-report-preview-shell" id="reportPreview" aria-labelledby="reportPreviewHeading" hidden>
         <div class="qjzh-report-preview-head"><h3 id="reportPreviewHeading" data-i18n="qjzh.report.preview">环境报告预览</h3><button class="control secondary" id="retryReportPrint" data-i18n="qjzh.report.retryPrint" type="button" hidden>再次打开打印窗口</button></div>
         <iframe class="qjzh-report-preview-frame" id="reportPreviewFrame" title="环境报告预览" sandbox="allow-modals allow-scripts"></iframe>
@@ -3427,6 +3428,8 @@
     const state = {
       sampleIndex: 0,
       running: true,
+      streamPhase: "booting",
+      streamSource: "simulation",
       timer: null,
       labels: [],
       temperature: [],
@@ -3534,7 +3537,7 @@
       "qjzh.data.help.ammonia": "Enter the sensor reading before highland calibration.",
       "qjzh.data.help.device": "Optional; used to trace the sensor or entry source."
     });
-    Object.assign(uiCopy.bo, {
+    Object.assign(uiCopy["bo"], {
       "a11y.skipMain": "ནང་དོན་གཙོ་བོར་མཆོང་།",
       "qjzh.data.label.site": "ས་ཚིགས ID",
       "qjzh.data.label.altitude": "མཚོ་ངོས་མཐོ་ཚད (m)",
@@ -4240,7 +4243,7 @@
       const engineRule = decision && decision.ruleId ? tr("rule.engine", ` · 引擎规则 ${decision.ruleId}`, { ruleId: decision.ruleId }) : "";
       els.decisionEvidence.textContent = tr("rule.basis", `决策依据：命中规则 ${activeRule.index} —— ${activeRule.condition}${engineRule}`, { index: activeRule.index, condition: activeRule.condition, engineRule });
       els.ruleMatchList.innerHTML = rules.map((rule) => `
-        <div class="rule-match-item${rule.index === activeRule.index ? " is-match" : ""}" style="--rule-match-color:${rule.color}">
+        <div class="rule-match-item${rule.index === activeRule.index ? " is-match" : ""}" role="listitem" style="--rule-match-color:${rule.color}">
           <span class="rule-match-index">${rule.index}</span>
           <div class="rule-match-copy"><strong>${rule.name}</strong><span>${rule.condition}</span></div>
           <span class="rule-match-state">${rule.index === activeRule.index ? `✓ ${tr("rule.matched", "命中")}` : `✗ ${tr("rule.unmet", "未满足")}`}</span>
@@ -4307,7 +4310,7 @@
       }
 
       els.snapshotList.innerHTML = state.snapshots.map((item) => `
-        <div class="snapshot-item">
+        <div class="snapshot-item" role="listitem">
           <strong>${item.time}</strong>
           <span>${tr("snapshot", `NH₃ ${item.ammonia.toFixed(1)}ppm · 温度 ${item.temperature.toFixed(1)}℃ · 湿度 ${item.humidity.toFixed(0)}% · 光照 ${item.light.toFixed(0)}Lux`, { ammonia: item.ammonia.toFixed(1), temperature: item.temperature.toFixed(1), humidity: item.humidity.toFixed(0), light: item.light.toFixed(0) })}</span>
           <span class="level-${item.result.levelClass}">${item.result.icon} ${localizedLevel(item.result.levelClass, item.result.title)}</span>
@@ -4770,6 +4773,7 @@
         trendChart.data.datasets.forEach((dataset, index) => { if (labels[index]) dataset.label = labels[index]; });
         trendChart.update("none");
       }
+      refreshDynamicLanguage();
       // 通知动态渲染层仅以当前采样状态重绘，不追加采样、曲线或历史记录。
       window.dispatchEvent(new CustomEvent("dashboard:language-change"));
     }
@@ -4887,6 +4891,29 @@
       if (count) count.textContent = tr("chart.points", `最近 ${state.labels.length} / ${MAX_POINTS} 点`, { count: state.labels.length, max: MAX_POINTS });
     }
 
+    function refreshStreamStatus() {
+      const imported = state.streamSource === "imported";
+      if (state.streamPhase === "complete") {
+        els.streamStatus.textContent = imported ? tr("qjzh.stream.importedComplete", "导入数据回放完成") : tr("simulation.complete", "24小时模拟完成");
+        els.toggleStream.textContent = tr("simulation.restart", "重新运行模拟");
+      } else if (state.running) {
+        els.streamStatus.textContent = state.streamPhase === "booting" ? runtimeText("collecting") : imported ? tr("qjzh.stream.importedRunning", "导入数据回放中") : tr("simulation.running", "24小时模拟中");
+        els.toggleStream.textContent = state.streamPhase === "booting" ? runtimeText("pause") : tr("simulation.pause", "暂停模拟");
+      } else {
+        els.streamStatus.textContent = tr("simulation.paused", "模拟已暂停");
+        els.toggleStream.textContent = tr("simulation.resume", "继续模拟");
+      }
+    }
+
+    function refreshDynamicLanguage() {
+      refreshStreamStatus();
+      updateChartPointCount();
+      updateTrendSummary();
+      updateChartInsights();
+      renderSnapshots();
+    }
+    window.QJZH.refreshDynamicLanguage = refreshDynamicLanguage;
+
     function tick() {
       const data = generateSensorData();
       state.currentData = data;
@@ -4900,6 +4927,7 @@
 
     function setRunning(nextRunning) {
       state.running = nextRunning;
+      state.streamPhase = nextRunning ? "booting" : "paused";
       els.streamStatus.textContent = nextRunning ? runtimeText("collecting") : runtimeText("paused");
       els.toggleStream.textContent = nextRunning ? runtimeText("pause") : runtimeText("resume");
 
@@ -5102,7 +5130,7 @@
           return;
         }
         els.adviceHistoryLog.innerHTML = state.adviceHistory.map((item) => `
-          <article class="advice-log-item" style="--log-color:${escapeHtml(item.color)}">
+          <article class="advice-log-item" role="listitem" style="--log-color:${escapeHtml(item.color)}">
             <i class="advice-log-accent"></i>
             <time class="advice-log-time">${escapeHtml(item.time)}</time>
             <div class="advice-log-copy"><strong>${escapeHtml(localizedUrgency(item.decision?.urgencyLevel, item.label))}</strong> · ${formatAdvice(adviceForDisplay(item.decision || item))}<br><span>${escapeHtml(tr("knowledge.citation", "依据"))}：${escapeHtml(localizedCitation(item.decision || item))} · ${escapeHtml(item.ruleId)}</span></div>
@@ -5325,6 +5353,7 @@
         if (controller) controller.stop();
         controller = null;
         state.running = false;
+        state.streamPhase = "paused";
         els.streamStatus.textContent = tr("simulation.paused", "模拟已暂停");
         els.toggleStream.textContent = tr("simulation.resume", "继续模拟");
       }
@@ -5337,6 +5366,7 @@
         clearDashboardData();
         configureDecisionMarkers();
         const useImported = Boolean(window.QJZH?.dataImport?.useImported?.());
+        state.streamSource = useImported ? "imported" : "simulation";
         if (useImported) {
           state.scenario.type = "normal";
           els.scenarioSelect.value = "normal";
@@ -5348,6 +5378,7 @@
           els.scenarioHint.textContent = tr("qjzh.replay.local", "本地 24 小时模拟中");
         }
         state.running = true;
+        state.streamPhase = "running";
         els.streamStatus.textContent = useImported ? tr("qjzh.stream.importedRunning", "导入数据回放中") : tr("simulation.running", "24小时模拟中");
         els.toggleStream.textContent = tr("simulation.pause", "暂停模拟");
         controller = useImported ? runImportedReplay(engine, updateKnowledgeUI) : window.LocalSimulator.runSimulation(engine, updateKnowledgeUI);
@@ -5357,6 +5388,7 @@
           controller = null;
           if (state.running) {
             state.running = false;
+            state.streamPhase = "complete";
             els.streamStatus.textContent = useImported ? tr("qjzh.stream.importedComplete", "导入数据回放完成") : tr("simulation.complete", "24小时模拟完成");
             els.toggleStream.textContent = tr("simulation.restart", "重新运行模拟");
             if (useImported) updateReplaySiteLabel(true);

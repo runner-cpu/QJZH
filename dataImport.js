@@ -19,6 +19,7 @@
   var activeStore = null;
   var storeState = { mode: "uninitialized", persistent: false, warning: "" };
   var cursor = 0;
+  var lastConfidenceResult = null;
   function memoryWarning() { return text("qjzh.storage.memoryWarning", "浏览器存储不可用，数据仅在当前页面会话中保留"); }
   function probe(candidate, mode) {
     if (!candidate) return null;
@@ -190,7 +191,9 @@
   function text(key, fallback, values) { return q.translate ? q.translate(key, fallback, values || {}) : fallback.replace(/\{(\w+)\}/g, function (_, name) { return values && values[name] != null ? values[name] : _; }); }
   function updateConfidence(result) {
     var badge = root.document && root.document.getElementById("confidenceBadge");
-    if (!badge || !result) return;
+    if (!result) return;
+    lastConfidenceResult = result;
+    if (!badge) return;
     var level = result.level || qualityFor(result);
     var map = {
       normal: [text("qjzh.confidence.detailHigh", "置信度：高（输入在模型适用范围内）"), "qjzh-confidence"],
@@ -201,6 +204,7 @@
     badge.textContent = entry[0]; badge.className = entry[1];
   }
   function resetConfidence() {
+    lastConfidenceResult = null;
     var badge = root.document && root.document.getElementById("confidenceBadge");
     if (badge) { badge.textContent = text("qjzh.confidence.wait", "置信度：待接入数据后评估"); badge.className = "qjzh-confidence"; }
   }
@@ -298,6 +302,11 @@
     renderRecordList();
     if (q.institutionView && q.institutionView.render) q.institutionView.render();
     try { root.dispatchEvent(new CustomEvent("qjzh:data-synced", { detail: { key: event.key } })); } catch (_) {}
+  });
+  root.addEventListener("dashboard:language-change", function () {
+    renderRecordList();
+    if (lastConfidenceResult) updateConfidence(lastConfidenceResult);
+    else resetConfidence();
   });
   function bindUi() {
     if (!root.document) return;
