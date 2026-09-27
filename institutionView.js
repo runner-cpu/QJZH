@@ -55,15 +55,26 @@
         : {};
     return labels[value] || value;
   }
+  function risk(nh3) {
+    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(nh3).label;
+    return Number(nh3) > 15 ? "紧急" : Number(nh3) >= 10 ? "关注" : "正常";
+  }
+  function deriveRow(input) {
+    var row = Object.assign({}, input);
+    if (row.raw_nh3_ppm != null && root.compensate) {
+      row.calibrated_nh3_ppm = Number(root.compensate(Number(row.altitude_m), Number(row.temp_c), Number(row.rh_percent), Number(row.raw_nh3_ppm)));
+    }
+    row.risk_level = risk(Number(row.calibrated_nh3_ppm));
+    return row;
+  }
   function getRows(mode) {
     var imported = read("QJZH_INSTITUTIONS");
-    var demoCopy = demo.map(function (row) { return Object.assign({}, row); });
-    var importedCopy = Array.isArray(imported) ? imported.map(function (row) { return Object.assign({}, row); }) : [];
+    var demoCopy = demo.map(deriveRow);
+    var importedCopy = Array.isArray(imported) ? imported.map(deriveRow) : [];
     if (mode === "demo") return demoCopy;
     if (mode === "imported") return importedCopy;
     return importedCopy.length ? importedCopy : demoCopy;
   }
-  function risk(nh3) { return nh3 >= 20 ? "紧急" : nh3 >= 15 ? "待办" : nh3 >= 10 ? "关注" : "正常"; }
   function filterRows(rows, query) {
     var term = String(query || "").trim().toLocaleLowerCase();
     if (!term) return rows.slice();
@@ -85,10 +96,6 @@
     var roleNode = root.document && root.document.getElementById("institutionRole");
     var role = roleNode ? roleNode.value : "station";
     if (roleNode) Array.from(roleNode.options).forEach(function (option) { option.textContent = roleLabels()[option.value] || option.textContent; });
-    rows.forEach(function (r) {
-      if (r.calibrated_nh3_ppm == null && root.compensate) r.calibrated_nh3_ppm = root.compensate(Number(r.altitude_m), Number(r.temp_c || 0), Number(r.rh_percent || 50), Number(r.raw_nh3_ppm || 0));
-      r.risk_level = r.risk_level || risk(Number(r.calibrated_nh3_ppm || 0));
-    });
     rows = filterRows(rows, filter && filter.value);
     rows.sort(function (a, b) { return Number(b.calibrated_nh3_ppm || 0) - Number(a.calibrated_nh3_ppm || 0); });
     if (body) body.innerHTML = rows.map(function (r) {

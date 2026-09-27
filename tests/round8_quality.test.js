@@ -207,7 +207,7 @@ test("report generator exposes the latest twelve calibrated points in time order
 
   assert.equal(report.trendSeries.length, 12);
   assert.equal(report.trendSeries[0].timestamp, records[2].timestamp);
-  assert.equal(report.trendSeries[report.trendSeries.length - 1].value, records[13].calibrated_nh3_ppm);
+  assert.equal(report.trendSeries[report.trendSeries.length - 1].value, records[13].raw_nh3_ppm);
 });
 
 test("report date range includes the complete first and last local calendar days", () => {

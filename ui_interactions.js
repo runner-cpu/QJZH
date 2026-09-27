@@ -25,12 +25,12 @@
     var raw = Number(input.raw_nh3_ppm ?? input.raw ?? 0);
     var corrected = typeof window.compensate === "function" ? Number(window.compensate(Number(input.altitude_m), Number(input.temp_c), Number(input.rh_percent), raw)) : raw;
     var validation = window.QJZH.dataImport?.validate(input);
-    return { calibrated_nh3_ppm: corrected, error_range: validation?.quality === "A" ? "±0.71%" : validation?.quality === "B" ? "±5%" : translate("qjzh.data.notEvaluated", "未评估"), confidence: validation?.confidence || translate("qjzh.confidence.levelLow", "低") };
+    return { calibrated_nh3_ppm: corrected, evaluation_note: translate("qjzh.model.evaluationNote", "内部记录的合成测试集平均相对误差 0.71%；单点不确定度尚未评估"), confidence: validation?.confidence || translate("qjzh.confidence.levelLow", "低") };
   };
   window.QJZH.advise = function (input) {
     var n = Number(input?.calibrated_nh3_ppm || 0);
-    var level = n >= 20 ? "紧急" : n >= 15 ? "待办" : n >= 10 ? "关注" : "正常";
-    return { risk_level: level, ventilation_window: "12:00-14:00", duration_min: n >= 20 ? 15 : n >= 10 ? 8 : 0, suggestions: n >= 20 ? ["建议立即组织通风", "清粪并复测"] : n >= 10 ? ["建议短时通风", "检查北侧风口"] : ["保持日常巡检"], rule_id: n >= 20 ? "KB-NH3-CRITICAL" : n >= 10 ? "KB-NH3-WATCH" : "KB-NH3-NORMAL", standard: "NY/T 388-1999" };
+    var policy = window.QJZH.riskPolicy?.classifyNh3(n) || { code: n > 15 ? "urgent" : n >= 10 ? "watch" : "normal", label: n > 15 ? "紧急" : n >= 10 ? "关注" : "正常" };
+    return { risk_level: policy.label, ventilation_window: "12:00-14:00", duration_min: policy.code === "urgent" ? 15 : policy.code === "watch" ? 8 : 0, suggestions: policy.code === "urgent" ? ["建议立即组织通风", "清粪并复测"] : policy.code === "watch" ? ["建议短时通风", "检查北侧风口"] : ["保持日常巡检"], rule_id: policy.code === "urgent" ? "KB-NH3-CRITICAL" : policy.code === "watch" ? "KB-NH3-WATCH" : "KB-NH3-NORMAL", standard: "NY/T 388-1999" };
   };
 
   // The legacy demo still owns the actuator DOM ids. Keep those ids for model compatibility,

@@ -2,7 +2,11 @@
 (function (root) {
   "use strict";
   var q = root.QJZH = root.QJZH || {};
-  function calibrated(r) { if (r.calibrated_nh3_ppm != null) return Number(r.calibrated_nh3_ppm); if (root.compensate) return Number(root.compensate(Number(r.altitude_m), Number(r.temp_c), Number(r.rh_percent), Number(r.raw_nh3_ppm))); return Number(r.raw_nh3_ppm || 0); }
+  function calibrated(r) { if (root.compensate) return Number(root.compensate(Number(r.altitude_m), Number(r.temp_c), Number(r.rh_percent), Number(r.raw_nh3_ppm))); return Number(r.raw_nh3_ppm || 0); }
+  function riskFor(value) {
+    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(value).label;
+    return Number(value) > 15 ? "紧急" : Number(value) >= 10 ? "关注" : "正常";
+  }
   function localDate(date) {
     return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
   }
@@ -16,7 +20,7 @@
       if (timestamps.length) { start = new Date(Math.min.apply(Math, timestamps)); end = new Date(Math.max.apply(Math, timestamps)); records = allRecords.filter(function (r) { return !siteIds || siteIds.indexOf(r.site_id) >= 0; }); }
     }
     var values = records.map(calibrated), sum = values.reduce(function (a, b) { return a + b; }, 0), dist = { 正常: 0, 关注: 0, 待办: 0, 紧急: 0 };
-    values.forEach(function (n) { dist[n >= 20 ? "紧急" : n >= 15 ? "待办" : n >= 10 ? "关注" : "正常"]++; });
+    values.forEach(function (n) { dist[riskFor(n)]++; });
     var temps = records.map(function (r) { return Number(r.temp_c); }).filter(function (n) { return isFinite(n); });
     var trendSeries = records.slice().sort(function (a, b) {
       return new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime();

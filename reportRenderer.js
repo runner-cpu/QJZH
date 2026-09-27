@@ -13,7 +13,7 @@
       institution: "机构模拟圈舍", trend: "氨气趋势", trendAria: "最近十二个采样点的校准氨气趋势图",
       institutionTrend: "圈舍 NH₃ 对比", institutionTrendAria: "机构视图各圈舍校准氨气横向对比图", institutionSeries: "共 {count} 个圈舍",
       riskChart: "风险分布", riskAria: "按正常、关注、待办和紧急分类的风险分布图",
-      threshold: "15 ppm 风险阈值", latest: "最近 12 个校准点", records: "条记录", noTrend: "暂无可绘制的趋势数据"
+      threshold: "15 ppm 关注区上界", latest: "最近 12 个校准点", records: "条记录", noTrend: "暂无可绘制的趋势数据"
     },
     en: {
       title: "Qingjing Zhiheng Environment Report", heading: "Quarterly Environment Report", eyebrow: "PLATEAU BARN ENVIRONMENT BRIEF",
@@ -25,7 +25,7 @@
       institution: "Institution demo barns", trend: "NH₃ trend", trendAria: "Calibrated ammonia trend for the latest twelve samples",
       institutionTrend: "Barn NH₃ comparison", institutionTrendAria: "Calibrated ammonia comparison across institution barns", institutionSeries: "{count} barns",
       riskChart: "Risk distribution", riskAria: "Risk distribution across normal, watch, to-do and urgent levels",
-      threshold: "15 ppm risk threshold", latest: "Latest 12 calibrated points", records: "records", noTrend: "No trend data available"
+      threshold: "15 ppm watch-zone upper bound", latest: "Latest 12 calibrated points", records: "records", noTrend: "No trend data available"
     },
     bo: {
       title: "མཐོ་སྒང་ཁོར་ཡུག་སྙན་ཞུ", heading: "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", eyebrow: "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་སྙན་ཞུ",
@@ -63,11 +63,13 @@
   }
 
   function riskFor(value) {
-    return value >= 20 ? "紧急" : value >= 15 ? "待办" : value >= 10 ? "关注" : "正常";
+    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(value).label;
+    return Number(value) > 15 ? "紧急" : Number(value) >= 10 ? "关注" : "正常";
   }
 
   function toneFor(value) {
-    return value >= 20 ? "#d94f5c" : value >= 15 ? "#f08c46" : value >= 10 ? "#d6a93d" : "#159b7d";
+    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(value).color;
+    return Number(value) > 15 ? "#d94f5c" : Number(value) >= 10 ? "#d6a93d" : "#159b7d";
   }
 
   function pointLabel(point, index, showDate) {
