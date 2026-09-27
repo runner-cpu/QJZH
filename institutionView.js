@@ -30,7 +30,10 @@
     bo: { "犊牦牛": "གཡག་ཕྲུག", "奶牛": "འོ་མའི་བ་གླང", "牦牛": "གཡག", "肉牛": "ཤ་ཕྱུགས" }
   };
   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; }); }
-  function read(key) { try { return JSON.parse(root.localStorage.getItem(key) || "null"); } catch (_) { return null; } }
+  function read(key) {
+    if (q.storage && typeof q.storage.get === "function") return q.storage.get(key);
+    try { return JSON.parse(root.localStorage.getItem(key) || "null"); } catch (_) { return null; }
+  }
   function language() { return root.document?.documentElement?.dataset?.language || "zh"; }
   function localizedFields(row, selectedLanguage) {
     var lang = selectedLanguage || language();
@@ -52,13 +55,13 @@
         : {};
     return labels[value] || value;
   }
-  function getRows() {
+  function getRows(mode) {
     var imported = read("QJZH_INSTITUTIONS");
     var demoCopy = demo.map(function (row) { return Object.assign({}, row); });
-    if (!Array.isArray(imported) || !imported.length) return demoCopy;
-    var byId = {};
-    imported.concat(demoCopy).forEach(function (row) { byId[row.site_id || row.name] = Object.assign({}, row); });
-    return Object.keys(byId).map(function (key) { return byId[key]; });
+    var importedCopy = Array.isArray(imported) ? imported.map(function (row) { return Object.assign({}, row); }) : [];
+    if (mode === "demo") return demoCopy;
+    if (mode === "imported") return importedCopy;
+    return importedCopy.length ? importedCopy : demoCopy;
   }
   function risk(nh3) { return nh3 >= 20 ? "紧急" : nh3 >= 15 ? "待办" : nh3 >= 10 ? "关注" : "正常"; }
   function filterRows(rows, query) {
@@ -143,8 +146,9 @@
       found.calibrated_nh3_ppm = root.compensate ? root.compensate(Number(r.altitude_m), Number(r.temp_c), Number(r.rh_percent), Number(r.raw_nh3_ppm)) : Number(r.raw_nh3_ppm);
       found.risk_level = risk(found.calibrated_nh3_ppm);
       return all;
-    }, getRows());
-    try { root.localStorage.setItem("QJZH_INSTITUTIONS", JSON.stringify(rows)); } catch (_) {}
+    }, []);
+    if (q.storage && typeof q.storage.set === "function") q.storage.set("QJZH_INSTITUTIONS", rows);
+    else try { root.localStorage.setItem("QJZH_INSTITUTIONS", JSON.stringify(rows)); } catch (_) {}
     return render();
   }
   function exportReport() {

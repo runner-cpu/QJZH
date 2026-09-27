@@ -18,6 +18,20 @@ function createStorage(initial = {}) {
   };
 }
 
+function throwingStorage() {
+  return {
+    get length() { return 0; },
+    key() { return null; },
+    getItem() { return null; },
+    setItem() { throw new Error("quota"); },
+    removeItem() {}
+  };
+}
+
+function seed(storage, entries) {
+  for (const [key, value] of Object.entries(entries)) storage.setItem(key, value);
+}
+
 function loadScript(file, overrides = {}, existingWindow) {
   const listeners = {};
   const window = existingWindow || {
@@ -100,4 +114,55 @@ test("timestamps require ISO 8601 offsets and reject unreasonable future values"
   assert.equal(window.QJZH.dataImport.validate(validRecord()).valid, true);
 });
 
-module.exports = { createStorage, loadScript, loadDataImport, validRecord };
+test("quota failure pins the session to memory and verifies the write", () => {
+  const { window } = loadDataImport({
+    localStorage: throwingStorage(),
+    sessionStorage: throwingStorage()
+  });
+
+  const result = window.QJZH.dataImport.save([validRecord()]);
+
+  assert.equal(result.storage.mode, "memory");
+  assert.equal(result.storage.persistent, false);
+  assert.equal(window.QJZH.dataImport.getRecords().length, 1);
+  assert.equal(window.QJZH.dataImport.storageStatus().mode, "memory");
+});
+
+test("clearData removes business keys but preserves preferences", () => {
+  const { window } = loadDataImport();
+  seed(window.localStorage, {
+    QJZH_SITES: "[]",
+    QJZH_REPORTS: "{}",
+    QJZH_INSTITUTIONS: "[]",
+    "qjzh-theme": "light",
+    "qjzh-language": "bo"
+  });
+
+  window.QJZH.dataImport.clearData();
+
+  assert.equal(window.localStorage.getItem("QJZH_REPORTS"), null);
+  assert.equal(window.localStorage.getItem("QJZH_INSTITUTIONS"), null);
+  assert.equal(window.localStorage.getItem("qjzh-theme"), "light");
+  assert.equal(window.localStorage.getItem("qjzh-language"), "bo");
+});
+
+test("sample loading removes sites absent from the sample", () => {
+  const { window } = loadDataImport();
+  window.QJZH.dataImport.save([validRecord({ site_id: "OLD-SITE" })]);
+
+  window.QJZH.dataImport.loadDemo();
+
+  assert.equal(window.QJZH.dataImport.getRecords("OLD-SITE").length, 0);
+  assert.equal(window.QJZH.dataImport.getRecords()[0].provenance, "sample");
+});
+
+test("institution rows keep imported data separate from the demo snapshot", () => {
+  const imported = [{ site_id: "USER-01", name: "User barn", calibrated_nh3_ppm: 8 }];
+  const localStorage = createStorage({ QJZH_INSTITUTIONS: JSON.stringify(imported) });
+  const { window } = loadScript("institutionView.js", { localStorage });
+
+  assert.deepEqual(JSON.parse(JSON.stringify(window.QJZH.institutionView.getRows())), imported);
+  assert.equal(window.QJZH.institutionView.getRows("demo").length, 5);
+});
+
+module.exports = { createStorage, loadScript, loadDataImport, validRecord, seed, throwingStorage };
