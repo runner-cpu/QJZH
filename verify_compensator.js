@@ -21,9 +21,10 @@ function read(fileName) {
 }
 
 const index = read("index.html");
-const weightsTag = '<script src="model_weights.js?v=1.0.0"></script>';
-const engineTag = '<script src="compensator_engine.js?v=1.0.0"></script>';
-const simulatorTag = '<script src="simulator.js?v=1.0.0"></script>';
+const dashboard = read("dashboard.js");
+const weightsTag = '<script defer src="model_weights.js?v=1.0.0"></script>';
+const engineTag = '<script defer src="compensator_engine.js?v=1.0.0"></script>';
+const simulatorTag = '<script defer src="simulator.js?v=1.0.0"></script>';
 const weightsIndex = index.indexOf(weightsTag);
 const engineIndex = index.indexOf(engineTag);
 const simulatorIndex = index.indexOf(simulatorTag);
@@ -32,9 +33,9 @@ assert(index.includes("COMPENSATOR-LOCK"), "Missing COMPENSATOR-LOCK marker in i
 assert(weightsIndex >= 0, "Missing versioned model_weights.js tag.");
 assert(engineIndex > weightsIndex, "compensator_engine.js must load after model_weights.js.");
 assert(simulatorIndex > engineIndex, "simulator.js must load after the compensation engine.");
-assert(index.includes("compensate(next.altitude"), "Dashboard no longer calls compensate(...).");
-assert(!index.includes("highland_compensator.js"), "Legacy embedded-weight runtime must not be loaded.");
-assert(!index.includes("HighlandCompensator"), "Dashboard must use global compensate(...), not the legacy runtime.");
+assert(dashboard.includes("compensate(next.altitude"), "Dashboard no longer calls compensate(...).");
+assert(!index.includes("highland_compensator.js") && !dashboard.includes("highland_compensator.js"), "Legacy embedded-weight runtime must not be loaded.");
+assert(!dashboard.includes("HighlandCompensator"), "Dashboard must use global compensate(...), not the legacy runtime.");
 
 const context = { console };
 context.globalThis = context;
