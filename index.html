@@ -2931,6 +2931,8 @@
     html[data-theme="light"] .qjzh-report-preview-shell{background:#eef7f4;border-color:#b9d8cf}@media(max-width:650px){.qjzh-report-preview-head{align-items:flex-start;flex-direction:column}.qjzh-report-preview-frame{height:68vh}}
   </style>
   <style id="qjzh-router-styles">
+    .skip-link{position:fixed;top:10px;left:10px;z-index:1000;padding:10px 14px;border:2px solid var(--primary);border-radius:8px;background:#061b25;color:#fff;font-weight:800;text-decoration:none;transform:translateY(calc(-100% - 18px));transition:transform .18s ease}.skip-link:focus-visible{transform:translateY(0);outline:3px solid #fff;outline-offset:3px}
+    #main-content:focus{outline:none}
     .view{display:none;min-height:420px;animation:view-enter .24s ease-out}.view.active{display:block}.view[hidden],.qjzh-view-source{display:none!important}
     @keyframes view-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
     .qjzh-main-nav{position:sticky;top:0;z-index:18;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:14px 0 18px;padding:6px;border:1px solid rgba(102,190,169,.24);border-radius:14px;background:rgba(7,20,31,.88);backdrop-filter:blur(18px);box-shadow:0 14px 34px rgba(0,19,28,.18)}
@@ -2938,10 +2940,12 @@
     .qjzh-main-nav .nav-link:hover,.qjzh-main-nav .nav-link:focus-visible{color:var(--text);background:rgba(22,214,176,.08);outline:2px solid transparent}.qjzh-main-nav .nav-link:focus-visible{box-shadow:0 0 0 2px var(--primary)}.qjzh-main-nav .nav-link:active{transform:translateY(1px)}.qjzh-main-nav .nav-link.active{color:#06251f;background:var(--primary);box-shadow:0 8px 22px rgba(22,214,176,.2)}
     .qjzh-main-nav .nav-icon{font-family:var(--mono);font-size:.72rem;opacity:.78}
     .view-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:8px 0 16px}.view-heading h2{margin:0;font-size:clamp(1.3rem,2.4vw,2rem);letter-spacing:-.035em;text-wrap:balance}.view-heading p{max-width:62ch;margin:5px 0 0;color:var(--muted);line-height:1.65;text-wrap:pretty}
-    .view h2[tabindex="-1"]:focus{outline:none}.qjzh-tour-hint{margin:-6px 0 16px;color:var(--muted);font-size:.84rem;line-height:1.65}.qjzh-scene-actions [aria-pressed="true"]{border-color:var(--primary);color:var(--primary)}
+    .view h2[tabindex="-1"]:focus{outline:none}.view h2[tabindex="-1"]:focus-visible{outline:2px solid var(--primary);outline-offset:4px;box-shadow:0 0 0 7px rgba(22,214,176,.18);border-radius:3px}.qjzh-tour-hint{margin:-6px 0 16px;color:var(--muted);font-size:.84rem;line-height:1.65}.qjzh-scene-actions [aria-pressed="true"]{border-color:var(--primary);color:var(--primary)}
     .view-layout{display:grid;gap:18px}.view-layout>.left-col,.view-layout>.right-col{display:grid;gap:18px;min-width:0}.overview-quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 16px}.overview-quick{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border:1px solid rgba(102,190,169,.2);border-radius:12px;background:rgba(7,20,31,.24);color:inherit;text-decoration:none;transition:border-color .2s ease,transform .2s ease,background .2s ease}.overview-quick:hover,.overview-quick:focus-visible{border-color:rgba(22,214,176,.62);background:rgba(22,214,176,.08);transform:translateY(-2px);outline:none}.overview-quick strong{display:block;margin-bottom:3px}.overview-quick small{color:var(--muted)}.overview-quick b{color:var(--primary);font-size:1.15rem}
     .qjzh-replay-site{display:flex;align-items:center;gap:9px;margin:0 0 16px;padding:10px 13px;border-left:3px solid var(--primary);border-radius:6px;background:rgba(22,214,176,.08);color:var(--muted);font-size:.86rem}.qjzh-replay-site strong{color:var(--text)}
-    .pipeline-strip{grid-template-columns:repeat(3,minmax(0,1fr)) auto!important;align-items:stretch}.pipeline-step[data-goto]{cursor:pointer;border:1px solid transparent;border-radius:10px;transition:border-color .2s ease,background .2s ease,transform .2s ease}.pipeline-step[data-goto]:hover,.pipeline-step[data-goto]:focus-visible{border-color:rgba(22,214,176,.45);background:rgba(22,214,176,.06);outline:none}.pipeline-step[data-goto].active{border-color:var(--primary);background:rgba(22,214,176,.1)}.pipeline-step[data-goto]:active{transform:scale(.99)}.pipeline-next{align-self:center;white-space:nowrap}.pipeline-value+.pipeline-value{margin-top:2px}
+    .pipeline-strip{grid-template-columns:repeat(3,minmax(0,1fr)) auto!important;align-items:stretch}.pipeline-step[data-goto]{width:100%;cursor:pointer;color:inherit;font:inherit;text-align:left;border:1px solid transparent;border-radius:10px;transition:border-color .2s ease,background .2s ease,transform .2s ease}.pipeline-step[data-goto]:hover,.pipeline-step[data-goto]:focus-visible{border-color:rgba(22,214,176,.45);background:rgba(22,214,176,.06);outline:none}.pipeline-step[data-goto]:focus-visible{box-shadow:0 0 0 3px rgba(22,214,176,.24)}.pipeline-step[data-goto].active{border-color:var(--primary);background:rgba(22,214,176,.1)}.pipeline-step[data-goto]:active{transform:scale(.99)}.pipeline-copy,.pipeline-name,.pipeline-value{display:block}.pipeline-next{align-self:center;white-space:nowrap}.pipeline-next[hidden] { display: none !important; }.pipeline-value+.pipeline-value{margin-top:2px}
+    .qjzh-manual-form .field-group{display:grid;align-content:start;gap:5px;min-width:0;padding:9px 10px;border:1px solid rgba(150,190,200,.18);border-radius:10px;background:rgba(7,20,31,.16)}.field-group label{font-size:.78rem;font-weight:800;color:var(--text)}.field-group .field-help{font-size:.72rem;line-height:1.45;color:var(--muted)}.qjzh-manual-form .field-group input{margin:0;min-height:44px}.qjzh-manual-form>button{min-height:44px}
+    .qjzh-boundary-banner button,.theme-option,.control,.scenario-select,.language-switch select,#institutionRole,#reportStartDate,#reportEndDate{min-height:44px}.qjzh-boundary-banner button{min-width:44px;display:grid;place-items:center}.theme-option,#institutionRole,#reportStartDate,#reportEndDate{min-width:44px}input[type="range"]{min-height:44px;cursor:pointer}
     .qjzh-data-panel{margin:0;padding:18px}.qjzh-record-panel{margin-top:16px;padding:18px}.qjzh-record-panel .data-table-scroll{max-height:360px}.qjzh-filter{display:flex;align-items:center;gap:8px;min-width:min(100%,310px)}.qjzh-filter input{width:100%;padding:9px 11px;border:1px solid rgba(150,190,200,.35);border-radius:8px;background:rgba(7,20,31,.3);color:inherit}.qjzh-report-watermark{margin:12px 0 0;padding:10px 12px;border:1px dashed rgba(224,180,81,.6);border-radius:8px;color:#ffd98a;background:rgba(224,180,81,.08);font-size:.84rem}
     .qjzh-institution-view{display:block}.qjzh-report-panel{margin:0}.compat-anchor-note{display:none}
     html[data-theme="light"] .qjzh-main-nav{background:rgba(247,251,251,.92);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-main-nav .nav-link.active{color:#fff;background:#0f9079}html[data-theme="light"] .overview-quick{background:rgba(255,255,255,.76);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-filter input{background:#fff;color:#17232d}
@@ -2951,6 +2955,7 @@
   </style>
 </head>
 <body>
+    <a class="skip-link" href="#main-content" data-i18n="a11y.skipMain">跳至主要内容</a>
     <noscript><div style="padding:16px;background:#ffe9e9;color:#a33;text-align:center">青境智衡为纯前端演示系统，需要启用 JavaScript 才能运行。</div></noscript>
     <aside class="qjzh-boundary-banner" id="boundaryBanner" role="note">
       <span class="qjzh-boundary-copy"><strong>青境智衡 · 纯软件环境数据服务</strong>：兼容第三方通用传感器、人工录入与公开数据，仅提供校准、分析和决策建议，不生产/销售/控制硬件，不涉及风机控制。</span>
@@ -2994,12 +2999,13 @@
       <a href="#/institution" data-view="institution" class="nav-link"><span class="nav-icon" aria-hidden="true">05</span><span data-i18n="nav.institution">机构版</span></a>
       <a href="#/report" data-view="report" class="nav-link"><span class="nav-icon" aria-hidden="true">06</span><span data-i18n="nav.report">环境报告</span></a>
     </nav>
+    <main id="main-content" tabindex="-1">
     <section class="view" data-view="data" aria-labelledby="dataImportTitle" hidden>
     <section class="qjzh-data-panel glass" id="dataImportPanel" aria-labelledby="dataImportTitle">
       <div class="panel-head"><div><h2 class="panel-title" id="dataImportTitle" data-i18n="qjzh.data.title">数据接入</h2><p class="panel-note" data-i18n="qjzh.data.note">本系统不做采集端，兼容市面通用传感器与人工录入，做采集后的校准、分析与决策端。</p></div><span class="qjzh-quality-badge" id="dataQualityBadge" data-i18n="qjzh.data.qualityPending">尚未评分</span></div>
       <div class="qjzh-data-grid">
         <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.importCsv">第三方传感器导入</h3><p data-i18n="qjzh.data.csvNote">上传包含 timestamp、site_id、altitude_m、temp_c、rh_percent、raw_nh3_ppm、device_model 的 CSV。</p><input id="csvInput" type="file" accept=".csv,text/csv" aria-label="上传传感器 CSV" data-i18n-aria-label="aria.csvUpload"><div class="qjzh-button-row"><button class="control secondary" id="downloadCsvTemplate" data-i18n="qjzh.data.downloadTemplate" type="button">下载 CSV 模板</button><button class="control secondary" id="loadSampleData" data-i18n="qjzh.data.loadSample" type="button">加载示例数据</button></div></article>
-        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.manual">人工录入</h3><form id="manualDataForm" class="qjzh-manual-form"><input name="site_id" required placeholder="站点名称" data-i18n-placeholder="qjzh.data.placeholder.site"><input name="altitude_m" required type="number" min="2200" max="3500" placeholder="海拔 (m)" data-i18n-placeholder="qjzh.data.placeholder.altitude"><input name="temp_c" required type="number" min="-15" max="25" step="0.1" placeholder="温度 (℃)" data-i18n-placeholder="qjzh.data.placeholder.temperature"><input name="rh_percent" required type="number" min="20" max="85" placeholder="湿度 (%)" data-i18n-placeholder="qjzh.data.placeholder.humidity"><input name="raw_nh3_ppm" required type="number" min="0" max="30" step="0.1" placeholder="原始氨气 (ppm)" data-i18n-placeholder="qjzh.data.placeholder.ammonia"><input name="device_model" value="manual_entry" placeholder="设备型号" data-i18n-placeholder="qjzh.data.placeholder.device"><button class="control" type="submit" data-i18n="qjzh.data.submit">接入并校准</button></form></article>
+        <article class="qjzh-data-card"><h3 data-i18n="qjzh.data.manual">人工录入</h3><form id="manualDataForm" class="qjzh-manual-form"><div class="field-group"><label for="manual-site_id" data-i18n="qjzh.data.label.site">站点 ID</label><input id="manual-site_id" aria-describedby="manual-site_id-help" name="site_id" required placeholder="例如 QH-HD-001" data-i18n-placeholder="qjzh.data.placeholder.site"><span id="manual-site_id-help" class="field-help" data-i18n="qjzh.data.help.site">2–64 位字母、数字、下划线或连字符。</span></div><div class="field-group"><label for="manual-altitude_m" data-i18n="qjzh.data.label.altitude">海拔（m）</label><input id="manual-altitude_m" aria-describedby="manual-altitude_m-help" name="altitude_m" required type="number" min="2200" max="3500" placeholder="2200–3500" data-i18n-placeholder="qjzh.data.placeholder.altitude"><span id="manual-altitude_m-help" class="field-help" data-i18n="qjzh.data.help.altitude">模型适用范围为 2200–3500 m。</span></div><div class="field-group"><label for="manual-temp_c" data-i18n="qjzh.data.label.temperature">温度（℃）</label><input id="manual-temp_c" aria-describedby="manual-temp_c-help" name="temp_c" required type="number" min="-15" max="25" step="0.1" placeholder="-15–25" data-i18n-placeholder="qjzh.data.placeholder.temperature"><span id="manual-temp_c-help" class="field-help" data-i18n="qjzh.data.help.temperature">输入圈舍当前温度，保留一位小数。</span></div><div class="field-group"><label for="manual-rh_percent" data-i18n="qjzh.data.label.humidity">相对湿度（%）</label><input id="manual-rh_percent" aria-describedby="manual-rh_percent-help" name="rh_percent" required type="number" min="20" max="85" placeholder="20–85" data-i18n-placeholder="qjzh.data.placeholder.humidity"><span id="manual-rh_percent-help" class="field-help" data-i18n="qjzh.data.help.humidity">输入 20–85 之间的相对湿度。</span></div><div class="field-group"><label for="manual-raw_nh3_ppm" data-i18n="qjzh.data.label.ammonia">原始 NH₃（ppm）</label><input id="manual-raw_nh3_ppm" aria-describedby="manual-raw_nh3_ppm-help" name="raw_nh3_ppm" required type="number" min="0" max="30" step="0.1" placeholder="0–30" data-i18n-placeholder="qjzh.data.placeholder.ammonia"><span id="manual-raw_nh3_ppm-help" class="field-help" data-i18n="qjzh.data.help.ammonia">输入传感器未经高原校准的读数。</span></div><div class="field-group"><label for="manual-device_model" data-i18n="qjzh.data.label.device">设备型号</label><input id="manual-device_model" aria-describedby="manual-device_model-help" name="device_model" value="manual_entry" placeholder="设备型号" data-i18n-placeholder="qjzh.data.placeholder.device"><span id="manual-device_model-help" class="field-help" data-i18n="qjzh.data.help.device">可选，用于追溯传感器或录入来源。</span></div><button class="control" type="submit" data-i18n="qjzh.data.submit">接入并校准</button></form></article>
         <article class="qjzh-data-card qjzh-empty-card" id="dataEmptyState"><h3 data-i18n="qjzh.data.demo">演示模拟数据</h3><p data-i18n="qjzh.data.emptyNote">尚未接入数据，请上传 CSV 或手动录入。</p><button class="control" id="loadDemoSimulation" data-i18n="qjzh.data.loadDemo" type="button">加载青海冬季 24 小时演示</button></article>
       </div>
       <div id="dataImportStatus" class="qjzh-data-state qjzh-state-empty" role="status" data-i18n="qjzh.data.emptyStatus">尚未接入数据，请上传 CSV 或手动录入。</div>
@@ -3013,18 +3019,18 @@
 
     <!-- 数据流先行：可点击步骤与 Hash 路由保持一致。 -->
     <section class="pipeline-strip glass" aria-label="数据接入到建议输出流程">
-      <article class="pipeline-step" data-goto="data" tabindex="0" role="button" style="--step-color: var(--temperature);">
+      <button class="pipeline-step" data-goto="data" type="button" style="--step-color: var(--temperature);">
         <span class="pipeline-icon">01</span>
-        <div><div class="pipeline-name">数据接入</div><div class="pipeline-value" id="flowCollect">等待采样</div></div>
-      </article>
-      <article class="pipeline-step" data-goto="algorithm" tabindex="0" role="button" style="--step-color: var(--humidity);">
+        <span class="pipeline-copy"><span class="pipeline-name">数据接入</span><span class="pipeline-value" id="flowCollect">等待采样</span></span>
+      </button>
+      <button class="pipeline-step" data-goto="algorithm" type="button" style="--step-color: var(--humidity);">
         <span class="pipeline-icon">02</span>
-        <div><div class="pipeline-name">高原校准</div><div class="pipeline-value" id="flowCompensate">压力校准 --</div></div>
-      </article>
-      <article class="pipeline-step" data-goto="decision" tabindex="0" role="button" style="--step-color: var(--light);">
+        <span class="pipeline-copy"><span class="pipeline-name">高原校准</span><span class="pipeline-value" id="flowCompensate">压力校准 --</span></span>
+      </button>
+      <button class="pipeline-step" data-goto="decision" type="button" style="--step-color: var(--light);">
         <span class="pipeline-icon">03</span>
-        <div><div class="pipeline-name">智能决策</div><div class="pipeline-value" id="flowDecision">规则待命中</div><!-- 兼容锚点：flowExecute 为历史命名，仅表示建议输出。 --><div class="pipeline-value" id="flowExecute">建议待生成</div></div>
-      </article>
+        <span class="pipeline-copy"><span class="pipeline-name">智能决策</span><span class="pipeline-value" id="flowDecision">规则待命中</span><!-- 兼容锚点：flowExecute 为历史命名，仅表示建议输出。 --><span class="pipeline-value" id="flowExecute">建议待生成</span></span>
+      </button>
       <button class="control secondary pipeline-next" id="pipelineNext" data-goto="data" type="button">下一步：数据接入</button>
     </section>
 
@@ -3050,7 +3056,7 @@
       <div class="view-layout"><section class="left-col" id="decisionMount"></section><aside class="right-col" id="decisionSideMount"></aside></div>
     </section>
     <div class="qjzh-view-source" id="qjzhViewSource" aria-hidden="true">
-    <main class="main-grid">
+    <div class="main-grid">
       <section class="left-col">
         <!-- 首屏优先：四路传感器数据先于详细建议展示。 -->
         <div class="sensor-grid" aria-label="实时传感器读数">
@@ -3376,7 +3382,7 @@
           </details>
         </section>
       </aside>
-    </main>
+    </div>
     </div>
 
     <section class="view" data-view="institution" aria-labelledby="institutionViewHeading" hidden>
@@ -3403,6 +3409,7 @@
       <p class="qjzh-report-watermark" data-i18n="qjzh.report.watermark">生成报告将带有“演示版・仅用于赛事展示”水印，不作为法定检测或动物诊疗依据。</p>
     </section>
     </section>
+    </main>
     <div class="qjzh-scene-presets" aria-label="答辩场景预设" data-i18n-aria-label="qjzh.scene.aria"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" data-i18n="qjzh.scene.toggle" type="button" aria-expanded="false">演示</button><div class="qjzh-scene-actions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">断网场景</button><button class="control secondary" data-scene="tour" data-i18n="qjzh.scene.tour" type="button" aria-pressed="false">巡览演示</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
     <footer class="footer">
       <span id="buildVersionText">青境智衡 · 纯软件环境数据服务演示</span>
@@ -3511,6 +3518,37 @@
         "simulation.running": "ཆུ་ཚོད་24 ཡི་དཔེ་མཚོན་འགྲོ་བཞིན", "simulation.pause": "དཔེ་མཚོན་མཚམས་འཇོག", "simulation.complete": "ཆུ་ཚོད་24 ཡི་དཔེ་མཚོན་ལེགས་འགྲུབ", "simulation.restart": "དཔེ་མཚོན་ཡང་བསྐྱར", "simulation.paused": "དཔེ་མཚོན་མཚམས་བཞག", "simulation.resume": "དཔེ་མཚོན་མུ་མཐུད", "simulation.time": "དཔེ་མཚོན་དུས་ཚོད། {time}", "simulation.data": "ས་གནས་དཔེ་མཚོན་གཞི་གྲངས", "marker.vent": "རླུང་འགྲོ་འགོ་འཛུགས", "scenario.running": "གནས་ཚུལ་དཔེ་མཚོན། {name}"
       }
     };
+
+    Object.assign(uiCopy.en, {
+      "a11y.skipMain": "Skip to main content",
+      "qjzh.data.label.site": "Site ID",
+      "qjzh.data.label.altitude": "Altitude (m)",
+      "qjzh.data.label.temperature": "Temperature (℃)",
+      "qjzh.data.label.humidity": "Relative humidity (%)",
+      "qjzh.data.label.ammonia": "Raw NH₃ (ppm)",
+      "qjzh.data.label.device": "Device model",
+      "qjzh.data.help.site": "Use 2–64 letters, numbers, underscores or hyphens.",
+      "qjzh.data.help.altitude": "The model operating range is 2200–3500 m.",
+      "qjzh.data.help.temperature": "Enter the current barn temperature to one decimal place.",
+      "qjzh.data.help.humidity": "Enter relative humidity from 20 to 85.",
+      "qjzh.data.help.ammonia": "Enter the sensor reading before highland calibration.",
+      "qjzh.data.help.device": "Optional; used to trace the sensor or entry source."
+    });
+    Object.assign(uiCopy.bo, {
+      "a11y.skipMain": "ནང་དོན་གཙོ་བོར་མཆོང་།",
+      "qjzh.data.label.site": "ས་ཚིགས ID",
+      "qjzh.data.label.altitude": "མཚོ་ངོས་མཐོ་ཚད (m)",
+      "qjzh.data.label.temperature": "དྲོད་ཚད (℃)",
+      "qjzh.data.label.humidity": "བརླན་ཚད (%)",
+      "qjzh.data.label.ammonia": "ཐོག་མའི NH₃ (ppm)",
+      "qjzh.data.label.device": "སྒྲིག་ཆས་དཔེ་རྟགས",
+      "qjzh.data.help.site": "ཡིག་འབྲུ་དང་ཨང་ཀི འོག་ཐིག འབྲེལ་རྟགས་བཅས་ 2–64 སྤྱོད།",
+      "qjzh.data.help.altitude": "མ་དཔེའི་སྤྱོད་ཁོངས་ 2200–3500 m ཡིན།",
+      "qjzh.data.help.temperature": "ཕྱུགས་ཁང་གི་ད་ལྟའི་དྲོད་ཚད་གྲངས་ཆུང་གཅིག་གིས་འཇུག",
+      "qjzh.data.help.humidity": "བརླན་ཚད་ 20 ནས་ 85 བར་འཇུག",
+      "qjzh.data.help.ammonia": "མཐོ་སྒང་ཁ་གསབ་མ་བྱས་གོང་གི་ཚོར་ཆས་ཀློག་གྲངས་འཇུག",
+      "qjzh.data.help.device": "འདེམས་རུང་། ཚོར་ཆས་སམ་ནང་འཇུག་ཁུངས་འདེད་པར་སྤྱོད།"
+    });
 
     // 藏语动态文案与英文键保持一一对应，避免规则刷新后回退成英文。
     Object.assign(uiCopy.bo, {

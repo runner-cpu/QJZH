@@ -141,13 +141,6 @@
     event.preventDefault();
     go(view);
   });
-  root.document.addEventListener("keydown", function (event) {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    var target = event.target && event.target.closest ? event.target.closest(".pipeline-step[data-goto]") : null;
-    if (!target) return;
-    event.preventDefault();
-    go(target.dataset.goto);
-  });
   if (root.document.readyState === "loading") root.document.addEventListener("DOMContentLoaded", apply);
   else apply();
 
