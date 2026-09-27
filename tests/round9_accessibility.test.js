@@ -39,10 +39,10 @@ test("high-frequency readings are not live regions and snapshots are a list", ()
 });
 
 test("language changes refresh stream and chart count immediately", () => {
-  const html = read("index.html");
-  assert.match(html, /function refreshDynamicLanguage\(/);
-  assert.match(html, /updateChartPointCount\(\)/);
-  assert.match(html, /refreshStreamStatus\(\)/);
+  const dashboard = read("dashboard.js");
+  assert.match(dashboard, /function refreshDynamicLanguage\(/);
+  assert.match(dashboard, /updateChartPointCount\(\)/);
+  assert.match(dashboard, /refreshStreamStatus\(\)/);
 });
 
 test("Tibetan has a dedicated font stack and readable line height", () => {

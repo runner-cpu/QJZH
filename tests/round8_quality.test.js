@@ -48,6 +48,7 @@ function extractObjectLiteral(source, marker) {
 
 test("core panel titles, notes, and actions use complete English and Tibetan i18n keys", () => {
   const html = read("index.html");
+  const dashboard = read("dashboard.js");
   const requiredKeys = [
     "panel.trend",
     "panel.trend.note",
@@ -73,29 +74,30 @@ test("core panel titles, notes, and actions use complete English and Tibetan i18
   for (const key of requiredKeys) {
     const escapedKey = key.replaceAll(".", "\\.");
     assert.match(html, new RegExp("data-i18n=\\\"" + escapedKey + "\\\""), key + " is attached to the visible control");
-    assert.ok(html.split('"' + key + '"').length - 1 >= 3, key + " has an element plus English and Tibetan copy");
+    assert.ok(dashboard.split('"' + key + '"').length - 1 >= 2, key + " has English and Tibetan copy");
   }
 });
 
 test("dynamic presentation controls and recommendation copy follow the active language", () => {
   const html = read("index.html");
+  const dashboard = read("dashboard.js");
   const interactions = read("ui_interactions.js");
 
   assert.match(html, /id="scenePresetToggle" data-i18n="qjzh.scene.toggle"/);
   assert.match(html, /data-i18n="view.algorithm.modelLabel"/);
-  assert.match(html, /window.QJZH_LANGUAGE = nextLanguage/);
-  assert.ok(html.split('"qjzh.scene.toggle"').length - 1 >= 3);
-  assert.ok(html.split('"view.algorithm.modelLabel"').length - 1 >= 3);
+  assert.match(dashboard, /window.QJZH_LANGUAGE = nextLanguage/);
+  assert.ok(dashboard.split('"qjzh.scene.toggle"').length - 1 >= 2);
+  assert.ok(dashboard.split('"view.algorithm.modelLabel"').length - 1 >= 2);
   for (const level of ["normal", "watch", "todo", "emergency"]) {
-    assert.equal(html.split('"recommendation.suggestion.' + level + '"').length - 1, 2);
+    assert.equal(dashboard.split('"recommendation.suggestion.' + level + '"').length - 1, 2);
   }
   assert.ok(interactions.includes('translate("recommendation.suggestion." + levelKey, rawAdvice)'));
 });
 
 test("Tibetan dynamic copy covers every English presentation key", () => {
-  const html = read("index.html");
-  const uiCopy = vm.runInNewContext("(" + extractObjectLiteral(html, "const uiCopy =") + ")");
-  const tibetanAdditions = vm.runInNewContext("(" + extractObjectLiteral(html, "Object.assign(uiCopy.bo") + ")");
+  const dashboard = read("dashboard.js");
+  const uiCopy = vm.runInNewContext("(" + extractObjectLiteral(dashboard, "const uiCopy =") + ")");
+  const tibetanAdditions = vm.runInNewContext("(" + extractObjectLiteral(dashboard, "Object.assign(uiCopy.bo") + ")");
   Object.assign(uiCopy.bo, tibetanAdditions);
 
   const missing = Object.keys(uiCopy.en).filter((key) => !(key in uiCopy.bo));
@@ -104,6 +106,7 @@ test("Tibetan dynamic copy covers every English presentation key", () => {
 
 test("visible control metadata and confidence details localize with the page", () => {
   const html = read("index.html");
+  const dashboard = read("dashboard.js");
   const dataImport = read("dataImport.js");
   const ariaKeys = [
     "aria.dismissBoundary", "aria.mainNav", "aria.quickLinks", "aria.csvUpload",
@@ -114,13 +117,13 @@ test("visible control metadata and confidence details localize with the page", (
   ];
   for (const key of ariaKeys) {
     assert.ok(html.includes('data-i18n-aria-label="' + key + '"'), key + " is attached to the visible element");
-    assert.ok(html.split('"' + key + '"').length - 1 >= 3, key + " has English and Tibetan copy");
+    assert.ok(dashboard.split('"' + key + '"').length - 1 >= 2, key + " has English and Tibetan copy");
   }
   for (const key of ["title.lowTempMarker", "title.highTempMarker"]) {
     assert.ok(html.includes('data-i18n-title="' + key + '"'), key + " is attached to the visible element");
-    assert.ok(html.split('"' + key + '"').length - 1 >= 3, key + " has English and Tibetan copy");
+    assert.ok(dashboard.split('"' + key + '"').length - 1 >= 2, key + " has English and Tibetan copy");
   }
-  assert.match(html, /querySelectorAll\("\[data-i18n-title\]"\)/);
+  assert.match(dashboard, /querySelectorAll\("\[data-i18n-title\]"\)/);
   assert.match(dataImport, /qjzh\.confidence\.detailHigh/);
   assert.doesNotMatch(dataImport, /\+ "（输入在模型适用范围内）"/);
 });
@@ -178,10 +181,11 @@ test("institution demo names and species localize without mutating source rows",
 
 test("localized placeholders and table headers remain scoped to their own views", () => {
   const html = read("index.html");
+  const dashboard = read("dashboard.js");
   assert.match(html, /data-i18n-placeholder="qjzh\.institution\.filterPlaceholder"/);
-  assert.match(html, /querySelectorAll\("\[data-i18n-placeholder\]"\)/);
-  assert.match(html, /restoreOrSet\("#recordsPanel \.data-table th"/);
-  assert.doesNotMatch(html, /restoreOrSet\("\.data-table th"/);
+  assert.match(dashboard, /querySelectorAll\("\[data-i18n-placeholder\]"\)/);
+  assert.match(dashboard, /restoreOrSet\("#recordsPanel \.data-table th"/);
+  assert.doesNotMatch(dashboard, /restoreOrSet\("\.data-table th"/);
   assert.match(html, /name="device_model" value="manual_entry"/);
 });
 
@@ -295,14 +299,15 @@ test("institution report uses a same-day range and labels the chart as a barn co
 
 test("algorithm view states the callable interface and validated operating range", () => {
   const html = read("index.html");
+  const dashboard = read("dashboard.js");
   assert.match(html, /data-i18n="view\.algorithm\.api"[^>]*>[^<]*compensate\(\)/);
   assert.match(html, /data-i18n="view\.algorithm\.range"[^>]*>[^<]*2200–3500 m/);
-  assert.ok(html.split('"view.algorithm.api"').length - 1 >= 3);
-  assert.ok(html.split('"view.algorithm.range"').length - 1 >= 3);
+  assert.ok(dashboard.split('"view.algorithm.api"').length - 1 >= 2);
+  assert.ok(dashboard.split('"view.algorithm.range"').length - 1 >= 2);
 });
 
 test("legacy expert advice retains recommendation semantics", () => {
-  assert.doesNotMatch(read("index.html"), /立即启动最大通风/);
+  assert.doesNotMatch(read("index.html") + read("dashboard.js"), /立即启动最大通风/);
 });
 
 test("repository governance, CI surface tests, and four-view README gallery are present", () => {
@@ -320,6 +325,9 @@ test("repository governance, CI surface tests, and four-view README gallery are 
   assert.match(license, /MIT License/);
   assert.match(readme, /assets\/screenshots\/algorithm\.png/);
   assert.match(readme, /assets\/screenshots\/report\.png/);
-  assert.match(online, /panel\.trend/);
+  assert.match(online, /src="dashboard\.js\?v=/);
+  assert.match(online, /src="riskPolicy\.js\?v=/);
+  assert.match(online, /href="#main-content"/);
+  assert.match(online, /runner-cpu\.github\.io\/QJZH\//);
   assert.match(online, /reportRenderer\.js/);
 });

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /QJZH/
+
+Sitemap: https://runner-cpu.github.io/QJZH/sitemap.xml

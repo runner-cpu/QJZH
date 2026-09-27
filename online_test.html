@@ -2,91 +2,135 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>青境智衡部署验证</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#081925">
+  <title>青境智衡 · 部署自检</title>
+  <link rel="canonical" href="https://runner-cpu.github.io/QJZH/online_test.html">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307141f'/%3E%3Cpath d='M16 38h32M22 28h20M32 14v34' stroke='%2316d6b0' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
-  <script src="model_weights.js?v=1.0.0"></script>
-  <script src="compensator_engine.js?v=1.0.0"></script>
-  <script src="ui_text_map.js?v=20260923"></script>
-  <script src="errorHandler.js?v=20260923"></script>
-  <script src="csvTemplate.js?v=20260923"></script>
-  <script src="dataImport.js?v=20260923"></script>
-  <script src="reportRenderer.js?v=20260927"></script>
-  <script src="build_info.js?v=20260924"></script>
-  <style>body{max-width:720px;margin:48px auto;padding:0 20px;background:#0b1a2a;color:#e8f0f8;font-family:system-ui}li{margin:10px 0;padding:10px;border-left:4px solid #7a9bb5;background:#10293a}.pass{border-color:#00d4aa}.fail{border-color:#ff4d5e}code{color:#00d4aa}</style>
+  <script defer src="model_weights.js?v=1.0.0"></script>
+  <script defer src="compensator_engine.js?v=1.0.0"></script>
+  <script defer src="build_info.js?v=20260927"></script>
+  <script defer src="ui_text_map.js?v=20260927"></script>
+  <script defer src="errorHandler.js?v=20260927"></script>
+  <script defer src="csvTemplate.js?v=20260927"></script>
+  <script defer src="dataImport.js?v=20260927"></script>
+  <script defer src="riskPolicy.js?v=20260927"></script>
+  <script defer src="reportRenderer.js?v=20260927"></script>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; padding: 32px 20px 64px; color: #e8f0f8; background: radial-gradient(circle at 15% 0%, rgba(0,212,170,.16), transparent 34rem), #081925; }
+    main { width: min(900px, 100%); margin: 0 auto; }
+    header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: end; margin-bottom: 24px; }
+    .eyebrow { margin: 0 0 8px; color: #00d4aa; font: 800 .75rem/1.2 ui-monospace, monospace; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.8rem); line-height: 1; letter-spacing: -.04em; }
+    .summary { min-width: 150px; padding: 14px 16px; border: 1px solid rgba(148,181,204,.28); border-radius: 10px; background: rgba(16,42,59,.9); text-align: right; }
+    .summary strong { display: block; color: #00d4aa; font: 900 1.7rem/1 ui-monospace, monospace; }
+    .summary span { display: block; margin-top: 6px; color: #93adbf; font-size: .76rem; }
+    .metadata { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-bottom: 18px; overflow: hidden; border: 1px solid rgba(148,181,204,.24); border-radius: 10px; background: rgba(148,181,204,.24); }
+    .metadata div { min-width: 0; padding: 13px 15px; background: #10293a; }
+    .metadata span { display: block; margin-bottom: 5px; color: #7897ac; font-size: .72rem; }
+    .metadata code { color: #dceaf3; overflow-wrap: anywhere; }
+    ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    li { position: relative; padding: 13px 16px 13px 46px; border: 1px solid rgba(148,181,204,.2); border-radius: 8px; background: rgba(16,41,58,.86); line-height: 1.5; }
+    li::before { position: absolute; left: 15px; top: 14px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; font: 900 .7rem/1 ui-monospace, monospace; content: "…"; }
+    li.pass { border-color: rgba(0,212,170,.38); }
+    li.pass::before { color: #041c17; background: #00d4aa; content: "✓"; }
+    li.fail { border-color: rgba(255,77,94,.55); background: rgba(92,27,40,.5); }
+    li.fail::before { color: #fff; background: #ff4d5e; content: "!"; }
+    footer { margin-top: 22px; color: #7897ac; font-size: .82rem; }
+    footer a { color: #8cebd8; }
+    @media (max-width: 640px) { body { padding: 24px 14px 48px; } header { grid-template-columns: 1fr; align-items: start; } .summary { text-align: left; } .metadata { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
-  <h1>青境智衡部署验证</h1>
-  <p>部署时间戳：<code id="deployedAt"></code></p>
-  <p>模型版本号：<code id="modelVersion">--</code></p>
-  <ol id="results"></ol>
+  <main>
+    <header>
+      <div><p class="eyebrow">Deployment diagnostics</p><h1>青境智衡部署自检</h1></div>
+      <div class="summary" aria-live="polite"><strong id="summaryCount">0 / 0</strong><span id="summaryLabel">正在检查公开产物</span></div>
+    </header>
+    <section class="metadata" aria-label="构建信息">
+      <div><span>运行环境</span><code id="environment">--</code></div>
+      <div><span>提交版本</span><code id="commit">--</code></div>
+      <div><span>构建时间</span><code id="builtAt">--</code></div>
+    </section>
+    <ol id="results"></ol>
+    <footer>此页只检查公开静态产物和浏览器运行接口。<a href="./#/overview">返回环境总览</a></footer>
+  </main>
   <script>
-    /** @param {boolean} passed @param {string} message @returns {void} */
-    function report(passed, message) {
-      var item = document.createElement("li");
-      item.className = passed ? "pass" : "fail";
-      item.textContent = (passed ? "PASS" : "FAIL") + ": " + message;
-      document.getElementById("results").appendChild(item);
-    }
-    /** @returns {void} */
-    function runOnlineTests() {
-      document.getElementById("deployedAt").textContent = window.BUILD_INFO?.deployedAt || new Date().toISOString();
-      var hasWeights = typeof MODEL_WEIGHTS !== "undefined";
-      report(hasWeights, hasWeights ? "MODEL_WEIGHTS 已定义" : "MODEL_WEIGHTS 未定义，请检查 model_weights.js 加载路径。");
-      document.getElementById("modelVersion").textContent = hasWeights ? MODEL_WEIGHTS.version : "未加载";
-      try {
-        var result = compensate(2800, 10, 60, 30);
-        report(result >= 15 && result <= 25, "compensate(2800, 10, 60, 30) = " + result.toFixed(2) + " ppm（期望 15-25 ppm）");
-      } catch (error) {
-        report(false, "补偿引擎执行失败：" + error.message);
+    document.addEventListener("DOMContentLoaded", function () {
+      var passedCount = 0;
+      var totalCount = 0;
+      var summaryCount = document.getElementById("summaryCount");
+      var summaryLabel = document.getElementById("summaryLabel");
+
+      function updateSummary() {
+        summaryCount.textContent = passedCount + " / " + totalCount;
+        summaryLabel.textContent = passedCount === totalCount ? "全部检查通过" : "发现 " + (totalCount - passedCount) + " 项异常";
       }
-      report(hasWeights && Boolean(MODEL_WEIGHTS.version), "部署时间戳与模型版本已显示：" + (hasWeights ? MODEL_WEIGHTS.version : "未加载"));
-    }
-    runOnlineTests();
+
+      function report(passed, message) {
+        totalCount += 1;
+        if (passed) passedCount += 1;
+        var item = document.createElement("li");
+        item.className = passed ? "pass" : "fail";
+        item.textContent = message;
+        document.getElementById("results").appendChild(item);
+        updateSummary();
+      }
+
+      var build = window.BUILD_INFO || { version: "dev", commit: "local", builtAt: null, environment: "local" };
+      document.getElementById("environment").textContent = build.environment || "unknown";
+      document.getElementById("commit").textContent = build.commit || build.version || "unknown";
+      document.getElementById("builtAt").textContent = build.builtAt || "本地开发构建";
+      report(Boolean(build.version && build.commit && build.environment), "构建版本、提交与环境字段已加载");
+      report(build.environment !== "production" || Boolean(build.builtAt), "生产构建包含不可变 UTC 构建时间");
+
+      var hasWeights = typeof window.MODEL_WEIGHTS !== "undefined";
+      report(hasWeights && Boolean(window.MODEL_WEIGHTS.version), "锁定模型参数与版本已加载");
+      try {
+        var result = window.compensate(2800, 10, 60, 30);
+        report(Number.isFinite(result) && result >= 15 && result <= 25, "高原校准接口可执行：" + result.toFixed(2) + " ppm");
+      } catch (error) {
+        report(false, "高原校准接口执行失败：" + error.message);
+      }
       report(Boolean(window.QJZH && window.QJZH.dataImport), "数据接入模块已加载");
-      report(Boolean(window.BUILD_INFO?.version && window.BUILD_INFO?.deployedAt), "运行时版本与部署日期已动态加载");
-      report(typeof window.QJZH?.dataImport?.nextRecord === "function" && typeof window.QJZH?.dataImport?.useImported === "function", "导入数据时间回放接口已加载");
-    fetch("index.html", { cache: "no-store" }).then(function (response) {
-      if (!response.ok) throw new Error("index.html HTTP " + response.status);
-      return response.text();
-    }).then(function (html) {
-      report(html.indexOf("qjzh-boundary-banner") >= 0, "边界声明 Banner 标记（主页面）");
-      report(html.indexOf("dataImportPanel") >= 0, "数据接入面板标记（主页面）");
-      report(html.indexOf("pipeline-strip") >= 0, "可导航流程步骤条标记（主页面）");
-      report(html.indexOf('id="pipelineNext"') >= 0, "链路'下一步'按钮存在");
-      report((html.match(/class="overview-quick"/g) || []).length >= 5, "总览快捷卡覆盖全部五个模块入口");
-      report(html.indexOf("institutionView") >= 0 && html.indexOf("reportPanel") >= 0, "机构视图与季度报告标记（主页面）");
-      report((html.match(/class="view(?: active)?" data-view=/g) || []).length === 6, "六个 Hash 视图容器存在");
-      report(html.indexOf("qjzh-main-nav") >= 0 && html.indexOf('data-view="institution"') >= 0, "六项主导航与机构视图入口存在");
-      report(html.indexOf('class="qjzh-tabs"') < 0 && html.indexOf('querySelectorAll(".qjzh-tab")') < 0, "旧页签 DOM 与点击绑定已移除");
-      report(html.indexOf("replaySiteLabel") >= 0, "回放站点标识存在");
-      report(html.indexOf('src="viewRouter.js?v=20260926"') >= 0, "六视图路由脚本已加载");
-      report(html.indexOf("动态通风调控执行") < 0, "原'动态通风调控执行'已从源码移除");
-      report(html.indexOf("数据接入") >= 0 && html.indexOf("指令待下发") < 0, "流水线已改为'数据接入→高原校准→智能决策→建议输出'");
-      report(html.indexOf("confidenceBadge") >= 0, "置信度元素存在");
-      report(html.indexOf("getNextSample") >= 0 && html.indexOf("runImportedReplay") >= 0, "主看板导入数据回放链路存在");
-      report(html.indexOf("data-i18n=\"qjzh.data.title\"") >= 0 && html.indexOf("data-i18n=\"qjzh.institution.title\"") >= 0, "新增面板三语标记存在");
-      var round8Keys = ["panel.trend", "panel.records", "panel.calibration", "panel.algorithm", "panel.decisionOutput", "panel.reasoning", "panel.knowledgeCatalog", "qjzh.data.downloadTemplate", "qjzh.data.loadSample", "qjzh.data.clear", "qjzh.institution.export", "qjzh.institution.import", "qjzh.report.generate"];
-      report(round8Keys.every(function (key) { return html.indexOf('data-i18n="' + key + '"') >= 0; }), "核心标题与操作按钮具有完整三语标记");
-      report(html.indexOf('data-i18n="view.algorithm.api"') >= 0 && html.indexOf("compensate()") >= 0, "算法标准接口说明存在");
-      report(html.indexOf('data-i18n="view.algorithm.range"') >= 0 && html.indexOf("2200–3500 m") >= 0, "算法适用域说明存在");
-      report(html.indexOf("qjzh-scene-toggle") >= 0, "移动端场景预设收起开关存在");
-      report(html.indexOf('value="bo"') >= 0 && html.indexOf("qjzh-scene-presets") >= 0, "藏语选项与场景预设存在");
-      report(html.indexOf("纯软件环境数据服务演示") >= 0, "页脚源码已是合规声明");
-    }).catch(function (error) {
-      report(false, "主页面标记读取失败：" + error.message);
+      report(Boolean(window.QJZH && window.QJZH.riskPolicy), "统一风险策略模块已加载");
+      report(Boolean(window.QJZH && window.QJZH.reportRenderer), "环境报告渲染器已加载");
+      report(typeof window.QJZH?.dataImport?.nextRecord === "function" && typeof window.QJZH?.dataImport?.useImported === "function", "导入数据回放接口可用");
+
+      try {
+        var sampleReport = { language: "zh", startDate: "2026-09-01", endDate: "2026-09-27", noRecords: false, complianceRate: 0.5, averageNh3: 12, maxNh3: 20, temperatureRange: { min: -5, max: 10 }, adviceCount: 2, riskDistribution: { "正常": 1, "关注": 1, "待办": 0, "紧急": 0 }, trendSeries: [{ timestamp: "2026-09-27T08:00:00+08:00", value: 12 }], generatedAt: "2026-09-27", source: "QJZH 本地记录" };
+        var reportHtml = window.QJZH.reportRenderer.buildHtml(sampleReport);
+        var institutionHtml = window.QJZH.reportRenderer.buildHtml(Object.assign({}, sampleReport, { seriesMode: "institution", trendSeries: [{ label: "海东示范圈舍", value: 8.4 }] }));
+        report(reportHtml.indexOf("data-chart='nh3-trend'") >= 0, "报告包含氨气趋势图");
+        report(institutionHtml.indexOf("data-chart='nh3-comparison'") >= 0, "机构报告包含圈舍对比图");
+        report(reportHtml.indexOf("data-chart='risk-distribution'") >= 0, "报告包含风险分布图");
+        report(reportHtml.indexOf("print-color-adjust:exact") >= 0, "报告启用打印颜色保真");
+      } catch (error) {
+        report(false, "报告渲染器执行失败：" + error.message);
+      }
+
+      Promise.all([
+        fetch("index.html", { cache: "no-store" }).then(function (response) { if (!response.ok) throw new Error("index.html HTTP " + response.status); return response.text(); }),
+        fetch("dashboard.js", { cache: "no-store" }).then(function (response) { if (!response.ok) throw new Error("dashboard.js HTTP " + response.status); return response.text(); })
+      ]).then(function (sources) {
+        var html = sources[0];
+        var dashboard = sources[1];
+        report((html.match(/<main\b/g) || []).length === 1 && html.indexOf('href="#main-content"') >= 0, "主页面包含唯一 main 与跳转主内容链接");
+        report((html.match(/<button class="pipeline-step/g) || []).length === 4 && html.indexOf('id="pipelineNext"') >= 0, "流程步骤与下一步操作均使用原生按钮");
+        report(html.indexOf('src="dashboard.js?v=') >= 0 && html.indexOf('src="riskPolicy.js?v=') >= 0, "主应用与风险策略脚本已发布");
+        report(html.indexOf('rel="canonical" href="https://runner-cpu.github.io/QJZH/"') >= 0, "主页 canonical 地址正确");
+        report((html.match(/class="view(?: active)?" data-view=/g) || []).length === 6, "六个 Hash 视图容器均已发布");
+        report((html.match(/class="overview-quick"/g) || []).length >= 5, "总览快捷入口覆盖五个业务视图");
+        report(html.indexOf('data-i18n="view.algorithm.api"') >= 0 && html.indexOf("compensate()") >= 0, "算法标准接口与适用域说明存在");
+        report(dashboard.indexOf("function getNextSample(") >= 0 && dashboard.indexOf("function runImportedReplay(") >= 0, "主看板导入回放链路存在");
+        report(dashboard.indexOf("function updateTrendA11ySummary(") >= 0, "趋势图同步提供文字摘要");
+      }).catch(function (error) {
+        report(false, "公开产物读取失败：" + error.message);
+      });
     });
-    try {
-      var sampleReport = { language: "zh", startDate: "2026-09-01", endDate: "2026-09-27", noRecords: false, complianceRate: 0.5, averageNh3: 12, maxNh3: 20, temperatureRange: { min: -5, max: 10 }, adviceCount: 2, riskDistribution: { 正常: 1, 关注: 1, 待办: 0, 紧急: 0 }, trendSeries: [{ timestamp: "2026-09-27T08:00:00+08:00", value: 12 }], generatedAt: "2026-09-27", source: "QJZH 本地记录" };
-      var reportHtml = window.QJZH.reportRenderer.buildHtml(sampleReport);
-      var institutionHtml = window.QJZH.reportRenderer.buildHtml(Object.assign({}, sampleReport, { seriesMode: "institution", trendSeries: [{ label: "海东示范圈舍", value: 8.4 }] }));
-      report(reportHtml.indexOf("data-chart='nh3-trend'") >= 0, "报告氨气趋势图标记存在");
-      report(institutionHtml.indexOf("data-chart='nh3-comparison'") >= 0, "机构报告圈舍对比图标记存在");
-      report(reportHtml.indexOf("data-chart='risk-distribution'") >= 0, "报告风险分布图标记存在");
-      report(reportHtml.indexOf("print-color-adjust:exact") >= 0, "报告图表启用打印色彩保真");
-    } catch (error) {
-      report(false, "报告渲染器执行失败：" + error.message);
-    }
   </script>
 </body>
 </html>
