@@ -100,8 +100,18 @@
     advance();
   }
 
+  function closeScenePresets() {
+    var presets = root.document.querySelector && root.document.querySelector(".qjzh-scene-presets");
+    if (presets) presets.classList.remove("expanded");
+    var toggle = root.document.getElementById && root.document.getElementById("scenePresetToggle");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+  }
+
   function go(view, fromTour) {
-    if (!fromTour) stopTour();
+    if (!fromTour) {
+      stopTour();
+      closeScenePresets();
+    }
     var target = VIEW_ORDER.indexOf(view) >= 0 ? view : "overview";
     var hash = "#/" + target;
     if (root.location.hash === hash) apply();

@@ -69,6 +69,16 @@
 
         update() { this.draw(); }
 
+        isDatasetVisible(index) {
+          const dataset = this.data.datasets?.[index];
+          return Boolean(dataset) && dataset.hidden !== true;
+        }
+
+        setDatasetVisibility(index, visible) {
+          const dataset = this.data.datasets?.[index];
+          if (dataset) dataset.hidden = !visible;
+        }
+
         setHover(event) {
           const rect = (this.canvas.parentElement || this.canvas).getBoundingClientRect();
           const x = event.clientX - rect.left;
@@ -98,7 +108,7 @@
           const ctx = this.ctx;
           ctx.clearRect(0, 0, width, height);
           const compact = width < 430;
-          this.chartArea = { left: compact ? 46 : 58, right: width - (compact ? 76 : 106), top: 42, bottom: height - 42 };
+          this.chartArea = { left: compact ? 46 : 58, right: width - (compact ? 76 : 106), top: 20, bottom: height - 42 };
           const scales = this.options.scales || {};
           Object.keys(scales).filter((key) => key !== "x").forEach((key) => { this.scales[key] = scales[key]; });
           Object.keys(this.scales).forEach((key) => {
@@ -150,26 +160,14 @@
               ctx.beginPath(); ctx.arc(x, y, dataset.pointRadius || 2, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
             });
           });
-          this.drawLegend(width);
           plugins.forEach((plugin) => plugin.afterDraw?.(this));
           if (this.hoverIndex >= 0) this.drawTooltip(width, height);
-        }
-
-        drawLegend(width) {
-          const ctx = this.ctx;
-          let x = this.chartArea.left;
-          ctx.font = "700 11px system-ui, sans-serif";
-          (this.data.datasets || []).forEach((dataset) => {
-            if (!dataset.label || dataset.id === "ventilationMarkers") return;
-            const color = dataset.borderColor || colors[dataset.yAxisID] || "#00D4AA";
-            ctx.fillStyle = color; ctx.fillRect(x, 17, 18, 3); ctx.fillStyle = "#7A9BB5"; ctx.fillText(dataset.label, x + 23, 21); x += Math.min(160, ctx.measureText(dataset.label).width + 42);
-          });
         }
 
         drawTooltip(width, height) {
           const ctx = this.ctx;
           const labels = this.data.labels || [];
-          const rows = (this.data.datasets || []).filter((dataset) => Number.isFinite(dataset.data?.[this.hoverIndex]) && dataset.id !== "ventilationMarkers");
+          const rows = (this.data.datasets || []).filter((dataset) => dataset.hidden !== true && Number.isFinite(dataset.data?.[this.hoverIndex]) && dataset.id !== "ventilationMarkers");
           const entries = rows.map((dataset) => {
             const unit = dataset.yAxisID === "yLight" ? "Lux" : dataset.yAxisID === "yHumidity" ? "%" : dataset.yAxisID === "yTemperature" ? "℃" : "ppm";
             const value = Number(dataset.data[this.hoverIndex]).toFixed(unit === "Lux" || unit === "%" ? 0 : 1);
@@ -1075,6 +1073,17 @@
       margin: 10px 0 0;
       color: var(--primary);
       font-weight: 850;
+    }
+
+    .trend-a11y-summary {
+      margin: 10px 0 0;
+      padding: 9px 11px;
+      border-left: 3px solid var(--primary);
+      border-radius: 5px;
+      background: rgba(22, 214, 176, .07);
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.55;
     }
 
     .chart-insights {
@@ -2628,7 +2637,10 @@
       .status-strip .scenario-select, .status-strip #lastUpdate, .status-strip .language-switch { grid-column: 1 / -1; }
       .theme-switch { grid-column: 1 / -1; width: 100%; }
       .theme-option { flex: 1; }
-      .sensor-grid { grid-template-columns: minmax(0, 1fr); }
+      .sensor-grid { grid-template-columns: 1fr; }
+      .panel-head { flex-wrap: wrap; align-items: flex-start; }
+      .panel-head > * { min-width: 0; }
+      .status-strip .pill { grid-column: 1 / -1; width: 100%; justify-content: center; }
       .decision-head { align-items: flex-start; gap: 10px; }
       .decision-icon { width: 54px; height: 54px; font-size: 1.7rem; }
       .decision-title { font-size: 1.55rem; }
@@ -2787,7 +2799,7 @@
       .status-strip .theme-switch { grid-column: auto; }
       .status-strip #scenarioSelect,
       .status-strip #toggleStream { grid-column: auto; }
-      .sensor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .sensor-grid { grid-template-columns: 1fr; gap: 8px; }
       .sensor-card { min-height: 104px; padding: 10px; }
       .sensor-name { font-size: 0.82rem; }
       .sensor-value { margin: 7px 0 6px; }
@@ -2811,6 +2823,7 @@
         scroll-behavior: auto !important;
         transition-duration: 0.01ms !important;
       }
+      .trend-toggle:hover { transform: none; }
     }
 
     /* 首屏决策摘要：桌面端把建议事项并列展示，减少纵向占用并保持处置顺序清晰。 */
@@ -2865,21 +2878,38 @@
       margin: 10px 0 8px;
     }
 
-    .trend-key-item {
+    .trend-toggle {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      min-height: 28px;
-      padding: 4px 8px;
+      min-height: 36px;
+      padding: 6px 10px;
       border: 1px solid color-mix(in srgb, var(--series), transparent 68%);
       border-radius: 6px;
       color: var(--text);
       background: color-mix(in srgb, var(--series), transparent 92%);
+      cursor: pointer;
+      font-family: inherit;
       font-size: 0.77rem;
       font-weight: 800;
+      transition: border-color .18s ease, background .18s ease, opacity .18s ease, transform .18s ease;
     }
 
-    .trend-key-item i {
+    .trend-toggle:hover {
+      border-color: var(--series);
+      background: color-mix(in srgb, var(--series), transparent 86%);
+      transform: translateY(-1px);
+    }
+
+    .trend-toggle:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .trend-toggle[aria-pressed="false"] { opacity: .52; background: transparent; }
+    .trend-toggle[aria-pressed="false"] .trend-key-label { text-decoration: line-through; text-decoration-thickness: 1px; }
+
+    .trend-toggle i {
       width: 18px;
       height: 3px;
       flex: 0 0 auto;
@@ -2888,12 +2918,12 @@
       box-shadow: 0 0 9px color-mix(in srgb, var(--series), transparent 35%);
     }
 
-    .trend-key-item.raw i {
+    .trend-toggle[data-dataset="rawAmmonia"] i {
       background: repeating-linear-gradient(90deg, #a8b2bb 0 5px, transparent 5px 8px);
       box-shadow: none;
     }
 
-    .trend-key-item small {
+    .trend-toggle small {
       color: var(--muted);
       font-family: var(--mono);
       font-weight: 700;
@@ -2913,10 +2943,21 @@
       background: rgba(239, 248, 249, 0.78);
     }
 
+    html[data-theme="light"] body {
+      background: linear-gradient(145deg, #f4faf8 0%, #edf6f5 52%, #f8fbfa 100%);
+    }
+
+    html[data-theme="light"] .glass {
+      box-shadow: 0 8px 24px rgba(25, 70, 77, .08);
+      backdrop-filter: saturate(112%) blur(10px);
+    }
+
+    html[data-theme="light"] .trend-toggle i { box-shadow: none; }
+
     @media (max-width: 650px) {
       .trend-key { gap: 5px; }
-      .trend-key-item { padding: 4px 7px; font-size: 0.72rem; }
-      .trend-key-item i { width: 14px; }
+      .trend-toggle { min-height: 44px; padding: 5px 8px; font-size: 0.72rem; }
+      .trend-toggle i { width: 14px; }
     }
   </style>
   <style id="qjzh-feature-styles">
@@ -2924,6 +2965,13 @@
     .qjzh-confidence-warn{background:rgba(245,124,0,.15);color:#ffd59c}.qjzh-confidence-err{background:rgba(211,47,47,.17);color:#ffb4b4}.qjzh-scene-toggle{display:none}.qjzh-role-detail{margin:-4px 0 12px;font-size:.86rem;opacity:.82}
     html[data-theme="light"] .qjzh-data-card{background:rgba(7,20,31,.05);border-color:rgba(7,20,31,.15)}html[data-theme="light"] .qjzh-data-card input{background:#fff;color:#17232d}html[data-theme="light"] .qjzh-boundary-banner{background:#eef7f2;border-color:#9ad5c2}html[data-theme="light"] .qjzh-quality-badge{background:rgba(245,124,0,.12);color:#9a5200}html[data-theme="light"] .qjzh-state-empty{background:rgba(120,150,170,.12)}html[data-theme="light"] .qjzh-confidence{background:rgba(22,214,176,.1);color:#0e7a64}html[data-theme="light"] .qjzh-institution-view table{color:#17232d}
     @media(max-width:900px){.qjzh-scene-presets{position:static;display:block;max-width:100%;margin:14px 0 18px}.qjzh-scene-toggle{display:inline-flex}.qjzh-scene-actions{display:none;gap:8px;max-width:100%;overflow-x:auto;padding:8px 0 4px;scrollbar-width:thin}.qjzh-scene-presets.expanded .qjzh-scene-actions{display:flex}.qjzh-scene-actions button{flex:0 0 auto}}
+    /* 演示场景默认收起，只在用户明确展开后显示预设，避免遮挡趋势图。 */
+    .qjzh-scene-presets{flex-direction:column;align-items:flex-end;flex-wrap:nowrap;max-width:min(520px,calc(100vw - 36px))}
+    .qjzh-scene-toggle{display:inline-flex}
+    .qjzh-scene-actions{display:none;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding:10px;border:1px solid rgba(102,190,169,.28);border-radius:12px;background:rgba(7,20,31,.94);box-shadow:0 12px 32px rgba(0,19,28,.24);backdrop-filter:blur(16px)}
+    .qjzh-scene-presets.expanded .qjzh-scene-actions{display:flex}
+    html[data-theme="light"] .qjzh-scene-actions{background:rgba(250,253,252,.98);border-color:rgba(25,70,77,.16);box-shadow:0 10px 26px rgba(25,70,77,.1)}
+    @media(max-width:900px){.qjzh-scene-presets{display:flex;align-items:stretch}.qjzh-scene-toggle{align-self:flex-end}.qjzh-scene-actions{justify-content:flex-start;padding:8px}}
   </style>
   <style id="qjzh-report-preview-styles">
     .qjzh-report-preview-shell{margin-top:16px;padding:14px;border:1px solid rgba(102,190,169,.28);border-radius:14px;background:rgba(7,20,31,.22)}
@@ -2951,6 +2999,17 @@
     .qjzh-institution-view{display:block}.qjzh-report-panel{margin:0}.compat-anchor-note{display:none}
     html[data-theme="light"] .qjzh-main-nav{background:rgba(247,251,251,.92);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-main-nav .nav-link.active{color:#fff;background:#0f9079}html[data-theme="light"] .overview-quick{background:rgba(255,255,255,.76);border-color:rgba(7,20,31,.12)}html[data-theme="light"] .qjzh-filter input{background:#fff;color:#17232d}
     @media(max-width:900px){body{padding-bottom:78px}.qjzh-main-nav{position:fixed;inset:auto 0 0;z-index:30;grid-template-columns:repeat(6,minmax(72px,1fr));gap:2px;margin:0;padding:5px 8px calc(5px + env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:0;overflow-x:auto;box-shadow:0 -10px 30px rgba(0,19,28,.22)}.qjzh-main-nav .nav-link{min-height:52px;flex-direction:column;gap:1px;padding:5px 7px;font-size:.7rem}.qjzh-main-nav .nav-icon{font-size:.66rem}.view-heading{align-items:flex-start;flex-direction:column}.overview-quick-grid{grid-template-columns:1fr}.pipeline-strip{grid-template-columns:1fr!important}.pipeline-next{width:100%}.view-layout>.left-col,.view-layout>.right-col{grid-template-columns:minmax(0,1fr)}.qjzh-scene-presets{margin-bottom:10px}.footer{padding-bottom:18px}}
+    @media (max-width: 430px) {
+      .qjzh-main-nav {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 1px;
+        padding-inline: 3px;
+        overflow-x: hidden;
+      }
+      .qjzh-main-nav .nav-link { min-width: 0; padding-inline: 1px; font-size: .58rem; }
+      .qjzh-main-nav .nav-icon { font-size: .58rem; }
+      .qjzh-main-nav .nav-link span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    }
     @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-boundary-banner,.pipeline-strip,button,.view:not([data-view="report"]){display:none!important}html,body{font-size:11pt;line-height:1.55}html[data-language="bo"],html[data-language="bo"] body{font-size:11.5pt;line-height:1.65}.data-table{font-size:9pt}body{padding:0;background:#fff;color:#17232d}.app{max-width:none;margin:0;padding:0}.view[data-view="report"]{display:block!important;animation:none;min-height:0}.qjzh-report-panel{border:0;box-shadow:none;background:#fff}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
     @media(prefers-reduced-motion:reduce){.view,.qjzh-main-nav .nav-link,.overview-quick{animation:none;transition:none}}
   </style>
@@ -2984,7 +3043,7 @@
           </select>
         </label>
         <select class="scenario-select" id="scenarioSelect" aria-label="场景模拟">
-          <option value="normal">正常环境</option>
+          <option value="normal">24 小时冬季基线</option>
           <option value="ammonia">氨气缓慢超标</option>
           <option value="cold">低温寒潮</option>
           <option value="humidAmmonia">高湿高氨</option>
@@ -3174,16 +3233,17 @@
             <span class="chart-live-count" id="chartPointCount">最近 0 / 60 点</span>
           </div>
           <!-- 图表色标与数据集颜色一一对应，便于快速区分多量纲曲线。 -->
-          <div class="trend-key" aria-label="实时曲线颜色说明" data-i18n-aria-label="aria.trendLegend">
-            <span class="trend-key-item" style="--series:#FF6B6B;"><i></i><span class="trend-key-label">补偿 NH₃</span><small>ppm</small></span>
-            <span class="trend-key-item raw" style="--series:#A8B2BB;"><i></i><span class="trend-key-label">原始 NH₃</span><small>ppm</small></span>
-            <span class="trend-key-item" style="--series:#4A9EFF;"><i></i><span class="trend-key-label">温度</span><small>℃</small></span>
-            <span class="trend-key-item" style="--series:#00D4AA;"><i></i><span class="trend-key-label">湿度</span><small>%</small></span>
-            <span class="trend-key-item" style="--series:#FFD93D;"><i></i><span class="trend-key-label">光照</span><small>Lux</small></span>
+          <div class="trend-key" aria-label="实时曲线显示控制" data-i18n-aria-label="aria.trendLegend">
+            <button class="trend-toggle" type="button" data-dataset="calibratedAmmonia" aria-pressed="true" aria-controls="trendChart" style="--series:#FF6B6B;"><i aria-hidden="true"></i><span class="trend-key-label">补偿 NH₃</span><small>ppm</small></button>
+            <button class="trend-toggle" type="button" data-dataset="rawAmmonia" aria-pressed="true" aria-controls="trendChart" style="--series:#A8B2BB;"><i aria-hidden="true"></i><span class="trend-key-label">原始 NH₃</span><small>ppm</small></button>
+            <button class="trend-toggle" type="button" data-dataset="temperature" aria-pressed="true" aria-controls="trendChart" style="--series:#4A9EFF;"><i aria-hidden="true"></i><span class="trend-key-label">温度</span><small>℃</small></button>
+            <button class="trend-toggle" type="button" data-dataset="humidity" aria-pressed="true" aria-controls="trendChart" style="--series:#00D4AA;"><i aria-hidden="true"></i><span class="trend-key-label">湿度</span><small>%</small></button>
+            <button class="trend-toggle" type="button" data-dataset="light" aria-pressed="true" aria-controls="trendChart" style="--series:#FFD93D;"><i aria-hidden="true"></i><span class="trend-key-label">光照</span><small>Lux</small></button>
           </div>
           <div class="chart-box">
-            <canvas id="trendChart"></canvas>
+            <canvas id="trendChart" role="img" aria-label="最近 60 个采样点的环境趋势图" aria-describedby="trendA11ySummary dataRecordTable"></canvas>
           </div>
+          <p class="trend-a11y-summary" id="trendA11ySummary">趋势图尚无采样数据。</p>
           <p class="trend-summary panel-note" id="trendSummary">📊 等待更多采样点生成趋势简评。</p>
           <div class="chart-insights" aria-label="最近60点统计" data-i18n-aria-label="aria.chartInsights">
             <div class="insight-card"><span>NH₃ 均值</span><strong id="insightAvgNh3">--</strong></div>
@@ -3202,7 +3262,7 @@
             <button class="control secondary" id="snapshotButton" type="button">保存数据快照</button>
           </div>
           <div class="data-table-scroll">
-            <table class="data-table">
+            <table class="data-table" id="dataRecordTable">
               <thead>
                 <tr>
                   <th>时间</th>
@@ -3411,7 +3471,7 @@
     </section>
     </section>
     </main>
-    <div class="qjzh-scene-presets" aria-label="答辩场景预设" data-i18n-aria-label="qjzh.scene.aria"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" data-i18n="qjzh.scene.toggle" type="button" aria-expanded="false">演示</button><div class="qjzh-scene-actions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">断网场景</button><button class="control secondary" data-scene="tour" data-i18n="qjzh.scene.tour" type="button" aria-pressed="false">巡览演示</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
+    <div class="qjzh-scene-presets" aria-label="答辩场景预设" data-i18n-aria-label="qjzh.scene.aria"><button class="control secondary qjzh-scene-toggle" id="scenePresetToggle" data-i18n="qjzh.scene.toggle" type="button" aria-expanded="false" aria-controls="scenePresetActions">演示</button><div class="qjzh-scene-actions" id="scenePresetActions"><button class="control secondary" data-scene="retail" data-i18n="qjzh.scene.retail" type="button">散户场景</button><button class="control secondary" data-scene="institution" data-i18n="qjzh.scene.institution" type="button">机构场景</button><button class="control secondary" data-scene="offline" data-i18n="qjzh.scene.offline" type="button">已加载会话断网演示</button><button class="control secondary" data-scene="tour" data-i18n="qjzh.scene.tour" type="button" aria-pressed="false">巡览演示</button><button class="control secondary" id="resetDemoData" data-i18n="qjzh.scene.reset" type="button">重置演示数据</button></div></div>
     <footer class="footer">
       <span id="buildVersionText">青境智衡 · 纯软件环境数据服务演示</span>
       <span id="buildDateText">数据本地存储不上传 · 不涉及动物诊疗 · 不控制硬件 · 仅提供环境参考建议</span>
@@ -3456,11 +3516,12 @@
       en: {
         "sensor.labels": ["Ammonia", "Barn temperature", "Relative humidity", "Illuminance"],
         "sensor.references": ["15 ppm threshold", "0 C / 22 C", "80% high humidity", "Supplemental-light guide"],
-        "qjzh.page.title": "Qingjing Zhiheng · Highland Barn Environmental Data Service", "qjzh.page.subtitle": "Data intake → highland calibration → decision support → recommendation → report", "qjzh.tab.individual": "Individual", "qjzh.tab.institution": "Institution", "qjzh.data.title": "Data intake", "qjzh.data.note": "The system does not provide sensors. It calibrates, analyzes and produces recommendations from third-party or manually entered data.", "qjzh.data.importCsv": "Third-party CSV", "qjzh.data.manual": "Manual entry", "qjzh.data.demo": "Demo data", "qjzh.confidence.wait": "Confidence: waiting for data", "qjzh.confidence.high": "Confidence: high", "qjzh.confidence.medium": "Confidence: medium", "qjzh.confidence.low": "Confidence: low", "qjzh.institution.title": "Institution multi-barn view", "qjzh.institution.role": "Institution role", "qjzh.report.title": "Quarterly environment report", "qjzh.scene.toggle": "Demo", "qjzh.scene.aria": "Presentation scene presets", "qjzh.scene.retail": "Individual scene", "qjzh.scene.institution": "Institution scene", "qjzh.scene.offline": "Offline scene", "qjzh.scene.reset": "Reset demo", "qjzh.advice.title": "Decision recommendations", "qjzh.algorithm.title": "Highland calibration demo", "qjzh.pipeline.intake": "Data intake", "qjzh.pipeline.calibrate": "Highland calibration", "qjzh.pipeline.decide": "Decision support", "qjzh.pipeline.output": "Recommendation", "qjzh.footer.product": "Qingjing Zhiheng · software environmental data service demo", "qjzh.footer.boundary": "Local-only data · no animal diagnosis · no hardware control · reference recommendations only", "qjzh.footer.deployed": "Deployed",
+        "qjzh.page.title": "Qingjing Zhiheng · Highland Barn Environmental Data Service", "qjzh.page.subtitle": "Data intake → highland calibration → decision support → recommendation → report", "qjzh.tab.individual": "Individual", "qjzh.tab.institution": "Institution", "qjzh.data.title": "Data intake", "qjzh.data.note": "The system does not provide sensors. It calibrates, analyzes and produces recommendations from third-party or manually entered data.", "qjzh.data.importCsv": "Third-party CSV", "qjzh.data.manual": "Manual entry", "qjzh.data.demo": "Demo data", "qjzh.confidence.wait": "Confidence: waiting for data", "qjzh.confidence.high": "Confidence: high", "qjzh.confidence.medium": "Confidence: medium", "qjzh.confidence.low": "Confidence: low", "qjzh.institution.title": "Institution multi-barn view", "qjzh.institution.role": "Institution role", "qjzh.report.title": "Quarterly environment report", "qjzh.scene.toggle": "Demo", "qjzh.scene.aria": "Presentation scene presets", "qjzh.scene.retail": "Individual scene", "qjzh.scene.institution": "Institution scene", "qjzh.scene.offline": "Loaded-session offline demo", "qjzh.scene.reset": "Reset demo", "qjzh.advice.title": "Decision recommendations", "qjzh.algorithm.title": "Highland calibration demo", "qjzh.pipeline.intake": "Data intake", "qjzh.pipeline.calibrate": "Highland calibration", "qjzh.pipeline.decide": "Decision support", "qjzh.pipeline.output": "Recommendation", "qjzh.footer.product": "Qingjing Zhiheng · software environmental data service demo", "qjzh.footer.boundary": "Local-only data · no animal diagnosis · no hardware control · reference recommendations only", "qjzh.footer.deployed": "Deployed",
         "nav.overview": "Overview", "nav.data": "Data intake", "nav.algorithm": "Highland calibration", "nav.decision": "Decision support", "nav.institution": "Institution", "nav.report": "Environment report", "nav.next": "Next: {label}",
         "qjzh.scene.tour": "Guided tour", "view.overview.tourHint": "Suggested tour: Data intake → Highland calibration → Decision support → Institution view → Environment report", "view.overview.institutionQuick": "Barn rankings, regional summaries and role views", "view.overview.reportQuick": "Date ranges, trilingual reports and print export",
         "view.overview.title": "Environment overview", "view.overview.note": "Review the active site, live readings, trends and samples before moving through calibration and decision views.", "view.algorithm.title": "Highland calibration", "view.algorithm.note": "Compare raw and calibrated ammonia, model boundaries and input confidence.", "view.algorithm.modelLabel": "Model", "view.algorithm.api": "The calibration algorithm is exposed through the standard compensate() interface for front ends, back ends and third-party devices; this page calls it directly in the browser.", "view.algorithm.range": "Operating range: altitude 2200–3500 m, temperature -15–25℃, humidity 20–85%, ammonia 0–30 ppm", "view.decision.title": "Decision support", "view.decision.note": "Generate risk level, time window, recommendations and traceable local rules.", "view.institution.title": "Institution view", "view.institution.note": "Review barns by risk and filter by site or species.", "view.report.title": "Environment report", "view.report.note": "Generate a localized report for a date range and print or save it as PDF.",
         "panel.trend": "Real-time trend", "panel.trend.note": "NH₃ uses the left ppm axis; temperature, humidity and light use independent axes. The red dashed line marks the 15 ppm risk threshold; hover any point for its measured values.", "panel.records": "Sampling records", "panel.records.note": "Keeps the latest eight samples; save snapshots for traceable review.", "panel.calibration": "Collection and compensation", "panel.calibration.note": "Simulates sensor compensation under high-altitude, low-pressure conditions.", "panel.algorithm": "Algorithm demonstration", "panel.decisionOutput": "Decision recommendations", "panel.decisionOutput.note": "The system provides recommendations only. Farmers act through existing equipment or manual work; no fan is controlled.", "panel.reasoning": "Current inference", "panel.reasoning.note": "Displays outputs from the local knowledge base and decision engine without duplicating rules in this page.", "panel.knowledgeCatalog": "Knowledge-base rule catalog", "panel.knowledgeCatalog.note": "Thresholds, operating constraints and traceable evidence matched in the current inference.",
+        "trend.a11y.canvas": "Environmental trend chart for the latest 60 samples", "trend.a11y.empty": "The trend chart has no samples yet.", "trend.a11y.summary": "Time window {start}–{end}. Latest compensated ammonia {latest} ppm; peak {max} ppm; trend {direction}; current risk: {risk}.", "trend.a11y.direction.rising": "rising", "trend.a11y.direction.falling": "falling", "trend.a11y.direction.stable": "stable", "trend.a11y.direction.collecting": "collecting",
         "view.overview.dataQuick": "CSV, manual entry and quality scoring", "view.overview.algorithmQuick": "Model demo, error boundaries and confidence", "view.overview.decisionQuick": "Risk, recommendations and rule traceability",
         "qjzh.data.records": "Local records", "qjzh.data.recordsNote": "Shows the latest 20 records; the newest value wins for the same site and timestamp.", "qjzh.data.noRecords": "No local records", "qjzh.data.partialImport": "Some records were not imported", "qjzh.data.imported": "Imported and deduplicated {count} records; the overview will replay one site.", "qjzh.data.sampleLoaded": "Demo data replaced ({sites} barns, {count} records)", "qjzh.data.quality": "Data quality {quality} · confidence {confidence}", "qjzh.data.qualityPending": "Not scored", "qjzh.data.cleared": "Local data cleared", "qjzh.data.demoReplay": "Qinghai winter demo loaded; the overview will replay one site in time order.",
         "qjzh.data.csvNote": "Upload a CSV containing timestamp, site_id, altitude_m, temp_c, rh_percent, raw_nh3_ppm and device_model.", "qjzh.data.downloadTemplate": "Download CSV template", "qjzh.data.loadSample": "Load sample data", "qjzh.data.clear": "Clear local data", "qjzh.data.submit": "Import and calibrate", "qjzh.data.emptyNote": "No data has been connected. Upload a CSV or enter a reading manually.", "qjzh.data.loadDemo": "Load Qinghai winter 24-hour demo", "qjzh.data.emptyStatus": "No data has been connected. Upload a CSV or enter a reading manually.", "qjzh.data.placeholder.site": "Site name", "qjzh.data.placeholder.altitude": "Altitude (m)", "qjzh.data.placeholder.temperature": "Temperature (℃)", "qjzh.data.placeholder.humidity": "Humidity (%)", "qjzh.data.placeholder.ammonia": "Raw ammonia (ppm)", "qjzh.data.placeholder.device": "Device model", "qjzh.data.table.time": "Time", "qjzh.data.table.site": "Site", "qjzh.data.table.species": "Species", "qjzh.data.table.altitude": "Altitude", "qjzh.data.table.raw": "Raw NH₃", "qjzh.data.table.source": "Source",
@@ -3493,13 +3554,13 @@
         "scenario.running": "Scenario simulation: {name}",
         "static.scenarioAria": "Scenario simulation", "static.statusAria": "System status and demo controls", "static.themeAria": "Display theme", "static.languageAria": "Language selection", "static.pipelineAria": "Data intake to recommendation output process", "static.sensorAria": "Live sensor readings", "static.decisionAria": "Local decision advice", "static.triggerAria": "Current trigger conditions", "static.match": "Rule match chain · priority check", "static.waitSample": "Waiting for sample", "static.waitSampleDesc": "The rule matching process will appear after the current sensor sample is received.", "static.ventWindow": "Ventilation window 12:00-14:00", "static.waitDecision": "Waiting for decision", "static.ruleState": ["Matched rule", "Recommendation", "Traceable basis"], "static.catalogNote": "Current thresholds, operating constraints and traceable basis from the local rule catalog.", "static.catalogLoading": "Loading the local knowledge-base rule catalog.", "static.library": "View complete rule-library document", "static.libraryRules": ["Level-one alert: NH3 > 20 ppm. Recommend organizing ventilation and move livestock to a safe area. Basis: NY/T 388-1999.", "Warning: NH3 > 15 ppm. Recommend 5-10 minutes of short ventilation from 12:00-14:00; temperature change must not exceed 3 C.", "Combined alert: humidity > 80% and NH3 > 10 ppm. Clean manure, replace bedding and extend noon ventilation to 15 minutes.", "Low-temperature notice: temperature < 0 C. Recommend insulation and limit ventilation to 3-5 minutes.", "Normal: no risk condition is active. Continue inspection and offline local decision-making."],
         "static.calibrationLabels": ["Estimated pressure", "Compensation factor", "Raw NH3", "Compensated NH3"], "static.compareTitle": "Highland dual-variable compensation comparison", "static.compareLabels": ["Raw NH3", "Compensated NH3"], "static.compareNote": "The pressure-temperature-humidity nonlinear model compensates sensor drift under high-altitude, low-pressure conditions; field uncertainty still requires validation.", "static.ventLabels": ["Risk level", "Recommendation"], "static.alarmWaiting": "Waiting for a traceable recommendation.", "static.ruleStateNote": "Displays current outputs from the local knowledge base and decision engine without duplicating the rules in this page.", "static.compensationNote": "Simulates sensor compensation under high-altitude, low-pressure conditions.", "static.executionNote": "Shows decision recommendations and their traceable basis; execution remains with existing equipment or people.", "static.modelNote": "Internal synthetic-test-set mean relative error: 0.71%; point-level uncertainty has not been evaluated.",
-        "aria.dismissBoundary": "Dismiss service boundary notice", "aria.mainNav": "Primary navigation", "aria.quickLinks": "Module shortcuts", "aria.csvUpload": "Upload sensor CSV", "aria.riskScale": "Ammonia risk scale", "aria.trendLegend": "Live trend color legend", "aria.chartInsights": "Statistics for the latest 60 points", "aria.snapshotList": "Saved snapshots", "aria.compensationCompare": "Highland dual-variable compensation comparison", "aria.algorithmPanel": "Algorithm demonstration panel", "aria.algorithmCredentials": "Algorithm interface and operating range", "aria.demoAltitude": "Algorithm demo altitude", "aria.demoTemperature": "Algorithm demo temperature", "aria.demoHumidity": "Algorithm demo humidity", "aria.demoRaw": "Algorithm demo raw ammonia", "aria.demoOutput": "Raw and compensated results", "aria.adviceTrace": "Recommendation traceability", "aria.institutionRole": "Institution role",
+        "aria.dismissBoundary": "Dismiss service boundary notice", "aria.mainNav": "Primary navigation", "aria.quickLinks": "Module shortcuts", "aria.csvUpload": "Upload sensor CSV", "aria.riskScale": "Ammonia risk scale", "aria.trendLegend": "Trend-series visibility controls", "aria.chartInsights": "Statistics for the latest 60 points", "aria.snapshotList": "Saved snapshots", "aria.compensationCompare": "Highland dual-variable compensation comparison", "aria.algorithmPanel": "Algorithm demonstration panel", "aria.algorithmCredentials": "Algorithm interface and operating range", "aria.demoAltitude": "Algorithm demo altitude", "aria.demoTemperature": "Algorithm demo temperature", "aria.demoHumidity": "Algorithm demo humidity", "aria.demoRaw": "Algorithm demo raw ammonia", "aria.demoOutput": "Raw and compensated results", "aria.adviceTrace": "Recommendation traceability", "aria.institutionRole": "Institution role",
         "title.lowTempMarker": "Low-temperature marker 0℃", "title.highTempMarker": "High-temperature marker 22℃", "qjzh.confidence.detailHigh": "Confidence: high (input is within the model operating range)", "qjzh.confidence.detailMedium": "Confidence: medium (some inputs are outside the model operating range)", "qjzh.confidence.detailLow": "Confidence: low (input is outside the model operating range; result is unreliable)"
       },
       bo: {
         "sensor.labels": ["ཨམ་མོ་ནི་ཡ", "ཁང་པའི་དྲོད་ཚད", "བརླན་ཚད", "འོད་ཀྱི་སྟུག་ཚད"],
         "sensor.references": ["15 ppm ཚད་ཐིག", "0 C / 22 C", "80% བརླན་ཚད་མཐོ", "ཁ་གསབ་འོད་ཀྱི་གཞི་འཛིན"],
-        "qjzh.page.title": "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ", "qjzh.page.subtitle": "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ", "qjzh.tab.individual": "ཁྱིམ་ཚང་ཐོན་སྐྱེད", "qjzh.tab.institution": "སྒྲིག་འཛུགས", "qjzh.data.title": "གཞི་གྲངས་འཇུག་པ", "qjzh.data.note": "མ་ལག་འདིས་བསྡུ་ལེན་སྒྲིག་ཆས་མི་བཟོ། ཕྱིའི་གཞི་གྲངས་ལ་ཁ་གསབ་དང་དཔྱད་ཞིབ། བསམ་འཆར་སྤྲོད།", "qjzh.data.importCsv": "CSV ནང་འདྲེན", "qjzh.data.manual": "ལག་བྲིས་ནང་འཇུག", "qjzh.data.demo": "དཔེ་སྟོན་གཞི་གྲངས", "qjzh.confidence.wait": "ཡིད་ཆེས། གཞི་གྲངས་སྒུག", "qjzh.confidence.high": "ཡིད་ཆེས་མཐོ", "qjzh.confidence.medium": "ཡིད་ཆེས་འབྲིང", "qjzh.confidence.low": "ཡིད་ཆེས་དམའ", "qjzh.institution.title": "སྒྲིག་འཛུགས་ཕྱུགས་ཁང་མང་པོའི་མཐོང་རིས", "qjzh.institution.role": "སྒྲིག་འཛུགས་ལས་འགན", "qjzh.report.title": "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", "qjzh.scene.toggle": "དཔེ་སྟོན", "qjzh.scene.aria": "འགྲེམས་སྟོན་རྣམ་པའི་སྔོན་སྒྲིག", "qjzh.scene.retail": "ཁྱིམ་ཚང་རྣམ་པ", "qjzh.scene.institution": "སྒྲིག་འཛུགས་རྣམ་པ", "qjzh.scene.offline": "དྲ་མེད་རྣམ་པ", "qjzh.scene.reset": "དཔེ་སྟོན་བསྐྱར་སྒྲིག", "qjzh.advice.title": "ཐག་གཅོད་བསམ་འཆར", "qjzh.algorithm.title": "མཐོ་སྒང་ཁ་གསབ་དཔེ་སྟོན", "qjzh.pipeline.intake": "གཞི་གྲངས་འཇུག", "qjzh.pipeline.calibrate": "མཐོ་སྒང་ཁ་གསབ", "qjzh.pipeline.decide": "ཐག་གཅོད", "qjzh.pipeline.output": "བསམ་འཆར", "qjzh.footer.product": "མཐོ་སྒང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ་དཔེ་སྟོན", "qjzh.footer.boundary": "གཞི་གྲངས་ས་གནས་སུ་ཉར · སྨན་བཅོས་མིན · སྲ་ཆས་མི་ཚོད", "qjzh.footer.deployed": "འགྲེམས་སྤེལ་དུས་ཚོད",
+        "qjzh.page.title": "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ", "qjzh.page.subtitle": "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ", "qjzh.tab.individual": "ཁྱིམ་ཚང་ཐོན་སྐྱེད", "qjzh.tab.institution": "སྒྲིག་འཛུགས", "qjzh.data.title": "གཞི་གྲངས་འཇུག་པ", "qjzh.data.note": "མ་ལག་འདིས་བསྡུ་ལེན་སྒྲིག་ཆས་མི་བཟོ། ཕྱིའི་གཞི་གྲངས་ལ་ཁ་གསབ་དང་དཔྱད་ཞིབ། བསམ་འཆར་སྤྲོད།", "qjzh.data.importCsv": "CSV ནང་འདྲེན", "qjzh.data.manual": "ལག་བྲིས་ནང་འཇུག", "qjzh.data.demo": "དཔེ་སྟོན་གཞི་གྲངས", "qjzh.confidence.wait": "ཡིད་ཆེས། གཞི་གྲངས་སྒུག", "qjzh.confidence.high": "ཡིད་ཆེས་མཐོ", "qjzh.confidence.medium": "ཡིད་ཆེས་འབྲིང", "qjzh.confidence.low": "ཡིད་ཆེས་དམའ", "qjzh.institution.title": "སྒྲིག་འཛུགས་ཕྱུགས་ཁང་མང་པོའི་མཐོང་རིས", "qjzh.institution.role": "སྒྲིག་འཛུགས་ལས་འགན", "qjzh.report.title": "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", "qjzh.scene.toggle": "དཔེ་སྟོན", "qjzh.scene.aria": "འགྲེམས་སྟོན་རྣམ་པའི་སྔོན་སྒྲིག", "qjzh.scene.retail": "ཁྱིམ་ཚང་རྣམ་པ", "qjzh.scene.institution": "སྒྲིག་འཛུགས་རྣམ་པ", "qjzh.scene.offline": "ཡོད་ཟིན་པའི་ལཱ་ཡུན་དྲ་མེད་དཔེ་སྟོན", "qjzh.scene.reset": "དཔེ་སྟོན་བསྐྱར་སྒྲིག", "qjzh.advice.title": "ཐག་གཅོད་བསམ་འཆར", "qjzh.algorithm.title": "མཐོ་སྒང་ཁ་གསབ་དཔེ་སྟོན", "qjzh.pipeline.intake": "གཞི་གྲངས་འཇུག", "qjzh.pipeline.calibrate": "མཐོ་སྒང་ཁ་གསབ", "qjzh.pipeline.decide": "ཐག་གཅོད", "qjzh.pipeline.output": "བསམ་འཆར", "qjzh.footer.product": "མཐོ་སྒང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ་དཔེ་སྟོན", "qjzh.footer.boundary": "གཞི་གྲངས་ས་གནས་སུ་ཉར · སྨན་བཅོས་མིན · སྲ་ཆས་མི་ཚོད", "qjzh.footer.deployed": "འགྲེམས་སྤེལ་དུས་ཚོད",
         "nav.overview": "སྙིང་བསྡུས", "nav.data": "གཞི་གྲངས", "nav.algorithm": "ཁ་གསབ", "nav.decision": "ཐག་གཅོད", "nav.institution": "སྒྲིག་འཛུགས", "nav.report": "སྙན་ཞུ", "nav.next": "རྗེས་མ། {label}",
         "qjzh.scene.tour": "ལྟ་སྐོར་དཔེ་སྟོན", "view.overview.tourHint": "དཔེ་སྟོན་གྱི་ལམ་རིམ། གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → རིག་ནུས་ཐག་གཅོད → སྒྲིག་འཛུགས → ཁོར་ཡུག་སྙན་ཞུ", "view.overview.institutionQuick": "ཕྱུགས་ཁང་གོ་རིམ་དང་ས་ཁུལ་སྙིང་བསྡུས། ལས་འགན་མཐོང་རིས།", "view.overview.reportQuick": "དུས་ཡུན་དང་སྐད་གསུམ་སྙན་ཞུ། པར་འདེབས།",
         "view.overview.title": "ཁོར་ཡུག་སྙིང་བསྡུས", "view.overview.note": "ད་ལྟའི་ས་ཚིགས་དང་ཚད་གྲངས། འཕེལ་ཕྱོགས། དཔེ་ཚད་ལ་ལྟ་བ།", "view.algorithm.title": "མཐོ་སྒང་ཁ་གསབ", "view.algorithm.note": "ཐོག་མའི་ཨམ་མོ་ནི་ཡ་དང་ཁ་གསབ་འབྲས་བུ་བསྡུར་བ།", "view.algorithm.modelLabel": "མ་དཔེ", "view.algorithm.api": "ཁ་གསབ་རྩིས་ཐབས་ནི་ཚད་ལྡན་མཐུད་ཁ compensate() བརྒྱུད་མདུན་སྣེ་དང་རྒྱབ་སྣེ། ཕྱིའི་སྒྲིག་ཆས་ཀྱིས་འབོད་ཆོག", "view.algorithm.range": "སྤྱོད་ཁོངས། མཚོ་ངོས་ 2200–3500 m། དྲོད་ཚད -15–25℃། བརླན་ཚད 20–85%། ཨམ་མོ་ནི་ཡ 0–30 ppm", "view.decision.title": "རིག་ནུས་ཐག་གཅོད", "view.decision.note": "ཉེན་ཁ་དང་དུས་སྐབས། བསམ་འཆར། ཁུངས་འདེད་སྒྲིག་གཞི་སྟོན།", "view.institution.title": "སྒྲིག་འཛུགས་མཐོང་རིས", "view.institution.note": "ཕྱུགས་ཁང་མང་པོ་ཉེན་ཁ་ལྟར་སྒྲིག", "view.report.title": "ཁོར་ཡུག་སྙན་ཞུ", "view.report.note": "དུས་ཡུན་ལྟར་སྙན་ཞུ་བཟོས་ནས་ PDF དུ་ཉར།",
@@ -3509,6 +3570,7 @@
         "qjzh.data.csvNote": "timestamp、site_id、altitude_m、temp_c、rh_percent、raw_nh3_ppm、device_model ཡོད་པའི CSV ཡར་འཇུག", "qjzh.data.downloadTemplate": "CSV དཔེ་གཞི་ཕབ་ལེན", "qjzh.data.loadSample": "དཔེ་གྲངས་འཇུག", "qjzh.data.clear": "ས་གནས་གཞི་གྲངས་བསུབ", "qjzh.data.submit": "ནང་འཇུག་དང་ཁ་གསབ", "qjzh.data.emptyNote": "གཞི་གྲངས་མ་མཐུད། CSV ཡར་འཇུག་གམ་ལག་བྲིས་ནང་འཇུག་བྱོས།", "qjzh.data.loadDemo": "མཚོ་སྔོན་དགུན་དུས་ཆུ་ཚོད་ 24 དཔེ་སྟོན", "qjzh.data.emptyStatus": "གཞི་གྲངས་མ་མཐུད། CSV ཡར་འཇུག་གམ་ལག་བྲིས་ནང་འཇུག་བྱོས།", "qjzh.data.placeholder.site": "ས་ཚིགས་མིང", "qjzh.data.placeholder.altitude": "མཚོ་ངོས་མཐོ་ཚད (m)", "qjzh.data.placeholder.temperature": "དྲོད་ཚད (℃)", "qjzh.data.placeholder.humidity": "བརླན་ཚད (%)", "qjzh.data.placeholder.ammonia": "ཐོག་མའི་ཨམ་མོ་ནི་ཡ (ppm)", "qjzh.data.placeholder.device": "སྒྲིག་ཆས་དཔེ་རྟགས", "qjzh.data.table.time": "དུས་ཚོད", "qjzh.data.table.site": "ས་ཚིགས", "qjzh.data.table.species": "ཕྱུགས་རིགས", "qjzh.data.table.altitude": "མཚོ་ངོས", "qjzh.data.table.raw": "ཐོག་མའི NH₃", "qjzh.data.table.source": "གཞི་གྲངས་ཁུངས",
         "qjzh.data.manualSaved": "གཞི་གྲངས་ནང་འཇུག་དང་ཉར་ཚགས་བྱས།", "qjzh.data.notEvaluated": "དཔྱད་ཞིབ་མ་བྱས", "qjzh.model.evaluationNote": "ནང་ཁུལ་མཉམ་བསྲེས་ཚོད་ལྟའི་ཆ་སྙོམས་ལྟོས་བཅས་ནོར་ཚད་ 0.71% ཡིན། གནས་གཅིག་གི་ངེས་མེད་ཚད་ད་དུང་དཔྱད་ཞིབ་མ་བྱས།", "qjzh.validation.number": "{field} གྲངས་ཀ་ཡིན་དགོས།", "qjzh.validation.rangeWarning": "{field} སྤྱོད་ཁོངས་ལས་ཅུང་ཟད་བརྒལ།", "qjzh.validation.rangeReject": "{field} མ་དཔེའི་སྤྱོད་ཁོངས་ལས་བརྒལ།", "qjzh.validation.missing": "ཞིང་ཁ་མི་འདང་། {field}", "qjzh.validation.csvEmpty": "CSV ནང་གཞི་གྲངས་མེད།", "qjzh.confidence.levelHigh": "མཐོ", "qjzh.confidence.levelMedium": "འབྲིང", "qjzh.confidence.levelLow": "དམའ",
         "qjzh.institution.filter": "འཚོལ་བ", "qjzh.institution.note": "སྔོན་སྒྲིག་ཏུ་མཚོ་སྔོན་དཔེ་སྟོན་ཕྱུགས་ཁང་ 5 འཇུག", "qjzh.institution.loading": "ས་ཁུལ་སྙིང་བསྡུས་འཇུག་བཞིན་པ…", "qjzh.institution.filterPlaceholder": "ས་ཚིགས ID ཡང་ན་ཕྱུགས་རིགས་འཇུག", "qjzh.institution.table.site": "ས་ཚིགས", "qjzh.institution.table.altitude": "མཚོ་ངོས", "qjzh.institution.table.species": "ཕྱུགས་རིགས", "qjzh.institution.table.ammonia": "ཁ་གསབ NH₃", "qjzh.institution.table.risk": "ཉེན་ཁའི་རིམ་པ", "qjzh.institution.table.updated": "མཇུག་མཐའི་དུས་ཚོད", "qjzh.institution.export": "ས་ཁུལ་སྙན་ཞུ་ཕྱིར་འདྲེན", "qjzh.institution.import": "ས་གནས་ཟིན་ཐོ་ནང་འདྲེན", "qjzh.report.note": "སྔོན་སྒྲིག་ཉིན་ 90 བསྡོམས། སྙན་ཞུ་པར་འདེབས་སམ PDF དུ་ཉར་ཆོག", "qjzh.report.start": "འགོ་ཚུགས་ཉིན", "qjzh.report.end": "མཇུག་ཉིན", "qjzh.report.generate": "སྙན་ཞུ་བཟོ་ཞིང་པར་འདེབས", "qjzh.report.status": "དུས་ཡུན་བདམས་ནས་སྙན་ཞུ་བཟོས།", "qjzh.report.preview": "ཁོར་ཡུག་སྙན་ཞུའི་སྔོན་ལྟ", "qjzh.report.retryPrint": "པར་འདེབས་སྒེའུ་ཁུང་ཡང་བསྐྱར་ཁ་ཕྱེ", "qjzh.report.watermark": "སྙན་ཞུར་དཔེ་སྟོན་ཆུ་རྟགས་ཡོད། ཁྲིམས་མཐུན་ཚད་འཇལ་ལམ་སྨན་བཅོས་གཞི་འཛིན་མིན།",
+        "trend.a11y.canvas": "ཉེ་བའི་དཔེ་འཇལ་ 60 ཡི་ཁོར་ཡུག་འཕེལ་ཕྱོགས་རི་མོ", "trend.a11y.empty": "འཕེལ་ཕྱོགས་རི་མོར་དཔེ་འཇལ་གཞི་གྲངས་མེད།", "trend.a11y.summary": "དུས་ཡུན {start}–{end}། ཁ་གསབ་ཨམ་མོ་ནི་ཡ་གསར་ཤོས {latest} ppm། མཐོ་ཤོས {max} ppm། འཕེལ་ཕྱོགས {direction}། ད་ལྟའི་ཉེན་ཁ། {risk}", "trend.a11y.direction.rising": "འཕར་བ", "trend.a11y.direction.falling": "མར་ཆག་པ", "trend.a11y.direction.stable": "བརྟན་པོ", "trend.a11y.direction.collecting": "བསྡུ་ལེན་བྱེད་བཞིན་པ",
         "recommendation.riskName": "ཉེན་ཁའི་རིམ་པ", "recommendation.riskDesc": "ཁ་གསབ་ཨམ་མོ་ནི་ཡ་དང་ས་གནས་ཤེས་བྱའི་སྒྲིག་གཞི་ལ་གཞིར་བཞག", "recommendation.actionName": "ཐག་གཅོད་བསམ་འཆར", "recommendation.actionDesc": "མ་ལག་གིས་བསམ་འཆར་ཁོ་ན་སྤྲོད", "recommendation.command": "བསམ་འཆར། {advice}（{window}）", "recommendation.trace": "ཁུངས་འདེད། {rule} · {standard}", "recommendation.noHardware": "{advice} སྲ་ཆས་ལ་ཚོད་འཛིན་བཀའ་མི་གཏོང་།", "recommendation.output": "བསམ་འཆར། {level}", "recommendation.suggestion.normal": "རྒྱུན་ལྡན་གྱི་སྐོར་ཞིབ་མུ་མཐུད།", "recommendation.suggestion.watch": "དུས་ཐུང་རླུང་འགྲོ་བྱས་ནས་བྱང་ཕྱོགས་ཀྱི་རླུང་ཁ་ཞིབ་བཤེར་བྱེད།", "recommendation.suggestion.todo": "དུས་ཐུང་རླུང་འགྲོ་དང་རླུང་ཁ་ཞིབ་བཤེར། ཨམ་མོ་ནི་ཡ་བསྐྱར་འཇལ་བྱེད།", "recommendation.suggestion.emergency": "མྱུར་དུ་རླུང་འགྲོ་སྒྲིག་འཛུགས་དང་ལྕི་བ་གཙང་སེལ། ཨམ་མོ་ནི་ཡ་བསྐྱར་འཇལ་བྱེད།",
         "qjzh.scene.retailStatus": "ཁྱིམ་ཚང་རྣམ་པ། QH-HD-001 ས་ཚིགས་གཅིག་བསྐྱར་སྟོན།", "qjzh.scene.institutionStatus": "སྒྲིག་འཛུགས་རྣམ་པ། ཕྱུགས་ཁང་5 ཉེན་ཁ་ལྟར་སྒྲིག", "qjzh.scene.offlineStatus": "དྲ་མེད་དཔེ་སྟོན། ས་གནས་ཟིན་ཐོ {count} · ཁ་གསབ {ppm} ppm · Canvas {fallback}", "qjzh.scene.active": "ལས་འགན་ཁུར", "qjzh.scene.available": "སྤྱོད་རུང",
         "qjzh.replay.active": "{site} བསྐྱར་སྟོན། ཟིན་ཐོ {count} · ས་ཚིགས {sites} ནས་གཅིག", "qjzh.replay.complete": "བསྐྱར་སྟོན་གྲུབ། {site} · ཟིན་ཐོ {count} · ས་ཚིགས་གཞན {other}", "qjzh.replay.local": "ད་ལྟའི་གཞི་གྲངས། ས་གནས་ཆུ་ཚོད་24 དཔེ་མཚོན།", "qjzh.replay.source": "ནང་འདྲེན་གཞི་གྲངས · {site}", "qjzh.stream.importedRunning": "ནང་འདྲེན་བསྐྱར་སྟོན་འགྲོ་བཞིན", "qjzh.stream.importedComplete": "ནང་འདྲེན་བསྐྱར་སྟོན་གྲུབ",
@@ -3659,7 +3721,7 @@
       "static.compensationNote": "མཐོ་སྒང་གནོན་ཤུགས་དམའ་བའི་ཚོར་ཆས་ཁ་གསབ་ལས་རིམ་དཔེ་སྟོན།",
       "static.executionNote": "ཐག་གཅོད་བསམ་འཆར་དང་ཁུངས་འདེད་གཞི་འཛིན་སྟོན། ལག་བསྟར་ནི་ཡོད་ཟིན་སྒྲིག་ཆས་སམ་མིས་བྱེད།",
       "static.modelNote": "ནང་ཁུལ་མཉམ་བསྲེས་ཚོད་ལྟའི་ཆ་སྙོམས་ལྟོས་བཅས་ནོར་ཚད་ 0.71% ཡིན། གནས་གཅིག་གི་ངེས་མེད་ཚད་ད་དུང་དཔྱད་ཞིབ་མ་བྱས།",
-      "aria.dismissBoundary": "ཞབས་ཞུའི་མཚམས་ཐིག་བརྡ་ཐོ་ཁ་རྒྱག", "aria.mainNav": "གཙོ་བོའི་ཕྱོགས་སྟོན", "aria.quickLinks": "ནུས་པའི་མགྱོགས་འཇུག", "aria.csvUpload": "ཚོར་ཆས་ CSV ཡར་འཇུག", "aria.riskScale": "ཨམ་མོ་ནི་ཡའི་ཉེན་ཁའི་ཚད", "aria.trendLegend": "དངོས་དུས་འཕེལ་ཕྱོགས་ཁ་དོག་གསལ་བཤད", "aria.chartInsights": "ཉེ་བའི་གནས་ཚད་ 60 ཡི་བསྡོམས་རྩིས", "aria.snapshotList": "མྱུར་བཀོད་རེའུ་མིག", "aria.compensationCompare": "མཐོ་སྒང་འགྱུར་ཚད་གཉིས་ཀྱི་ཁ་གསབ་བསྡུར་བ", "aria.algorithmPanel": "རྩིས་ཐབས་དཔེ་སྟོན་ངོས", "aria.algorithmCredentials": "རྩིས་ཐབས་མཐུད་ཁ་དང་སྤྱོད་ཁོངས", "aria.demoAltitude": "རྩིས་ཐབས་དཔེ་སྟོན་མཚོ་ངོས", "aria.demoTemperature": "རྩིས་ཐབས་དཔེ་སྟོན་དྲོད་ཚད", "aria.demoHumidity": "རྩིས་ཐབས་དཔེ་སྟོན་བརླན་ཚད", "aria.demoRaw": "རྩིས་ཐབས་དཔེ་སྟོན་ཐོག་མའི་ཨམ་མོ་ནི་ཡ", "aria.demoOutput": "ཐོག་མ་དང་ཁ་གསབ་འབྲས་བུ", "aria.adviceTrace": "བསམ་འཆར་ཁུངས་འདེད", "aria.institutionRole": "སྒྲིག་འཛུགས་ལས་འགན",
+      "aria.dismissBoundary": "ཞབས་ཞུའི་མཚམས་ཐིག་བརྡ་ཐོ་ཁ་རྒྱག", "aria.mainNav": "གཙོ་བོའི་ཕྱོགས་སྟོན", "aria.quickLinks": "ནུས་པའི་མགྱོགས་འཇུག", "aria.csvUpload": "ཚོར་ཆས་ CSV ཡར་འཇུག", "aria.riskScale": "ཨམ་མོ་ནི་ཡའི་ཉེན་ཁའི་ཚད", "aria.trendLegend": "འཕེལ་ཕྱོགས་གཞི་གྲངས་མངོན་སྟོན་ཚོད་འཛིན", "aria.chartInsights": "ཉེ་བའི་གནས་ཚད་ 60 ཡི་བསྡོམས་རྩིས", "aria.snapshotList": "མྱུར་བཀོད་རེའུ་མིག", "aria.compensationCompare": "མཐོ་སྒང་འགྱུར་ཚད་གཉིས་ཀྱི་ཁ་གསབ་བསྡུར་བ", "aria.algorithmPanel": "རྩིས་ཐབས་དཔེ་སྟོན་ངོས", "aria.algorithmCredentials": "རྩིས་ཐབས་མཐུད་ཁ་དང་སྤྱོད་ཁོངས", "aria.demoAltitude": "རྩིས་ཐབས་དཔེ་སྟོན་མཚོ་ངོས", "aria.demoTemperature": "རྩིས་ཐབས་དཔེ་སྟོན་དྲོད་ཚད", "aria.demoHumidity": "རྩིས་ཐབས་དཔེ་སྟོན་བརླན་ཚད", "aria.demoRaw": "རྩིས་ཐབས་དཔེ་སྟོན་ཐོག་མའི་ཨམ་མོ་ནི་ཡ", "aria.demoOutput": "ཐོག་མ་དང་ཁ་གསབ་འབྲས་བུ", "aria.adviceTrace": "བསམ་འཆར་ཁུངས་འདེད", "aria.institutionRole": "སྒྲིག་འཛུགས་ལས་འགན",
       "title.lowTempMarker": "དྲོད་ཚད་དམའ་བའི་རྟགས་ 0℃", "title.highTempMarker": "དྲོད་ཚད་མཐོ་བའི་རྟགས་ 22℃", "qjzh.confidence.detailHigh": "ཡིད་ཆེས་མཐོ（ནང་འཇུག་མ་དཔེའི་སྤྱོད་ཁོངས་ནང་ཡོད）", "qjzh.confidence.detailMedium": "ཡིད་ཆེས་འབྲིང（ནང་འཇུག་ཁ་ཤས་མ་དཔེའི་སྤྱོད་ཁོངས་ལས་བརྒལ）", "qjzh.confidence.detailLow": "ཡིད་ཆེས་དམའ（ནང་འཇུག་མ་དཔེའི་སྤྱོད་ཁོངས་ལས་བརྒལ་ཞིང་འབྲས་བུར་ཡིད་ཆེས་མི་རུང）"
     });
 
@@ -4355,6 +4417,7 @@
     };
 
     Chart.register(thresholdLinePlugin);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let trendChart = new Chart(document.getElementById("trendChart"), {
       type: "line",
@@ -4362,6 +4425,7 @@
         labels: state.labels,
         datasets: [
           {
+            id: "calibratedAmmonia",
             label: "补偿NH₃ ppm",
             data: state.ammonia,
             borderColor: "#FF6B6B",
@@ -4378,6 +4442,7 @@
             yAxisID: "yAmmonia"
           },
           {
+            id: "rawAmmonia",
             label: "原始NH₃ ppm",
             data: state.rawAmmonia,
             borderColor: "rgba(170, 170, 170, 0.5)",
@@ -4390,6 +4455,7 @@
             yAxisID: "yAmmonia"
           },
           {
+            id: "temperature",
             label: "温度 ℃",
             data: state.temperature,
             borderColor: "#4A9EFF",
@@ -4404,6 +4470,7 @@
             yAxisID: "yTemperature"
           },
           {
+            id: "humidity",
             label: "湿度 %",
             data: state.humidity,
             borderColor: "#00D4AA",
@@ -4419,6 +4486,7 @@
             borderDash: [5, 4]
           },
           {
+            id: "light",
             label: "光照 Lux",
             data: state.light,
             borderColor: "#FFD93D",
@@ -4438,10 +4506,11 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 240 },
+        animation: reducedMotion.matches ? false : { duration: 240 },
         interaction: { mode: "index", intersect: false },
         plugins: {
           legend: {
+            display: false,
             labels: {
               color: "#7A9BB5",
               usePointStyle: true,
@@ -4513,10 +4582,50 @@
       const canvas = document.getElementById("trendChart");
       const data = trendChart.data;
       const options = trendChart.options;
+      data.datasets.forEach((dataset, index) => { dataset.hidden = !trendChart.isDatasetVisible(index); });
       if (typeof trendChart.destroy === "function") trendChart.destroy();
       trendChart = new window.QJZHCanvasChart(canvas, { type: "line", data, options });
+      syncTrendToggleState();
       return true;
     };
+
+    const trendDatasetIds = ["calibratedAmmonia", "rawAmmonia", "temperature", "humidity", "light"];
+
+    function syncTrendToggleState() {
+      document.querySelectorAll(".trend-toggle[data-dataset]").forEach((button) => {
+        const index = trendChart.data.datasets.findIndex((dataset) => dataset.id === button.dataset.dataset);
+        button.setAttribute("aria-pressed", String(index >= 0 && trendChart.isDatasetVisible(index)));
+      });
+    }
+
+    function toggleDataset(id) {
+      const index = trendChart.data.datasets.findIndex((dataset) => dataset.id === id);
+      if (index < 0 || !trendDatasetIds.includes(id)) return false;
+      const visibleCount = trendChart.data.datasets.reduce((count, dataset, datasetIndex) => (
+        trendDatasetIds.includes(dataset.id) && trendChart.isDatasetVisible(datasetIndex) ? count + 1 : count
+      ), 0);
+      const nextVisible = !trendChart.isDatasetVisible(index);
+      if (!nextVisible && visibleCount <= 1) return true;
+      trendChart.setDatasetVisibility(index, nextVisible);
+      trendChart.update(reducedMotion.matches ? "none" : undefined);
+      syncTrendToggleState();
+      updateTrendA11ySummary();
+      return nextVisible;
+    }
+
+    window.QJZH.chartControls = { toggleDataset: toggleDataset };
+    document.querySelector(".trend-key")?.addEventListener("click", (event) => {
+      const button = event.target.closest(".trend-toggle[data-dataset]");
+      if (button) toggleDataset(button.dataset.dataset);
+    });
+    syncTrendToggleState();
+
+    function applyChartMotionPreference() {
+      trendChart.options.animation = reducedMotion.matches ? false : { duration: 240 };
+      trendChart.update("none");
+    }
+    if (typeof reducedMotion.addEventListener === "function") reducedMotion.addEventListener("change", applyChartMotionPreference);
+    else if (typeof reducedMotion.addListener === "function") reducedMotion.addListener(applyChartMotionPreference);
 
     // 语言包只负责界面文案，不参与采集、补偿和知识库决策。
     const languageState = { current: "zh" };
@@ -4525,7 +4634,7 @@
         title: "Qingjing Zhiheng · Highland Barn Environmental Data Service",
         subtitle: "Data intake → highland calibration → decision support → recommendation → environment report.",
         stream: "Collecting",
-        scenario: ["Normal environment", "Slow ammonia rise", "Cold wave", "High humidity + ammonia"],
+        scenario: ["24-hour winter baseline", "Slow ammonia rise", "Cold wave", "High humidity + ammonia"],
         recent: "Last 60 points",
         lastUpdate: "Last update: ",
         pause: "Pause collection",
@@ -4575,7 +4684,7 @@
         title: "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་གཞི་གྲངས་ཞབས་ཞུ",
         subtitle: "གཞི་གྲངས་འཇུག་པ → མཐོ་སྒང་ཁ་གསབ → ཐག་གཅོད → བསམ་འཆར → སྙན་ཞུ",
         stream: "བསྡུ་ལེན་བྱེད་བཞིན་པ",
-        scenario: ["ཁོར་ཡུག་རྒྱུན་ལྡན", "ཨམ་མོ་ནི་ཡ་འཕར་བ", "གྲང་ངར་རླུང", "རློན་ཚད་མཐོ་བ་དང་ཨམ་མོ་ནི་ཡ་མཐོ་བ"],
+        scenario: ["དགུན་ཁའི་ཆུ་ཚོད་ 24 གཞི་རྩའི་རྣམ་པ", "ཨམ་མོ་ནི་ཡ་འཕར་བ", "གྲང་ངར་རླུང", "རློན་ཚད་མཐོ་བ་དང་ཨམ་མོ་ནི་ཡ་མཐོ་བ"],
         recent: "གནས་ཚད་ 60 མཐའ་མ",
         lastUpdate: "མཇུག་མཐུད་དུས་ཚོད། ",
         pause: "བསྡུ་ལེན་སྐབས་སྐབས་འཇོག",
@@ -4873,6 +4982,44 @@
       }
     }
 
+    function updateTrendA11ySummary() {
+      const summary = document.getElementById("trendA11ySummary");
+      const canvas = document.getElementById("trendChart");
+      if (canvas) canvas.setAttribute("aria-label", tr("trend.a11y.canvas", "最近 60 个采样点的环境趋势图"));
+      if (!summary) return;
+      if (state.ammonia.length === 0 || state.labels.length === 0) {
+        summary.textContent = tr("trend.a11y.empty", "趋势图尚无采样数据。");
+        return;
+      }
+      const recent = state.ammonia.slice(-10);
+      const latest = recent[recent.length - 1];
+      const max = Math.max(...state.ammonia);
+      const delta = recent.length > 1 ? latest - recent[0] : 0;
+      const directionKey = recent.length < 3
+        ? "collecting"
+        : delta > 0.5 ? "rising" : delta < -0.5 ? "falling" : "stable";
+      const directionFallback = {
+        collecting: "采集中",
+        rising: "上升",
+        falling: "下降",
+        stable: "平稳"
+      }[directionKey];
+      const direction = tr("trend.a11y.direction." + directionKey, directionFallback);
+      const risk = getSensorStatus("ammonia", latest).label;
+      summary.textContent = tr(
+        "trend.a11y.summary",
+        "时间窗 {start}–{end}；补偿氨气最新 {latest} ppm、最高 {max} ppm；趋势{direction}；当前风险：{risk}。",
+        {
+          start: state.labels[0],
+          end: state.labels[state.labels.length - 1],
+          latest: latest.toFixed(1),
+          max: max.toFixed(1),
+          direction,
+          risk
+        }
+      );
+    }
+
     // 汇总最近 60 个采样点，学习监测平台常见的 min/max/avg 辅助读数。
     function updateChartInsights() {
       if (state.ammonia.length === 0) return;
@@ -4887,6 +5034,7 @@
     }
 
     function updateChartPointCount() {
+      updateTrendA11ySummary();
       const count = document.getElementById("chartPointCount");
       if (count) count.textContent = tr("chart.points", `最近 ${state.labels.length} / ${MAX_POINTS} 点`, { count: state.labels.length, max: MAX_POINTS });
     }
