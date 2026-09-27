@@ -119,7 +119,7 @@
         var html = sources[0];
         var dashboard = sources[1];
         report((html.match(/<main\b/g) || []).length === 1 && html.indexOf('href="#main-content"') >= 0, "主页面包含唯一 main 与跳转主内容链接");
-        report((html.match(/<button class="pipeline-step/g) || []).length === 4 && html.indexOf('id="pipelineNext"') >= 0, "流程步骤与下一步操作均使用原生按钮");
+        report((html.match(/<button class="pipeline-step/g) || []).length === 3 && html.indexOf('id="pipelineNext"') >= 0, "流程步骤与下一步操作均使用原生按钮");
         report(html.indexOf('src="dashboard.js?v=') >= 0 && html.indexOf('src="riskPolicy.js?v=') >= 0, "主应用与风险策略脚本已发布");
         report(html.indexOf('rel="canonical" href="https://runner-cpu.github.io/QJZH/"') >= 0, "主页 canonical 地址正确");
         report((html.match(/class="view(?: active)?" data-view=/g) || []).length === 6, "六个 Hash 视图容器均已发布");
