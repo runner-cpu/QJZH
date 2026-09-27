@@ -1022,9 +1022,8 @@ function updateCalibration(data) {
   }
 }
 
-function pushRecord(data, result) {
-  state.records.unshift({ ...data, result });
-  state.records = state.records.slice(0, MAX_RECORDS);
+function renderRecords() {
+  if (!els.recordRows) return;
   els.recordRows.innerHTML = state.records.map((item) => `
     <tr>
       <td>${item.time}</td>
@@ -1036,6 +1035,12 @@ function pushRecord(data, result) {
       <td class="level-${item.result.levelClass}">${item.result.icon} ${localizedLevel(item.result.levelClass, item.result.title)}</td>
     </tr>
   `).join("");
+}
+
+function pushRecord(data, result) {
+  state.records.unshift({ ...data, result });
+  state.records = state.records.slice(0, MAX_RECORDS);
+  renderRecords();
 }
 
 // 数据快照功能：手动保存当前时刻读数和决策结果，最多保留 5 条。
@@ -1746,6 +1751,7 @@ function refreshDynamicLanguage() {
   updateChartPointCount();
   updateTrendSummary();
   updateChartInsights();
+  renderRecords();
   renderSnapshots();
 }
 window.QJZH.refreshDynamicLanguage = refreshDynamicLanguage;
