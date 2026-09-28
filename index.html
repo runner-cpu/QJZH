@@ -186,6 +186,103 @@
       align-items: center;
     }
 
+    /* Reserve the final desktop header footprint before the remainder of the
+       inline stylesheet is parsed. Dynamic telemetry labels can otherwise
+       add a flex row during boot and shift the whole dashboard. */
+    @media (min-width: 981px) {
+      .topbar {
+        display: flex;
+        min-height: 120px;
+        gap: 14px;
+        padding: 12px 16px;
+        align-items: center;
+      }
+      .topbar > .brand-block { min-width: 0; flex: 1 1 310px; }
+      .topbar .title {
+        max-width: 100%;
+        overflow: visible;
+        overflow-wrap: anywhere;
+        text-overflow: clip;
+        text-wrap: wrap;
+        white-space: normal;
+        font-size: clamp(1.16rem, 1.55vw, 1.55rem);
+        line-height: 1.24;
+      }
+      .topbar .subtitle { display: none; }
+      .status-strip {
+        display: grid;
+        grid-template-columns: minmax(130px, 1fr) minmax(210px, 1fr) 160px 145px;
+        grid-template-rows: repeat(2, minmax(35px, auto));
+        flex: 0 1 760px;
+        min-width: 0;
+        min-height: 94px;
+        margin-left: auto;
+        gap: 7px;
+        align-items: center;
+      }
+      .status-strip > .pill:first-child { grid-column: 1; grid-row: 1; justify-content: center; }
+      .status-strip > .telemetry-pill { grid-column: 2; grid-row: 1; justify-content: center; }
+      .status-strip > .theme-switch { grid-column: 3; grid-row: 1; justify-self: center; }
+      .status-strip > .language-switch { grid-column: 4; grid-row: 1; justify-self: end; }
+      .status-strip .pill,
+      .status-strip .control,
+      .status-strip .scenario-select { min-height: 34px; padding: 7px 9px; }
+      .status-strip #scenarioSelect { grid-column: 3; grid-row: 2; }
+      .status-strip #toggleStream { grid-column: 4; grid-row: 2; justify-self: end; }
+      .telemetry-pill { gap: 7px; }
+      .telemetry-divider { width: 1px; height: 14px; background: var(--line-strong); }
+      .theme-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        min-height: 36px;
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.055);
+      }
+      .theme-option {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 4px 9px;
+        border: 0;
+        border-radius: 5px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 0.78rem;
+        font-weight: 850;
+      }
+      .language-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 3px 5px 3px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.055);
+        font-size: 0.78rem;
+        font-weight: 850;
+        white-space: nowrap;
+      }
+      .language-switch select {
+        min-height: 44px;
+        padding: 4px 22px 4px 7px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 0.78rem;
+        font-weight: 850;
+      }
+      #main-content { min-height: calc(100vh - 321px); }
+    }
+
+    @media (min-width: 901px) and (max-width: 980px) {
+      #main-content { min-height: calc(100vh - 321px); }
+    }
+
     .pill,
     .control,
     .scenario-select {
@@ -2855,6 +2952,23 @@
       .qjzh-main-nav .nav-icon { font-size: .58rem; }
       .qjzh-main-nav .nav-link span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     }
+    /* Keep the late cascade aligned with the critical reservation above. */
+    @media (min-width: 981px) {
+      .topbar { min-height: 120px; }
+      .status-strip {
+        display: grid;
+        grid-template-columns: minmax(130px, 1fr) minmax(210px, 1fr) 160px 145px;
+        grid-template-rows: repeat(2, minmax(35px, auto));
+        min-height: 94px;
+        align-items: center;
+      }
+      .status-strip > .pill:first-child { grid-column: 1; grid-row: 1; justify-content: center; }
+      .status-strip > .telemetry-pill { grid-column: 2; grid-row: 1; justify-content: center; }
+      .status-strip > .theme-switch { grid-column: 3; grid-row: 1; justify-self: center; }
+      .status-strip > .language-switch { grid-column: 4; grid-row: 1; justify-self: end; }
+      .status-strip #scenarioSelect { grid-column: 3; grid-row: 2; }
+      .status-strip #toggleStream { grid-column: 4; grid-row: 2; justify-self: end; }
+    }
     @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-boundary-banner,.pipeline-strip,button,.view:not([data-view="report"]){display:none!important}html,body{font-size:11pt;line-height:1.55}html[data-language="bo"],html[data-language="bo"] body{font-size:11.5pt;line-height:1.65}.data-table{font-size:9pt}body{padding:0;background:#fff;color:#17232d}.app{max-width:none;margin:0;padding:0}.view[data-view="report"]{display:block!important;animation:none;min-height:0}.qjzh-report-panel{border:0;box-shadow:none;background:#fff}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
     @media(prefers-reduced-motion:reduce){.view,.qjzh-main-nav .nav-link,.overview-quick{animation:none;transition:none}}
   </style>
@@ -2873,8 +2987,8 @@
         <p class="subtitle sr-only">数据接入 → 高原校准 → 智能决策 → 建议输出 → 环境报告</p>
       </div>
       <div class="status-strip" aria-label="系统状态与演示控制">
-        <span class="pill"><span class="dot"></span><span id="streamStatus">采集中</span></span>
-        <span class="pill telemetry-pill"><span id="recentPoints">最近 60 点</span><i class="telemetry-divider" aria-hidden="true"></i><span id="lastUpdate">更新：--</span></span>
+        <span class="pill"><span class="dot"></span><span id="streamStatus">24小时模拟中</span></span>
+        <span class="pill telemetry-pill"><span id="recentPoints">最近 60 点</span><i class="telemetry-divider" aria-hidden="true"></i><span id="lastUpdate">模拟时刻：00:00</span></span>
         <div class="theme-switch" role="group" aria-label="显示主题">
           <button type="button" class="theme-option" data-theme-value="light" aria-pressed="false">浅色</button>
           <button type="button" class="theme-option active" data-theme-value="dark" aria-pressed="true">深色</button>
@@ -2960,7 +3074,7 @@
       <div class="view-heading"><div><h2 id="decisionViewTitle" data-i18n="view.decision.title">智能决策</h2><p data-i18n="view.decision.note">依据校准数据与本地知识库生成风险等级、时间窗口、处置建议和可追溯规则。</p></div></div>
       <div class="view-layout"><section class="left-col" id="decisionMount"></section><aside class="right-col" id="decisionSideMount"></aside></div>
     </section>
-    <div class="qjzh-view-source" id="qjzhViewSource" aria-hidden="true">
+    <div class="qjzh-view-source" id="qjzhViewSource" aria-hidden="true" hidden>
     <div class="main-grid">
       <section class="left-col">
         <!-- 首屏优先：四路传感器数据先于详细建议展示。 -->
