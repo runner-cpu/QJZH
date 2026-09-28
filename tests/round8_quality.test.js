@@ -214,14 +214,14 @@ test("report generator exposes the latest twelve calibrated points in time order
   assert.equal(report.trendSeries[report.trendSeries.length - 1].value, records[13].raw_nh3_ppm);
 });
 
-test("report date range includes the complete first and last local calendar days", () => {
+test("report date range includes the complete first and last Shanghai calendar days", () => {
   const records = [
-    new Date(2026, 7, 31, 23, 59, 59, 999),
-    new Date(2026, 8, 1, 0, 0, 0, 0),
-    new Date(2026, 8, 30, 23, 59, 59, 999),
-    new Date(2026, 9, 1, 0, 0, 0, 0)
+    "2026-08-31T23:59:59.999+08:00",
+    "2026-09-01T00:00:00.000+08:00",
+    "2026-09-30T23:59:59.999+08:00",
+    "2026-10-01T00:00:00.000+08:00"
   ].map((timestamp, index) => ({
-    timestamp: timestamp.toISOString(),
+    timestamp: new Date(timestamp).toISOString(),
     site_id: "QH-BOUNDARY",
     temp_c: 8,
     calibrated_nh3_ppm: 7 + index
