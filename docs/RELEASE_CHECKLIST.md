@@ -26,7 +26,7 @@
 
 ## GitHub Actions 与线上 smoke test
 
-推送 gh-pages 后等待 Verify and deploy GitHub Pages workflow。必须确认 verify 和 deploy job 均为 success。线上至少检查：
+仓库 Settings → Pages → Build and deployment → Source 必须保持为 **GitHub Actions**。如果通过 API 配置，使用 Pages 更新接口的 `PUT` 方法设置 `build_type=workflow`；不要使用 `PATCH`，也不要恢复为 gh-pages 根目录。推送 gh-pages 后等待 Verify and deploy GitHub Pages workflow，必须确认 verify 和 deploy job 均为 success。线上至少检查：
 
 - / 返回 200，六个 hash 视图可切换；
 - /online_test.html 自检全部 PASS；
@@ -34,6 +34,8 @@
 - /robots.txt、/sitemap.xml、/404.html 返回正确内容；
 - /COPYRIGHT.md、/ORIGINALITY.md、/SECURITY.md 和 docs/ 公开文档可访问；
 - 页面禁词扫描和许可证链接均无异常。
+
+若线上 `/build_info.js` 仍显示 `commit: "local"` 或 `environment: "local"`，说明 Pages source 被切回 legacy 根目录；先修复 Pages source，再重新运行 workflow，不要手工把生成的 `dist/build_info.js` 复制回源码。
 
 ## 回滚
 

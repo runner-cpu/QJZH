@@ -4,7 +4,7 @@
 
 - 目标仓库：`runner-cpu/QJZH`
 - 发布分支：`gh-pages`
-- 发布方式：GitHub Pages 根目录静态部署
+- 发布方式：GitHub Actions 校验后部署 allowlist artifact
 - 训练模型版本：`1.0.0`
 - 训练日期：`2026-08-03`
 - 测试集相对误差：`0.71%`

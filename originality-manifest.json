@@ -26,7 +26,7 @@
     {
       "path": "README.md",
       "purpose": "public product documentation",
-      "sha256": "2be8d7de8ad3e3d2941ac886984a00d2d7b260b78ec4db51ffb70267e113765d"
+      "sha256": "f6a55093c9b4f83acbba146cf48af8caffb723cc5f8af00dcb421674be8f2b94"
     },
     {
       "path": "index.html",
@@ -101,7 +101,7 @@
     {
       "path": "verify-deployment.js",
       "purpose": "deployment verification surface",
-      "sha256": "81344048bd4000df67c7b7ffee64ddbde0d4753858d2cfdb42829d222c283f42"
+      "sha256": "a14b144770053fe9a310a2e37f4066354222e67731059319199af720d751bb5f"
     },
     {
       "path": "scripts/verify-originality.js",

@@ -11,8 +11,7 @@ const PUBLIC_TEXT_FILES = [
   "README.md", "PROJECT_REPORT.md", "ALGORITHM_DOCUMENTATION.md", "generate_docs.py",
   "index.html", "dashboard.js", "institutionView.js", "reportRenderer.js", "LICENSE",
   "COPYRIGHT.md", "ORIGINALITY.md", "SECURITY.md", "docs/USER_GUIDE.md", "docs/DATA_DICTIONARY.md",
-  "docs/RELEASE_CHECKLIST.md", "docs/superpowers/specs/2026-09-27-qjzh-balanced-hardening-design.md",
-  "docs/superpowers/plans/2026-09-27-qjzh-balanced-hardening.md"
+  "docs/RELEASE_CHECKLIST.md"
 ];
 const FORBIDDEN = ["学校", "大学", "比赛", "竞赛", "参赛", "创新大赛", "答辩", "指导老师", "课程", "学院", "赛事", "competition", "contest", "university", "school", "classroom", "college"];
 
