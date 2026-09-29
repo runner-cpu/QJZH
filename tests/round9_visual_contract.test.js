@@ -87,8 +87,11 @@ test("Pages builder emits only the public runtime allowlist", (t) => {
   for (const file of ["index.html", "dashboard.js", "build_info.js", "online_test.html", "assets"]) {
     assert.equal(fs.existsSync(path.join(output, file)), true, file + " is included");
   }
-  for (const file of ["tests", "execution_log.txt", ".git", "docs", "README.md"]) {
+  for (const file of ["tests", "execution_log.txt", ".git", "docs/superpowers", "README.md"]) {
     assert.equal(fs.existsSync(path.join(output, file)), false, file + " is excluded");
+  }
+  for (const file of ["COPYRIGHT.md", "ORIGINALITY.md", "SECURITY.md", "originality-manifest.json", "docs/USER_GUIDE.md", "docs/DATA_DICTIONARY.md", "docs/RELEASE_CHECKLIST.md"]) {
+    assert.equal(fs.existsSync(path.join(output, file)), true, file + " is included");
   }
   const metadata = fs.readFileSync(path.join(output, "build_info.js"), "utf8");
   assert.ok(metadata.includes('commit: "' + commit + '"'));

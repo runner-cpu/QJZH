@@ -6,6 +6,7 @@
   var MAX = { altitude_m: 3500, temp_c: 25, rh_percent: 85, raw_nh3_ppm: 30 };
   var REQUIRED = ["timestamp", "site_id", "altitude_m", "temp_c", "rh_percent", "raw_nh3_ppm", "device_model"];
   var ACCEPTED_FIELDS = REQUIRED.concat(["species", "age_days", "stocking_density", "barn_area"]);
+  var MAX_CSV = Object.freeze({ bytes: 1024 * 1024, rows: 5000, fields: ACCEPTED_FIELDS.length, fieldLength: 256 });
   var SITE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{1,63}$/;
   var RESERVED_SITE_IDS = new Set(["__proto__", "prototype", "constructor"]);
   var memory = root.__QJZH_MEM__ = root.__QJZH_MEM__ || {};
@@ -126,6 +127,10 @@
     return { valid: !reject, accepted: !reject, quality: quality, level: level, confidence: confidence, issues: issues, record: record };
   }
   function parseLine(line) { var result = [], value = "", quoted = false; for (var i = 0; i < line.length; i += 1) { var c = line[i]; if (c === '"' && line[i + 1] === '"' && quoted) { value += '"'; i += 1; } else if (c === '"') quoted = !quoted; else if (c === "," && !quoted) { result.push(value); value = ""; } else value += c; } result.push(value); return result; }
+  function byteLength(value) {
+    try { return new TextEncoder().encode(String(value == null ? "" : value)).length; }
+    catch (_) { return unescape(encodeURIComponent(String(value == null ? "" : value))).length; }
+  }
   function splitRows(text) {
     var input = String(text == null ? "" : text).replace(/^\ufeff/, "");
     var rows = [], row = "", quoted = false;
@@ -144,7 +149,37 @@
     if (row.trim() !== "") rows.push(row);
     return rows;
   }
-  function parseCsv(csvText, options) { var lines = splitRows(csvText); options = options || {}; if (!lines.length) return { records: [], errors: [{ row: 1, message: text("qjzh.validation.csvEmpty", "CSV 为空") }], warnings: [] }; var headers = parseLine(lines[0]).map(function (h) { return h.trim(); }), missing = REQUIRED.filter(function (h) { return headers.indexOf(h) < 0; }); if (missing.length) return { records: [], errors: [{ row: 1, field: "header", message: text("qjzh.validation.missing", "缺少字段：{field}", { field: missing.join(", ") }) }], warnings: [] }; var records = [], errors = [], warnings = []; lines.slice(1).forEach(function (line, offset) { var values = parseLine(line), raw = {}; headers.forEach(function (key, i) { if (ACCEPTED_FIELDS.indexOf(key) >= 0) raw[key] = (values[i] == null ? "" : values[i]).trim(); }); var record = normalizeRecord(raw, options.provenance || "user-import"); var result = check(record); if (result.valid) { records.push(record); if (result.level === "warning") warnings.push({ row: offset + 2, issues: result.issues }); } else errors.push({ row: offset + 2, issues: result.issues, message: result.issues.join("；") }); }); return { records: records, errors: errors, warnings: warnings }; }
+  function csvError(code, message, row, field) { return { row: row || 1, field: field || "csv", code: code, message: text("qjzh.validation." + code, message) }; }
+  function parseCsv(csvText, options) {
+    options = options || {};
+    var input = String(csvText == null ? "" : csvText);
+    if (byteLength(input) > MAX_CSV.bytes) return { records: [], errors: [csvError("csvTooLarge", "CSV 超过 1 MB 大小限制")], warnings: [] };
+    var lines = splitRows(input);
+    if (!lines.length) return { records: [], errors: [csvError("csvEmpty", "CSV 为空")], warnings: [] };
+    if (lines.length - 1 > MAX_CSV.rows) return { records: [], errors: [csvError("csvTooManyRows", "CSV 数据行超过 5000 行限制")], warnings: [] };
+    var headers = parseLine(lines[0]).map(function (h) { return h.trim(); });
+    if (!headers.length || headers.some(function (header) { return !header; })) return { records: [], errors: [csvError("csvHeaderEmpty", "CSV 表头不能为空")], warnings: [] };
+    if (headers.length > MAX_CSV.fields) return { records: [], errors: [csvError("csvTooManyFields", "CSV 字段数超过允许上限")], warnings: [] };
+    var duplicates = headers.filter(function (header, index) { return headers.indexOf(header) !== index; });
+    if (duplicates.length) return { records: [], errors: [csvError("csvDuplicateHeader", "CSV 表头不能重复：" + Array.from(new Set(duplicates)).join(", "))], warnings: [] };
+    var missing = REQUIRED.filter(function (h) { return headers.indexOf(h) < 0; });
+    if (missing.length) return { records: [], errors: [csvError("missing", text("qjzh.validation.missing", "缺少字段：{field}", { field: missing.join(", ") }))], warnings: [] };
+    var records = [], errors = [], warnings = [];
+    lines.slice(1).forEach(function (line, offset) {
+      var values = parseLine(line);
+      if (values.length > MAX_CSV.fields || values.some(function (value) { return String(value).length > MAX_CSV.fieldLength; })) {
+        errors.push(csvError("csvFieldTooLong", "CSV 字段长度或字段数量超过限制", offset + 2));
+        return;
+      }
+      var raw = {};
+      headers.forEach(function (key, i) { if (ACCEPTED_FIELDS.indexOf(key) >= 0) raw[key] = (values[i] == null ? "" : values[i]).trim(); });
+      var record = normalizeRecord(raw, options.provenance || "user-import");
+      var result = check(record);
+      if (result.valid) { records.push(record); if (result.level === "warning") warnings.push({ row: offset + 2, issues: result.issues }); }
+      else errors.push({ row: offset + 2, issues: result.issues, message: result.issues.join("；") });
+    });
+    return { records: records, errors: errors, warnings: warnings };
+  }
   function recordKey(record) { return String(record.site_id || "unknown") + "\u0000" + String(record.timestamp || ""); }
   function save(records, options) {
     options = options || {};
@@ -211,6 +246,7 @@
   var api = q.dataImport = {
     MIN: MIN,
     MAX: MAX,
+    MAX_CSV: Object.assign({}, MAX_CSV),
     REQUIRED: REQUIRED.slice(),
     ACCEPTED_FIELDS: ACCEPTED_FIELDS.slice(),
     storage: function () { return storageStatus().mode; },

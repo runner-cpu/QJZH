@@ -316,7 +316,7 @@ def render(model: dict[str, Any], metrics: dict[str, float], metric_path: Path |
 | Q 定点比例尺 | `{int(model['scale'])}`（Q16.16） |
 | 自同步方式 | 修改 `model_weights.js`、`compensator_engine.js`、`knowledgeBase.js`、`decisionEngine.js` 或训练指标后，执行 `python generate_docs.py`。 |
 
-文档版本跟随 `MODEL_WEIGHTS.version`；模型版本变化时，生成器会同步更新本文件标题区、参数区、验证区和源文件校验和。当前文档从已部署权重而非手工记录取值，便于作为计划书附件、答辩材料或技术白皮书的可追溯快照。
+文档版本跟随 `MODEL_WEIGHTS.version`；模型版本变化时，生成器会同步更新本文件标题区、参数区、验证区和源文件校验和。当前文档从已部署权重而非手工记录取值，便于作为技术白皮书和版本审计快照。
 
 ## 2. 算法概览
 

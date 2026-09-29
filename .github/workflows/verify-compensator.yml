@@ -32,6 +32,9 @@ jobs:
       - name: Verify locked compensation model
         run: node verify_compensator.js
 
+      - name: Verify copyright and originality manifest
+        run: node scripts/verify-originality.js
+
       - name: Verify generated knowledge-base document
         run: |
           node generate-knowledge-base-document.js
@@ -49,6 +52,15 @@ jobs:
 
       - name: Verify built Pages artifact
         run: node verify-deployment.js dist
+
+      - name: Verify public text and artifact boundaries
+        run: |
+          test ! -e dist/tests
+          test ! -e dist/docs/superpowers
+          test ! -e dist/output
+          test ! -e dist/backups
+          test -e dist/COPYRIGHT.md
+          test -e dist/ORIGINALITY.md
 
       - name: Upload verified Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa

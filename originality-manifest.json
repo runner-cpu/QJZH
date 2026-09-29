@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "algorithm": "SHA-256",
+  "generatedBy": "scripts/verify-originality.js",
+  "files": [
+    {
+      "path": "LICENSE",
+      "purpose": "custom usage terms",
+      "sha256": "4e8e314b646b6aef091e0d00d10b846477a2c7411e487a5dd1fb27dcae9b73cb"
+    },
+    {
+      "path": "COPYRIGHT.md",
+      "purpose": "rights and third-party notices",
+      "sha256": "35033d462d8e615bd3fae02db262ec86ac940b70865c148287e8fab62be97c38"
+    },
+    {
+      "path": "ORIGINALITY.md",
+      "purpose": "provenance statement",
+      "sha256": "31aea7de84cfc9837843015ebc832dc8d434d331e0180edeaa373941ecad9048"
+    },
+    {
+      "path": "SECURITY.md",
+      "purpose": "security boundary",
+      "sha256": "afd19f521ff3c8f1d6a9bc924b4cd05ee665a3ca0eb64613db5c8a905514ad23"
+    },
+    {
+      "path": "README.md",
+      "purpose": "public product documentation",
+      "sha256": "2be8d7de8ad3e3d2941ac886984a00d2d7b260b78ec4db51ffb70267e113765d"
+    },
+    {
+      "path": "index.html",
+      "purpose": "application shell and visual system",
+      "sha256": "6c89fbe426b6feb541c05a6ee9fd6f6456a5f2ae20b5ec72c3abea56d7b6b588"
+    },
+    {
+      "path": "dashboard.js",
+      "purpose": "dashboard behavior and localized copy",
+      "sha256": "6b39d3ba29c613afcc85709b1cdfd9f2cf7555e8776b86140260b742269e4cbb"
+    },
+    {
+      "path": "dataImport.js",
+      "purpose": "local data ingestion and validation",
+      "sha256": "09c7d4ba5aa1b18e177398f371cd5ef223b7520080528dd8440d8a06aeea3c33"
+    },
+    {
+      "path": "institutionView.js",
+      "purpose": "multi-site analysis view",
+      "sha256": "07ee93e20b917908cd8f7114fd564bfdc60839cb6c496744492267dc4b49a4a4"
+    },
+    {
+      "path": "reportGenerator.js",
+      "purpose": "report aggregation",
+      "sha256": "609c4481e2512512af3874facc6bbcef7dcc75cb446658c7c3ea1124e4cc07c6"
+    },
+    {
+      "path": "reportRenderer.js",
+      "purpose": "printable report renderer",
+      "sha256": "3c97faee9f1a8c9c957892ad1eaccd708bc5595503aeb67d47753e33ac701313"
+    },
+    {
+      "path": "ui_interactions.js",
+      "purpose": "interaction and display behavior",
+      "sha256": "5aac5f9e222a28f04a09d8a71876a453c4ceafe2d601061fab251605f6c1fd67"
+    },
+    {
+      "path": "viewRouter.js",
+      "purpose": "six-view navigation",
+      "sha256": "69c0e1e50eea7a649a0c49ca308dcd1b6070cdc6e986358745158b21f2d27ebe"
+    },
+    {
+      "path": "knowledgeBase.js",
+      "purpose": "locked rule knowledge base",
+      "sha256": "f08ef4a6d02ae435fa8bef03403e85d947d07553cde752f7904734460eaff111"
+    },
+    {
+      "path": "decisionEngine.js",
+      "purpose": "locked decision engine",
+      "sha256": "9876a11c835548b9aa165f713d5413ab6b83373bc3d2f12ae0662e584777a9af"
+    },
+    {
+      "path": "compensator_engine.js",
+      "purpose": "locked compensation implementation",
+      "sha256": "168d97925e2e2e9ff44d6956a69ed116f3fc1091e6705a8ff327a26ddab6a5ff"
+    },
+    {
+      "path": "model_weights.js",
+      "purpose": "locked model weights",
+      "sha256": "40c5e332bdf0e68bd783059f9445af3e150a5c01d666d3570e555b42e5fbb04e"
+    },
+    {
+      "path": "simulator.js",
+      "purpose": "locked demonstration simulator",
+      "sha256": "a1a2fb8f48156bea6ab3bdb8472c767823b4867d95a3b92b26518b65124e3c15"
+    },
+    {
+      "path": "scripts/build-pages.js",
+      "purpose": "Pages artifact builder",
+      "sha256": "bdbf1bc6def63a0349a83b00af83a11ea432db6cb44e3ed49712d4b3b2cac06b"
+    },
+    {
+      "path": "verify-deployment.js",
+      "purpose": "deployment verification surface",
+      "sha256": "81344048bd4000df67c7b7ffee64ddbde0d4753858d2cfdb42829d222c283f42"
+    },
+    {
+      "path": "scripts/verify-originality.js",
+      "purpose": "originality verification",
+      "sha256": "e8c249159bfa8729f4a25dcdf78ceb3014176dcd187beca499055ff2398db456"
+    },
+    {
+      "path": "assets/og_cover.png",
+      "purpose": "social preview artwork",
+      "sha256": "449c7c6f6777686d6637c22a33a4bf168f1dfcb9906197171e50fc785fa21415"
+    }
+  ]
+}

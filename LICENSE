@@ -1,21 +1,27 @@
-MIT License
+青境智衡定制软件许可
 
-Copyright (c) 2026 青海大学农牧学院青境智衡团队
+版权所有 © 2026 青境智衡项目权利人。保留所有权利。
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+一、授权范围
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+在遵守本许可的前提下，权利人授予浏览者一项有限、不可转让、不可再许可的许可，仅用于查看源代码、在自有设备上运行未修改的本地副本，以及进行内部技术评估。该许可不构成著作权转让、专利许可、商标许可或商业合作承诺。
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+二、禁止行为
+
+未经权利人书面许可，禁止复制、改编、翻译、反向工程、再发布、出租、出售、提供商业服务、移除版权标识、提取模型参数或规则用于衍生服务，也不得将本项目或其核心片段放入其他产品、网站、数据集或训练流程。
+
+三、网页访问说明
+
+网页运行所需的浏览器缓存、临时渲染和个人备份属于正常使用行为；不得据此推定获得复制、公开传播或再许可权。第三方依赖按其各自许可执行，详见 COPYRIGHT.md。
+
+四、终止
+
+违反本许可时，全部授权立即终止。停止使用并删除未获许可的副本，不影响权利人依法主张其他权利。
+
+五、免责声明
+
+本软件按“现状”提供，不承诺特定环境下的测量准确度、持续可用性或适用于任何监管用途。系统输出是环境参考建议，不替代法定检测、专业运维或动物诊疗。
+
+除非法律强制要求，权利人不对因使用或无法使用本软件产生的直接、间接、偶发或后果性损失承担责任。
+
+如需商用、集成、再发布或获得更宽授权，请先通过 COPYRIGHT.md 中的联系入口取得书面许可。

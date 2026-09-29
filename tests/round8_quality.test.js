@@ -288,8 +288,11 @@ test("institution report uses a same-day range and labels the chart as a barn co
 
   window.QJZH.reportRenderer.renderInstitution(rows, "en");
 
-  const today = new Date();
-  const localDate = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
+  const todayParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).reduce((result, part) => {
+    result[part.type] = part.value;
+    return result;
+  }, {});
+  const localDate = [todayParts.year, todayParts.month, todayParts.day].join("-");
   assert.match(reportHtml, new RegExp(localDate + " to " + localDate));
   assert.match(reportHtml, /data-chart='nh3-comparison'/);
   assert.match(reportHtml, /Barn NH₃ comparison/);
@@ -322,7 +325,7 @@ test("repository governance, CI surface tests, and four-view README gallery are 
   assert.match(workflow, /node --test tests\/\*\.test\.js/);
   assert.match(ignore, /node_modules\//);
   assert.match(ignore, /\*\.log/);
-  assert.match(license, /MIT License/);
+  assert.match(license, /保留所有权利/);
   assert.match(readme, /assets\/screenshots\/algorithm\.png/);
   assert.match(readme, /assets\/screenshots\/report\.png/);
   assert.match(online, /src="dashboard\.js\?v=/);

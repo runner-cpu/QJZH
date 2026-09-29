@@ -11,6 +11,11 @@ const PUBLIC_FILES = Object.freeze([
   "404.html",
   "robots.txt",
   "sitemap.xml",
+  "COPYRIGHT.md",
+  "ORIGINALITY.md",
+  "SECURITY.md",
+  "originality-manifest.json",
+  "docs",
   "dashboard.js",
   "riskPolicy.js",
   "model_weights.js",
@@ -31,6 +36,12 @@ const PUBLIC_FILES = Object.freeze([
   "knowledge-base-rules.md",
   "ALGORITHM_DOCUMENTATION.md",
   "assets"
+]);
+
+const PUBLIC_DOC_FILES = Object.freeze([
+  "docs/USER_GUIDE.md",
+  "docs/DATA_DICTIONARY.md",
+  "docs/RELEASE_CHECKLIST.md"
 ]);
 
 function argumentValue(name, fallback) {
@@ -101,12 +112,20 @@ function build() {
     if (!fs.existsSync(source)) throw new Error("Missing public artifact entry: " + entry);
     assertNoSymlinks(source);
   }
+  for (const entry of PUBLIC_DOC_FILES) {
+    const source = path.join(ROOT, entry);
+    if (!fs.existsSync(source)) throw new Error("Missing public document: " + entry);
+    assertNoSymlinks(source);
+  }
 
   fs.rmSync(output, { recursive: true, force: true });
   fs.mkdirSync(output, { recursive: true });
   for (const entry of PUBLIC_FILES) {
+    if (entry === "docs") continue;
     fs.cpSync(path.join(ROOT, entry), path.join(output, entry), { recursive: true, force: false });
   }
+  fs.mkdirSync(path.join(output, "docs"), { recursive: true });
+  for (const entry of PUBLIC_DOC_FILES) fs.cpSync(path.join(ROOT, entry), path.join(output, entry), { recursive: true, force: false });
 
   const commit = resolveCommit();
   const builtAt = resolveBuiltAt();

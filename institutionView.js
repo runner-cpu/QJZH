@@ -43,9 +43,9 @@
     };
   }
   function roleLabels() {
-    if (language() === "en") return { station: "Livestock station", college: "Agricultural college", cooperative: "Cooperative" };
-    if (language() === "bo") return { station: "ཕྱུགས་ལས་ས་ཚིགས", college: "ཞིང་ཕྱུགས་སློབ་གྲྭ", cooperative: "མཉམ་ལས་ཁང" };
-    return { station: "畜牧站", college: "农牧院校", cooperative: "合作社" };
+    if (language() === "en") return { station: "Livestock station", analyst: "Regional analyst", cooperative: "Cooperative" };
+    if (language() === "bo") return { station: "ཕྱུགས་ལས་ས་ཚིགས", analyst: "ས་ཁུལ་དཔྱད་ཞིབ་མཁན", cooperative: "མཉམ་ལས་ཁང" };
+    return { station: "畜牧站", analyst: "区域分析", cooperative: "合作社" };
   }
   function riskLabel(value) {
     var labels = language() === "en"
@@ -110,31 +110,31 @@
     var sampleCount = rows.reduce(function (sum, r) { return sum + Number(r.sample_count || 1); }, 0);
     if (summary) {
       summary.className = "qjzh-data-state qjzh-state";
-      if (language() === "en") summary.textContent = role === "college"
-        ? "Teaching labels: species " + species + " · " + sampleCount + " samples · ready for classroom rule demonstrations"
+      if (language() === "en") summary.textContent = role === "analyst"
+        ? "Analysis view: species " + species + " · " + sampleCount + " samples · grouped for regional comparison"
         : role === "cooperative"
           ? "Cooperative barns: " + rows.length + " sites · " + warnings + " need attention · export a cooperative report"
           : "Regional summary: compliance " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · alerts " + warnings + " · average NH3 " + average + " ppm";
-      else if (language() === "bo") summary.textContent = role === "college"
-        ? "སློབ་ཁྲིད་མཆན་འགྲེལ། ཕྱུགས་རིགས " + species + " · དཔེ་ཚད " + sampleCount
+      else if (language() === "bo") summary.textContent = role === "analyst"
+        ? "ས་ཁུལ་དཔྱད་ཞིབ། ཕྱུགས་རིགས " + species + " · དཔེ་ཚད " + sampleCount
         : role === "cooperative"
           ? "མཉམ་ལས་ཁང་ཕྱུགས་ཁང " + rows.length + " · དོ་སྣང " + warnings
           : "ས་ཁུལ་སྙིང་བསྡུས། ཚད་ལོངས " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · NH3 " + average + " ppm";
-      else summary.textContent = role === "college"
-        ? "教学标注：畜种 " + species + " · 样本 " + sampleCount + " 条 · 可用于课堂规则演示"
+      else summary.textContent = role === "analyst"
+        ? "区域分析：畜种 " + species + " · 样本 " + sampleCount + " 条 · 用于不同站点的数据比较"
         : role === "cooperative"
           ? "合作社多圈舍：共 " + rows.length + " 个站点 · " + warnings + " 个需关注 · 建议导出合作社环境报告"
           : "区域汇总：达标率 " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · 预警 " + warnings + " 次 · 平均氨气 " + average + " ppm";
     }
     if (detail) {
-      if (language() === "en") detail.textContent = role === "college" ? "College role: species distribution and sample counts are prioritized for teaching." : role === "cooperative" ? "Cooperative role: multi-barn list first, with cooperative report export." : "Livestock-station role: regional summary first, sorted by ammonia risk.";
-      else if (language() === "bo") detail.textContent = role === "college"
-        ? "སློབ་གྲྭའི་ལས་འགན། ཕྱུགས་རིགས་དང་དཔེ་ཚད་སྔོན་དུ་སྟོན།"
+      if (language() === "en") detail.textContent = role === "analyst" ? "Regional-analysis role: prioritize species distribution and sample counts for comparison." : role === "cooperative" ? "Cooperative role: multi-barn list first, with cooperative report export." : "Livestock-station role: regional summary first, sorted by ammonia risk.";
+      else if (language() === "bo") detail.textContent = role === "analyst"
+        ? "ས་ཁུལ་དཔྱད་ཞིབ་ལས་འགན། ཕྱུགས་རིགས་དང་དཔེ་ཚད་བསྡུར་བར་སྔོན་དུ་སྟོན།"
         : role === "cooperative"
           ? "མཉམ་ལས་ཁང་ལས་འགན། ཕྱུགས་ཁང་རེའུ་མིག་དང་སྙན་ཞུ་ཕྱིར་འདྲེན།"
           : "ཕྱུགས་ལས་ས་ཚིགས། ས་ཁུལ་སྙིང་བསྡུས་དང་ཉེན་ཁ་རིམ་སྒྲིག";
-      else detail.textContent = role === "college"
-        ? "农牧院校角色：优先呈现畜种分布和样本量，便于教学标注。"
+      else detail.textContent = role === "analyst"
+        ? "区域分析视角：优先呈现畜种分布和样本量，便于横向比较。"
         : role === "cooperative"
           ? "合作社角色：优先查看多圈舍列表，导出按钮将生成合作社环境报告。"
           : "畜牧站角色：区域汇总优先，列表按氨气风险从高到低排列。";

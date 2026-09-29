@@ -5,7 +5,7 @@
   var COPY = {
     zh: {
       title: "青境智衡环境报告", heading: "季度环境报告", eyebrow: "PLATEAU BARN ENVIRONMENT BRIEF",
-      watermark: "演示版・仅用于赛事展示", range: "统计范围", to: "至", empty: "所选范围内无记录",
+      watermark: "演示数据 · 不作为法定检测或动物诊疗依据", range: "统计范围", to: "至", empty: "所选范围内无记录",
       metric: "指标", result: "结果", compliance: "项目舒适区占比（NH₃ < 10 ppm）", ammonia: "平均 / 最高氨气",
       temperature: "温度范围", advice: "建议次数", risk: "风险分布", source: "数据来源",
       generated: "生成时间", opened: "报告已生成，正在打开打印窗口。", print: "打印 / 另存 PDF",
@@ -19,7 +19,7 @@
     },
     en: {
       title: "Qingjing Zhiheng Environment Report", heading: "Quarterly Environment Report", eyebrow: "PLATEAU BARN ENVIRONMENT BRIEF",
-      watermark: "DEMO · FOR COMPETITION PRESENTATION ONLY", range: "Date range", to: "to", empty: "No records in the selected range",
+      watermark: "DEMO DATA · NOT A STATUTORY MEASUREMENT OR ANIMAL DIAGNOSIS", range: "Date range", to: "to", empty: "No records in the selected range",
       metric: "Metric", result: "Result", compliance: "Project comfort-zone share (NH₃ < 10 ppm)", ammonia: "Average / peak ammonia",
       temperature: "Temperature range", advice: "Recommendations", risk: "Risk distribution", source: "Data source",
       generated: "Generated", opened: "Report generated. Opening the print window.", print: "Print / Save as PDF",
@@ -33,7 +33,7 @@
     },
     bo: {
       title: "མཐོ་སྒང་ཁོར་ཡུག་སྙན་ཞུ", heading: "དུས་ཚིགས་ཁོར་ཡུག་སྙན་ཞུ", eyebrow: "མཐོ་སྒང་ཕྱུགས་ཁང་ཁོར་ཡུག་སྙན་ཞུ",
-      watermark: "དཔེ་སྟོན་པར་གཞི · འགྲན་བསྡུར་འགྲེམས་སྟོན་ཁོ་ན", range: "བསྡོམས་རྩིས་དུས་ཡུན", to: "ནས", empty: "བདམས་པའི་ཁྱབ་ཁོངས་སུ་ཟིན་ཐོ་མེད",
+      watermark: "དཔེ་སྟོན་གཞི་གྲངས · ཁྲིམས་མཐུན་ཚད་འཇལ་དང་སྨན་བཅོས་གཞི་འཛིན་མིན", range: "བསྡོམས་རྩིས་དུས་ཡུན", to: "ནས", empty: "བདམས་པའི་ཁྱབ་ཁོངས་སུ་ཟིན་ཐོ་མེད",
       metric: "ཚད་གཞི", result: "འབྲས་བུ", compliance: "ལས་གཞིའི་བདེ་འཇགས་ཁུལ་གྱི་བསྡུར་ཚད (NH₃ < 10 ppm)", ammonia: "ཆ་སྙོམས / མཐོ་ཤོས་ཨམ་མོ་ནི་ཡ",
       temperature: "དྲོད་ཚད་ཁྱབ་ཁོངས", advice: "བསམ་འཆར་གྲངས", risk: "ཉེན་ཁའི་ཁྱབ་ཚུལ", source: "གཞི་གྲངས་ཁུངས",
       generated: "བཟོས་པའི་དུས་ཚོད", opened: "སྙན་ཞུ་བཟོས་ཟིན། པར་འདེབས་སྒེའུ་ཁུང་ཁ་ཕྱེ་བཞིན།", print: "པར་འདེབས / PDF ཉར",

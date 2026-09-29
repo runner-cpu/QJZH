@@ -1,138 +1,152 @@
-# 青境智衡
+# 青境智衡（QJZH）
 
-> **高原圈舍环境数据服务系统**
->
-> 面向青海 2200–3500 m 高原圈舍的纯软件数据接入、校准分析与决策建议演示。
+青境智衡是一个面向环境监测数据的本地优先分析工作台。它把数据导入、质量检查、风险判读、情景模拟和可审阅报告串成一条可追溯的浏览器工作流。项目可以直接在 GitHub Pages 上体验，也可以下载到本地运行；默认演示数据仅用于展示界面与计算流程。
 
-[在线演示](https://runner-cpu.github.io/QJZH/) · [规则库文档](knowledge-base-rules.md) · [算法说明](ALGORITHM_DOCUMENTATION.md)
+## 在线体验
 
-## 界面预览
+- 主页：<https://runner-cpu.github.io/QJZH/>
+- 在线自检：<https://runner-cpu.github.io/QJZH/online_test.html>
+- 发布构建信息：<https://runner-cpu.github.io/QJZH/build_info.js>
 
-| 环境总览 | 数据接入 |
-| --- | --- |
-| ![青境智衡环境总览](assets/screenshots/overview.png) | ![青境智衡数据接入](assets/screenshots/data-intake.png) |
-| 高原校准 | 环境报告 |
-| ![青境智衡高原校准](assets/screenshots/algorithm.png) | ![青境智衡环境报告](assets/screenshots/report.png) |
+页面不需要账号，不会把导入的 CSV 上传到远程服务。浏览器刷新后，当前页面内存中的导入数据会被清空。
 
-## 项目定位
+## 界面导览
 
-青境智衡把第三方通用传感器数据、人工录入数据或公开数据，转化为适用于高原圈舍场景的环境参考建议。系统只负责网页展示层和本地数据服务，不生产、不销售、不控制任何硬件设备，不涉及风机控制，也不替代动物诊疗。
+以下截图来自公开演示界面，帮助快速定位主要操作区域：
 
-核心链路：
+![总览视图](assets/screenshots/overview.png)
 
-```text
-数据接入 → 高原校准 → 智能决策 → 建议输出 → 环境报告
-```
+![数据接入](assets/screenshots/data-intake.png)
 
-## 六界面导航
+![算法解释](assets/screenshots/algorithm.png)
 
-项目采用单 HTML 的 SPA Hash 路由。六个界面共享同一份实时状态与本地数据，刷新可保持当前界面，浏览器前进/后退也可直接切换。
+![报告预览](assets/screenshots/report.png)
 
-| 界面 | Hash 入口 | 用途 |
+## 项目边界
+
+本项目用于数据整理、指标计算、规则解释和报告预览，不替代法定检测、专业审查或现场处置。输出结果是可解释的风险提示，不是诊断结论、合规结论或处置指令。使用者应核对原始记录、采样条件、单位和时间范围，并由具备相应权限的人员做最终判断。
+
+## 六个工作视图
+
+1. **总览**：查看数据规模、风险分布、质量概况和当前计算批次。
+2. **数据接入**：导入 CSV、检查表头与字段约束、查看拒绝原因，并在提交前预览记录。
+3. **算法解释**：逐项查看规则、权重、置信度和触发依据；每次导入都会重新计算派生值。
+4. **机构/区域分析**：按区域或分析单元聚合指标，比较样本量、风险水平和数据完整度。
+5. **情景模拟**：调整可解释的输入因子，观察风险等级与建议动作的变化。
+6. **报告**：生成可打印、可保存的摘要报告，包含数据范围、限制说明、计算时间和免责声明。
+
+## 快速开始
+
+直接打开在线主页即可查看演示数据。若要使用自己的数据：
+
+1. 进入“数据接入”。
+2. 下载页面提供的 CSV 模板，或按下方字段创建 UTF-8 CSV 文件。
+3. 选择文件并等待预检结果；所有错误都会在提交前显示。
+4. 确认记录数、时间范围和单位无误后导入。
+5. 在“算法解释”核对触发规则，在“报告”导出结果。
+
+## 本地运行
+
+项目是静态前端，不需要构建后端。建议使用任意静态文件服务器，避免浏览器对本地文件的模块和资源策略产生差异。
+
+~~~text
+git clone https://github.com/runner-cpu/QJZH.git
+cd QJZH/deploy-gh-pages
+python -m http.server 8080
+~~~
+
+然后访问 <http://localhost:8080/>。也可以使用 Node、Nginx 或其他静态服务器指向本目录。
+
+## CSV 数据格式
+
+最小字段集合如下，字段名必须完全匹配模板：
+
+| 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| 总览 | [`#/overview`](https://runner-cpu.github.io/QJZH/#/overview) | 当前站点、实时读数、趋势图、采样记录与快捷入口 |
-| 数据接入 | [`#/data`](https://runner-cpu.github.io/QJZH/#/data) | CSV、人工录入、示例数据、质量评分与本地记录 |
-| 高原校准 | [`#/algorithm`](https://runner-cpu.github.io/QJZH/#/algorithm) | 校准演示、模型卡、误差边界与置信度 |
-| 智能决策 | [`#/decision`](https://runner-cpu.github.io/QJZH/#/decision) | 风险等级、建议窗口、处置建议与规则溯源 |
-| 机构版 | [`#/institution`](https://runner-cpu.github.io/QJZH/#/institution) | 多圈舍汇总、搜索筛选、角色视角与导出 |
-| 环境报告 | [`#/report`](https://runner-cpu.github.io/QJZH/#/report) | 日期范围、三语报告、打印与 PDF 保存 |
+| site_id | 文本 | 站点或样本的稳定标识 |
+| timestamp | ISO-8601 时间 | 采样或观测时间，建议包含时区 |
+| temperature | 数值 | 温度指标 |
+| ph | 数值 | pH 指标 |
+| turbidity | 数值 | 浊度指标 |
+| dissolved_oxygen | 数值 | 溶解氧指标 |
+| ammonia_nitrogen | 数值 | 氨氮指标 |
 
-## 校准效果与服务模式
+导入器会拒绝空表头、重复表头、未知字段、缺失字段、非法时间、超出允许范围的数值、原型污染字段和无法安全解析的行。派生指标不会直接信任 CSV 中的同名列，而是由当前版本算法重新计算。
 
-在项目合成测试集上，原始氨气读数误差约为 **39.01%**，经过高原气压、温度和湿度联合校准后降至 **0.71%**。该结果用于展示模型链路效果，不等同于现场标定精度；真实部署仍需使用当地对照仪器复核。
+### 输入硬限制
 
-面向个人养殖户提供 39 元 / 季的环境参考服务，面向 B / G 端提供机构定制与行业端算法授权。当前落地路径为 Demo 内测 → 合作养殖场试点数据收集 → 机构合作。
+- 文件大小不超过 1 MiB；
+- 数据行不超过 5,000 行；
+- 字段数量不超过模板定义；
+- 单个字段长度不超过 256 个字符；
+- 空文件和只有表头的文件不作为有效数据集。
 
-## 当前功能
+这些限制用于保持浏览器响应速度、避免意外资源消耗，并减少不完整输入进入分析流程的机会。
 
-- **数据接入**：支持 CSV 导入、人工录入、青海冬季示例数据、CSV 模板下载和本地数据清除；按“站点 + 时间戳”去重，重复加载示例不会累加记录。
-- **高原校准**：沿用锁定的高原氨气校准模型，展示原始值、校准值、误差范围与输入置信度；标准 compensate() 接口可由前端、后端或第三方设备调用。
-- **决策建议**：根据校准氨气、温湿度和本地规则输出“正常 / 关注 / 待办 / 紧急”风险等级、建议窗口、处置建议、规则 ID 与标准出处。
-- **数据看板**：保留实时读数、趋势曲线、采样记录、快照和建议历史；导入多站点数据时按首个站点隔离回放，并明确显示当前站点与完成状态。
-- **机构版视图**：提供 5 个青海模拟圈舍的汇总、排序、风险分布、本地记录导入，以及按站点或畜种筛选。
-- **季度报告**：按日期范围聚合本地记录，在新窗口生成中文、English、藏文三语的可打印环境报告，并展示最近 12 点氨气趋势与四色风险分布。“项目舒适区占比”统一按校准后 NH₃ < 10 ppm 的记录数占比计算，不代表法规达标率。
-- **答辩场景**：支持散户、机构、已加载会话断网演示场景切换，以及一键重置演示数据。断网场景用于证明当前会话已加载脚本和本地记录仍可运行，并不承诺首次访问时离线加载。
+## 数据生命周期与隐私
 
-## 数据格式
+CSV 在浏览器内解析，经过校验后保存在当前页面的运行时状态中。项目没有默认的上传接口、账号系统、远程数据库或第三方分析脚本。报告导出由浏览器完成；如果使用者主动把文件、截图或报告发送给他人，后续传播由发送者负责。
 
-CSV 至少应包含以下字段：
+使用敏感数据前，请先脱敏站点名称、坐标、人员信息和内部编号。关闭页面或刷新后，未导出的运行时数据不会被项目恢复。
 
-```text
-timestamp,site_id,altitude_m,temp_c,rh_percent,raw_nh3_ppm,device_model
-```
+## 算法与可信度边界
 
-完整字段可参考 [assets/csv_template.csv](assets/csv_template.csv)，青海示例数据见 [assets/csv_sample_qinghai.csv](assets/csv_sample_qinghai.csv)。当前演示校验范围为：海拔 2200–3500 m、温度 −15–25 ℃、相对湿度 20–85%、原始氨气 0–30 ppm。数据优先保存在浏览器本地存储；不可用时降级为当前会话内存，不上传服务器。
+计算由规则库、决策引擎、补偿引擎、模型权重和模拟器共同完成。界面会展示输入摘要、触发规则、权重、置信度和限制说明，帮助审阅者复算关键结论。
 
-每条记录都会保留来源标记：用户上传 CSV 为 `user-import`，人工录入为 `manual-entry`，内置青海冬季样例为 `sample`，旧版无标记记录归为 `legacy-local`。CSV 中的校准值、风险等级和来源字段不会被直接信任；系统只接收允许的原始字段，并在当前锁定模型与统一风险策略下重新计算派生结果。机构页默认展示的五个圈舍是确定性的演示快照，只有选择“从本地记录导入”后才切换为用户数据。
+置信度表示当前规则与输入质量下的相对可信程度，不等同于统计显著性、检测准确率或未来事件概率。缺失值、异常值、样本量不足、时间范围过窄和单位错误都会降低解释价值。任何结论都应结合原始记录与领域知识复核。
 
-## 运行方式
-
-直接访问在线演示：
-
-<https://runner-cpu.github.io/QJZH/>
-
-本地运行静态页面：
-
-```bash
-npx serve .
-```
-
-然后打开 http://localhost:3000/。也可以直接打开 index.html，但部分浏览器会限制本地文件读取和 CSV 预览。
+算法核心文件由原创清单保护。对核心实现的更改必须同步更新文档、测试和原创清单；发布前会验证文件哈希和许可证条款。
 
 ## 主要文件
 
-```text
-index.html             主页面、看板与信息架构
-viewRouter.js          六视图 Hash 路由、挂载与前进/后退同步
-ui_interactions.js     文案映射、建议展示与页面交互
-ui_text_map.js         命令式文案到建议式文案的显示层映射
-dataImport.js          CSV/人工数据校验、本地存储与示例导入
-csvTemplate.js         CSV 模板下载
-institutionView.js     机构版多圈舍视图
-reportGenerator.js     报告数据聚合
-reportRenderer.js      报告窗口渲染与打印
-errorHandler.js        数据面板状态与错误展示
-demoReset.js           演示数据重置
-model_weights.js       锁定的模型参数
-compensator_engine.js  高原校准模型实现
-knowledgeBase.js       本地规则知识库
-decisionEngine.js      规则推理引擎
-simulator.js           演示数据与图表逻辑
-online_test.html       浏览器端部署自检页
-verify_compensator.js  模型锁校验脚本
-verify-deployment.js   知识库部署校验脚本
-```
+| 路径 | 作用 |
+| --- | --- |
+| index.html | 主应用页面与布局 |
+| dashboard.js | 总览与交互状态 |
+| dataImport.js | CSV 解析、校验和派生值重算 |
+| knowledgeBase.js | 规则与知识条目 |
+| decisionEngine.js | 风险判读与解释链 |
+| compensator_engine.js | 补偿计算 |
+| model_weights.js | 模型权重与版本信息 |
+| simulator.js | 情景模拟 |
+| reportGenerator.js / reportRenderer.js | 报告生成与渲染 |
+| scripts/build-pages.js | GitHub Pages 白名单构建 |
+| scripts/verify-originality.js | 原创文件哈希与许可校验 |
+| verify-deployment.js | 发布产物与运行时契约检查 |
+| tests/ | 自动化质量、视觉和治理测试 |
 
-## 模型与发布保护
+## 质量检查与发布
 
-以下五个源文件属于模型与规则基线，网页改造不应修改：
+本地发布前建议依次执行：
 
-```text
-knowledgeBase.js
-decisionEngine.js
-compensator_engine.js
-model_weights.js
-simulator.js
-```
-
-发布前运行：
-
-```bash
+~~~text
+node scripts/verify-originality.js
 node verify_compensator.js
-node verify-deployment.js .
-```
+node --test tests/*.test.js
+node scripts/build-pages.js --out dist
+node verify-deployment.js dist
+git diff --check
+~~~
 
-同时应保持 COMPENSATOR-LOCK 标记、模型加载顺序，以及知识库文档中的源文件 SHA256 校验值不变。
+scripts/build-pages.js 只复制明确列出的运行时文件和公开文档，不会把测试、备份、临时输出或内部计划目录带到 Pages。构建会生成 build_info.js，其中包含提交 SHA、构建时间和环境标识，便于线上回溯。
 
-## 合规边界
+## 版权、原创与安全
 
-- 本项目是纯软件环境数据服务演示，不生产、不销售、不控制硬件设备。
-- 系统只输出环境参考建议，执行由养殖户使用既有设备或人工完成。
-- 数据默认保存在本地浏览器，不向外部服务上传。
-- 建议不能替代动物疫病诊断、治疗或专业兽医意见。
+本仓库采用项目根目录 LICENSE 中的定制“保留所有权利”许可，不授予默认复制、改编、再发布、商用、去除署名、提取模型参数或建立衍生服务的权利。允许在不修改的本地副本上查看、运行和进行内部评估；超出范围请先取得书面许可。
 
-## 版权与项目说明
+- 版权边界：[COPYRIGHT.md](COPYRIGHT.md)
+- 原创组成与证据：[ORIGINALITY.md](ORIGINALITY.md)
+- 安全问题报告：[SECURITY.md](SECURITY.md)
+- 数据字段说明：[docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md)
+- 用户操作手册：[docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- 发布清单：[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
 
-本项目为中国国际大学生创新大赛（2026）青海大学选拔赛参赛作品，由青海大学农牧学院团队开发。公开仓库仅包含网页演示、前端模块和必要的校验文档；内部计划、原始调研资料和成员隐私信息不随仓库发布。
+项目不使用阻断右键、禁用键盘、破坏屏幕阅读器或恶意反爬等手段。保护措施集中在许可证、署名、公开发布白名单、哈希清单、审计记录和安全响应流程上。
 
-代码以 [MIT License](LICENSE) 开源。
+## 反馈与贡献边界
+
+欢迎提交可复现的错误信息、浏览器版本、最小输入样例和期望行为。请不要在公开 issue 中上传真实敏感数据、访问凭据或未公开的内部记录。任何代码、文档、图像或规则贡献都必须明确来源并符合本项目许可证；未经维护者确认，不得将项目文件镜像到其他产品或服务中。
+
+## 状态说明
+
+这是一个持续维护的静态分析工具。规则、阈值、字段和界面可能随版本调整；请在引用结果时记录页面显示的构建 SHA、数据时间范围和导出报告版本。

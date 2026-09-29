@@ -10,3 +10,6 @@
 [2026-09-28] 真实浏览器矩阵覆盖 320×568、390×844、768×1024、1440×900、2560×1440；六视图、三语、深浅主题、键盘、图例、CSV、清除、存储降级、日期反转、popup 阻止、打印与 reduced motion 均完成回归。
 [2026-09-28] 锁定文件 SHA-256：knowledgeBase.js F08EF4A6D02AE435FA8BEF03403E85D947D07553CDE752F7904734460EAFF111；decisionEngine.js 9876A11C835548B9AA165F713D5413AB6B83373BC3D2F12AE0662E584777A9AF；compensator_engine.js 168D97925E2E2E9FF44D6956A69ED116F3FC1091E6705A8FF327A26DDAB6A5FF；model_weights.js 40C5E332BDF0E68BD783059F9445AF3E150A5C01D666D3570E555B42E5FBB04E；simulator.js A1A2FB8F48156BEA6AB3BDB8472C767823B4867D95A3B92B26518B65124E3C15。
 [2026-09-28] GitHub Actions UTC 回归修复：报告日期边界测试改用显式 +08:00 上海时区夹具，消除宿主时区依赖；Node.js 24 在 TZ=UTC 下 57/57 通过，目标测试在 UTC 与 Asia/Shanghai 均通过；verify_compensator.js、源码与 dist 部署校验、28 个受版本控制 JavaScript 文件语法检查及锁定文件哈希复核全部通过。
+[2026-09-29] 公共发布加固：完成中性产品 README、用户指南、数据字典、发布清单、版权/原创/安全说明；CSV 导入限制为 1 MiB、5,000 行、256 字符字段，并补充原创清单与发布白名单。
+[2026-09-29] 回归核验：TZ=UTC 下 node --test tests/*.test.js 为 61/61；28 个受版本控制 JavaScript 文件 node --check 通过；原创清单 22 个文件、补偿模型锁、源码与 dist 部署校验均通过。
+[2026-09-29] Pages 构建预检：公开文档 7 项存在，tests、docs/superpowers、output、backups 与 README 均未进入 dist；构建元数据使用最终提交 SHA 的机制待提交后复核。

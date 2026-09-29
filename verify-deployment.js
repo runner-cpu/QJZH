@@ -24,6 +24,25 @@ function requirePatterns(file, patterns) {
   }
 }
 
+function verifyPublicCopy() {
+  const files = [
+    "README.md", "PROJECT_REPORT.md", "ALGORITHM_DOCUMENTATION.md", "generate_docs.py",
+    "index.html", "dashboard.js", "institutionView.js", "reportRenderer.js", "LICENSE",
+    "COPYRIGHT.md", "ORIGINALITY.md", "SECURITY.md", "docs/USER_GUIDE.md", "docs/DATA_DICTIONARY.md",
+    "docs/RELEASE_CHECKLIST.md", "docs/superpowers/specs/2026-09-27-qjzh-balanced-hardening-design.md",
+    "docs/superpowers/plans/2026-09-27-qjzh-balanced-hardening.md"
+  ];
+  const forbidden = ["学校", "大学", "比赛", "竞赛", "参赛", "创新大赛", "答辩", "指导老师", "课程", "学院", "赛事", "competition", "contest", "university", "school", "classroom", "college"];
+  for (const file of files) {
+    const filePath = path.join(packageDirectory, file);
+    if (!fs.existsSync(filePath)) continue;
+    const content = fs.readFileSync(filePath, "utf8").toLowerCase();
+    for (const term of forbidden) if (content.includes(term.toLowerCase())) failures.push(file + " contains restricted public term: " + term);
+  }
+}
+
+verifyPublicCopy();
+
 requirePatterns("index.html", [
   /<a[^>]+class="skip-link"[^>]+href="#main-content"/,
   /<main\b[^>]*id="main-content"/,
@@ -54,6 +73,7 @@ requirePatterns("simulator.js", [/historyNh3\.slice\(-2\)/, /expertAdviceAtNight
 requirePatterns("build_info.js", [/version:/, /commit:/, /builtAt:/, /environment:/]);
 
 for (const file of ["online_test.html", "404.html", "robots.txt", "sitemap.xml"]) read(file);
+for (const file of ["COPYRIGHT.md", "ORIGINALITY.md", "SECURITY.md", "originality-manifest.json", "docs/USER_GUIDE.md", "docs/DATA_DICTIONARY.md", "docs/RELEASE_CHECKLIST.md"]) read(file);
 
 const html = read("index.html");
 if (html) {
