@@ -30,7 +30,8 @@ jobs:
       - name: Configure Pages for verified workflow artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api --method PATCH repos/${{ github.repository }}/pages -H "Accept: application/vnd.github+json" -f build_type=workflow
+        run: |
+          gh api --method PATCH repos/${{ github.repository }}/pages -H "Accept: application/vnd.github+json" -f build_type=workflow
 
       - name: Run browser-surface regression tests
         run: node --test tests/*.test.js
