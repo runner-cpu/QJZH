@@ -32,7 +32,11 @@ const PROTECTED_FILES = [
 ];
 
 function hashFile(relative) {
-  return crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, relative))).digest("hex");
+  const content = fs.readFileSync(path.join(ROOT, relative));
+  // Git may check out text files with CRLF on Windows and LF on Linux/macOS.
+  // Normalize line endings before hashing so the evidence is repository-stable.
+  const normalized = content.toString("utf8").replace(/\r\n?/g, "\n");
+  return crypto.createHash("sha256").update(normalized, "utf8").digest("hex");
 }
 
 function safeRelative(relative) {

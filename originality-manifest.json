@@ -61,7 +61,7 @@
     {
       "path": "ui_interactions.js",
       "purpose": "interaction and display behavior",
-      "sha256": "5aac5f9e222a28f04a09d8a71876a453c4ceafe2d601061fab251605f6c1fd67"
+      "sha256": "761ba231a62abebb84e379d79a0368e361f9d50f72247cdbbd3b7249259b5e3d"
     },
     {
       "path": "viewRouter.js",
@@ -81,12 +81,12 @@
     {
       "path": "compensator_engine.js",
       "purpose": "locked compensation implementation",
-      "sha256": "168d97925e2e2e9ff44d6956a69ed116f3fc1091e6705a8ff327a26ddab6a5ff"
+      "sha256": "7438b8d6cb9b66da5c6413dca2b6d733c69f97e91ddff165e77b9930a61a8a28"
     },
     {
       "path": "model_weights.js",
       "purpose": "locked model weights",
-      "sha256": "40c5e332bdf0e68bd783059f9445af3e150a5c01d666d3570e555b42e5fbb04e"
+      "sha256": "d2bb20f4143c7d6232e35ce9a54c7f5712286fca0476ffe9d961e1e193f2175f"
     },
     {
       "path": "simulator.js",
@@ -106,12 +106,12 @@
     {
       "path": "scripts/verify-originality.js",
       "purpose": "originality verification",
-      "sha256": "e8c249159bfa8729f4a25dcdf78ceb3014176dcd187beca499055ff2398db456"
+      "sha256": "469e0801c29674e532fd5342b7362df00ca5a80ba2295f79b8d2cad153d67b20"
     },
     {
       "path": "assets/og_cover.png",
       "purpose": "social preview artwork",
-      "sha256": "449c7c6f6777686d6637c22a33a4bf168f1dfcb9906197171e50fc785fa21415"
+      "sha256": "fe12fd610c46bf38ebf3a354bb826f42d905a2b34e92ab0e2c628279490d447e"
     }
   ]
 }

@@ -13,3 +13,4 @@
 [2026-09-29] 公共发布加固：完成中性产品 README、用户指南、数据字典、发布清单、版权/原创/安全说明；CSV 导入限制为 1 MiB、5,000 行、256 字符字段，并补充原创清单与发布白名单。
 [2026-09-29] 回归核验：TZ=UTC 下 node --test tests/*.test.js 为 61/61；28 个受版本控制 JavaScript 文件 node --check 通过；原创清单 22 个文件、补偿模型锁、源码与 dist 部署校验均通过。
 [2026-09-29] Pages 构建预检：公开文档 7 项存在，tests、docs/superpowers、output、backups 与 README 均未进入 dist；构建元数据使用最终提交 SHA 的机制待提交后复核。
+[2026-09-29] Actions 回归修复：发现 Windows CRLF 与 Linux LF 导致 ui_interactions.js 清单哈希不一致；verify-originality.js 现按 LF 规范化文本后计算 SHA-256，避免跨平台误报。UTC 下 61/61 测试再次通过。
