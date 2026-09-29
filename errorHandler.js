@@ -15,10 +15,18 @@
     var element = typeof target === "string" && root.document ? root.document.querySelector(target) : target;
     var value = typeof status === "string" ? api.make(status) : (status || api.empty());
     if (!element) return value;
+    var translate = typeof options.translate === "function" ? options.translate : function (key, fallback) { return fallback; };
+    var stateKeys = { empty: "qjzh.status.empty", loading: "qjzh.status.loading", error: "qjzh.status.error", warning: "qjzh.status.warning" };
+    var stateFallbacks = { empty: "No data connected", loading: "Loading data…", error: "Data loading failed", warning: "Data needs attention" };
+    var renderedMessage = value.message || translate(stateKeys[value.state] || "qjzh.status.empty", stateFallbacks[value.state] || "Status");
     element.textContent = "";
     element.className = (options.className || "qjzh-data-state") + " qjzh-state-" + value.state;
-    element.setAttribute("role", value.state === "error" ? "alert" : "status");
-    var text = root.document.createElement("span"); text.textContent = value.message; element.appendChild(text);
+    element.setAttribute("role", "status");
+    element.setAttribute("aria-live", "polite");
+    element.setAttribute("aria-atomic", "true");
+    var busy = options.busy === true || value.state === "loading";
+    element.setAttribute("aria-busy", busy ? "true" : "false");
+    var text = root.document.createElement("span"); text.textContent = renderedMessage; element.appendChild(text);
     if (value.details && value.details.length) {
       var details = root.document.createElement("details"); var summary = root.document.createElement("summary");
       summary.textContent = options.detailsLabel || "查看详情"; details.appendChild(summary);
@@ -26,6 +34,12 @@
       details.appendChild(list); element.appendChild(details);
     }
     if (options.retry && (value.state === "error" || value.state === "warning")) { var button = root.document.createElement("button"); button.type = "button"; button.textContent = options.retryLabel || "重试"; button.addEventListener("click", options.retry); element.appendChild(button); }
+    if (!busy && (options.focus || options.focusTarget)) {
+      element.setAttribute("tabindex", "-1");
+      element.tabIndex = -1;
+      var focusTarget = options.focusTarget && options.focusTarget.focus ? options.focusTarget : element;
+      if (focusTarget && typeof focusTarget.focus === "function") focusTarget.focus();
+    }
     return value;
   };
   api.setState = api.render;

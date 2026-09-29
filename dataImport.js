@@ -134,7 +134,8 @@
   function inspectFile(file) {
     var candidate = file || {};
     var name = String(candidate.name == null ? "" : candidate.name).trim();
-    var bytes = Number(candidate.size);
+    var rawBytes = Number(candidate.size);
+    var bytes = Number.isFinite(rawBytes) && rawBytes > 0 ? Math.floor(rawBytes) : 0;
     if (!name) return { ok: false, code: "fileNameMissing", message: text("qjzh.data.fileNameMissing", "请选择一个有名称的 CSV 文件"), bytes: Number.isFinite(bytes) ? bytes : 0, name: name };
     if (!Number.isFinite(bytes) || bytes <= 0) return { ok: false, code: "fileEmpty", message: text("qjzh.data.fileEmpty", "文件为空，无法导入"), bytes: Number.isFinite(bytes) ? bytes : 0, name: name };
     if (candidate.readable === false || candidate.error) return { ok: false, code: "fileUnreadable", message: text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), bytes: bytes, name: name };
@@ -400,19 +401,28 @@
     var importStatus = root.document.getElementById("dataImportStatus");
     var emptyState = root.document.getElementById("dataEmptyState");
     var input = root.document.getElementById("csvInput");
-    var setStatus = function (value, busy) { if (importStatus) { importStatus.textContent = value; importStatus.setAttribute("aria-busy", busy ? "true" : "false"); } };
+    var setStatus = function (value, busy) { if (importStatus) { importStatus.textContent = value; importStatus.setAttribute("aria-busy", busy ? "true" : "false"); if (!busy) { importStatus.setAttribute("tabindex", "-1"); if (typeof importStatus.focus === "function") importStatus.focus(); } } };
     if (input) input.addEventListener("change", function () {
       var file = input.files && input.files[0];
       var preflight = api.inspectFile(file);
-      if (!preflight.ok || !root.FileReader) { setStatus(preflight.message || text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), false); return; }
+      if (!preflight.ok) { setStatus(preflight.message || text("qjzh.data.readError", "文件不可读取，请重新选择"), false); return; }
+      if (!root.FileReader) { setStatus(text("qjzh.data.readError", "当前浏览器不支持文件读取，请重试"), false); return; }
       setStatus(text("qjzh.data.importing", "正在读取文件…"), true);
       var reader = new root.FileReader();
       reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); renderRecordList(); setStatus(result.errors.length ? text("qjzh.data.partialImport", "部分数据未导入") : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录", { count: result.records.length }), false); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); };
-      reader.onerror = function () { setStatus(text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), false); };
-      reader.onabort = function () { setStatus(text("qjzh.data.importCancelled", "已取消文件导入"), false); };
-      try { reader.readAsText(file, "utf-8"); } catch (_) { setStatus(text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), false); }
+      reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); renderRecordList(); var message = result.ok === false ? text("qjzh.storage.rollback", "存储失败，已恢复原有数据") : (result.errors.length ? text("qjzh.data.partialImport", "部分数据未导入") : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录", { count: result.records.length })); setStatus(message, false); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); };
+      reader.onerror = function () { setStatus(text("qjzh.data.readError", "文件读取失败，请重试"), false); };
+      reader.onabort = function () { setStatus(text("qjzh.data.readCancelled", "已取消文件读取"), false); };
+      try { reader.readAsText(file, "utf-8"); } catch (_) { setStatus(text("qjzh.data.readError", "文件读取失败，请重试"), false); }
     });
-    if (input) input.addEventListener("change", function () { var file = input.files && input.files[0]; if (!file || !root.FileReader) return; var reader = new root.FileReader(); reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); renderRecordList(); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = result.errors.length ? text("qjzh.data.partialImport", "部分数据未导入") : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录，主看板将按单站点回放", { count: result.records.length }); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); }; reader.readAsText(file, "utf-8"); });
+    var clearGuard = root.document.getElementById("clearLocalData");
+    if (clearGuard) clearGuard.addEventListener("click", function (event) {
+      if (event && event.stopImmediatePropagation) event.stopImmediatePropagation();
+      var confirmed = root.confirm ? root.confirm(text("qjzh.data.confirmClear", "确认清除本地数据？")) : false;
+      var result = confirmed ? api.clearData({ confirm: true }) : { ok: false, cancelled: true };
+      if (result.ok) renderRecordList();
+      setStatus(result.ok ? text("qjzh.data.cleared", "本地数据已清除") : text("qjzh.data.clearCancelled", "已取消清除"), false);
+    });
     var sample = root.document.getElementById("loadSampleData"); if (sample) sample.addEventListener("click", function () { var result = api.loadDemo(); renderRecordList(); var summary = api.replaySummary(); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = text("qjzh.data.sampleLoaded", "示例数据已覆盖导入（{sites}圈舍{count}条）", { sites: summary.siteCount, count: summary.totalCount }); var badge = root.document.getElementById("dataQualityBadge"); if (badge) badge.textContent = text("qjzh.data.quality", "数据质量 {quality} · 置信度 {confidence}", { quality: result.level === "normal" ? "A" : result.level === "warning" ? "B" : "C", confidence: result.level === "normal" ? "高" : result.level === "warning" ? "中" : "低" }); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); });
     if (manualForm) manualForm.setAttribute("data-qjzh-ready", "true");
     var downloadLocal = root.document.getElementById("downloadLocalData");
@@ -423,7 +433,7 @@
         var anchor = root.document.createElement("a"); anchor.href = url; anchor.download = result.filename; anchor.click();
         if (root.URL.revokeObjectURL) root.URL.revokeObjectURL(url);
       }
-      setStatus(result.ok ? text("qjzh.data.exported", "已导出 {count} 条本地记录", { count: result.records }) : text("qjzh.data.exportFailed", "导出失败"), false);
+      setStatus(result.ok ? text("qjzh.data.exported", "已导出 {count} 条本地记录", { count: result.records }) : text("qjzh.data.exportError", "导出失败"), false);
     });
     if (importStatus) importStatus.setAttribute("aria-live", "polite");
     if (emptyState) emptyState.setAttribute("data-qjzh-empty", "true");

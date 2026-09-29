@@ -421,7 +421,7 @@ function tr(key, zhFallback, values = {}) {
   const language = document.documentElement.dataset.language || "zh";
   const template = language === "zh"
     ? zhFallback
-    : uiCopy[language]?.[key] || uiCopy.en[key] || zhFallback;
+    : uiCopy[language]?.[key] || uiCopy.en[key] || (window.UI_TEXT_MAP && window.UI_TEXT_MAP[key] && (window.UI_TEXT_MAP[key][language] || window.UI_TEXT_MAP[key].en)) || zhFallback;
   return String(template).replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
 }
 window.QJZH = window.QJZH || {};

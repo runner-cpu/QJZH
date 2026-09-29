@@ -31,17 +31,17 @@
     {
       "path": "index.html",
       "purpose": "application shell and visual system",
-      "sha256": "d3474037e046abae178d5fd766e2ef42df52235227d11b44f735c80cc0494b54"
+      "sha256": "779ab2cf3cffdf535a02b0e75b2318af224ea2d701cf26c9ac62f654f160458b"
     },
     {
       "path": "dashboard.js",
       "purpose": "dashboard behavior and localized copy",
-      "sha256": "6b39d3ba29c613afcc85709b1cdfd9f2cf7555e8776b86140260b742269e4cbb"
+      "sha256": "ee1e99e88946332eb190893b6a1cd59fe714b4ded26804a0b68ddf4baf985e57"
     },
     {
       "path": "dataImport.js",
       "purpose": "local data ingestion and validation",
-      "sha256": "d723dd8b8d1e269bc2fc3b44800dfb51421ba96df93a17c05636c83814bcd565"
+      "sha256": "e37fabea7dd8f99dde9c7ce07c3def56d41cc84681c4b45ab1c6c83ecf884964"
     },
     {
       "path": "institutionView.js",

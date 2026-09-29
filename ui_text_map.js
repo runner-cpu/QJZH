@@ -10,6 +10,17 @@
     todo: { zh: "待办", en: "To do", bo: "བྱ་དགོས" },
     emergency: { zh: "紧急", en: "Emergency", bo: "ཛ་དྲག" }
   };
+  Object.assign(map, {
+    "qjzh.data.fileTooLarge": { zh: "文件超过大小限制", en: "File exceeds the size limit", bo: "ཡིག་ཆའི་ཆེ་ཆུང་ཚད་ལས་བརྒལ།" },
+    "qjzh.data.readError": { zh: "文件读取失败，请重试", en: "File read failed; try again", bo: "ཡིག་ཆ་ཀློག་མ་ཐུབ།" },
+    "qjzh.data.readCancelled": { zh: "已取消文件读取", en: "File read cancelled", bo: "ཡིག་ཆ་ཀློག་པ་མཚམས་བཞག" },
+    "qjzh.data.exported": { zh: "已导出本地记录", en: "Local records exported", bo: "ས་གནས་ཟིན་ཐོ་ཕྱིར་འདྲེན་བྱས།" },
+    "qjzh.data.exportError": { zh: "导出失败，请重试", en: "Export failed; try again", bo: "ཕྱིར་འདྲེན་མ་ཐུབ།" },
+    "qjzh.storage.rollback": { zh: "存储失败，已恢复原有数据", en: "Storage failed; previous data was restored", bo: "ཉར་ཚགས་ཕམ། སྔོན་གྱི་གཞི་གྲངས་སླར་གསོ་བྱས།" },
+    "qjzh.storage.sessionWarning": { zh: "数据仅保留在当前浏览器会话", en: "Data will remain only for this browser session", bo: "གཞི་གྲངས་ད་ལྟའི་བལྟ་མཛོད་ནང་ཁོ་ནར་ཉར།" },
+    "qjzh.storage.memoryWarning": { zh: "存储不可用，数据仅保留在当前页面", en: "Storage is unavailable; data remains only in this page", bo: "ཉར་ཚགས་མི་སྤྱོད་པས་ཤོག་ངོས་ཁོ་ནར་ཉར།" },
+    "qjzh.report.retry": { zh: "重试", en: "Retry", bo: "ཡང་བསྐྱར་ཚོད་ལྟ།" }
+  });
   function text(key, language) {
     const item = map[key] || map.normal;
     return item[language || global.QJZH_LANGUAGE || "zh"] || item.zh;

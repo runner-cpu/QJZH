@@ -50,3 +50,38 @@ test("Tibetan has a dedicated font stack and readable line height", () => {
   assert.match(html, /html\[data-language="bo"\][^{]*\{[^}]*line-height:\s*1\.6/);
   assert.match(html, /Noto Sans Tibetan/);
 });
+
+test("async status surfaces expose live atomic focus targets and three-language keys", () => {
+  const html = read("index.html");
+  for (const id of ["dataImportStatus", "reportStatus"]) {
+    const element = extractElement(html, id);
+    assert.match(element, /role="status"/);
+    assert.match(element, /aria-live="polite"/);
+    assert.match(element, /aria-atomic="true"/);
+    assert.match(element, /tabindex="-1"/);
+  }
+  assert.match(html, /id="csvInput"[^>]+aria-describedby="csvInputHelp dataImportStatus"/);
+  assert.match(html, /id="downloadLocalData"[^>]+aria-controls="dataRecordRows"/);
+  const map = read("ui_text_map.js");
+  for (const key of ["qjzh.data.fileTooLarge", "qjzh.data.readError", "qjzh.data.readCancelled", "qjzh.data.exported", "qjzh.data.exportError", "qjzh.storage.rollback", "qjzh.storage.sessionWarning", "qjzh.storage.memoryWarning", "qjzh.report.retry"]) {
+    assert.match(map, new RegExp(key.replaceAll(".", "\\.")));
+  }
+});
+
+test("errorHandler marks loading busy and returns focus to terminal summary", () => {
+  const document = {
+    querySelector() { return null; },
+    createElement(tag) { return { tagName: tag, children: [], setAttribute(k, v) { this[k] = v; }, appendChild(child) { this.children.push(child); }, focus() { this.focused = true; } }; }
+  };
+  const window = { QJZH: {}, document };
+  const vm = require("node:vm");
+  vm.runInNewContext(read("errorHandler.js"), { window, document });
+  const target = { children: [], className: "", setAttribute(k, v) { this[k] = v; }, appendChild(child) { this.children.push(child); }, textContent: "", focus() { this.focused = true; } };
+  const translate = (key, fallback) => key + "::" + fallback;
+  window.QJZH.errorHandler.render(target, window.QJZH.errorHandler.loading(), { translate, busy: true });
+  assert.equal(target["aria-busy"], "true");
+  window.QJZH.errorHandler.render(target, window.QJZH.errorHandler.make("error", "failed"), { translate, focus: true });
+  assert.equal(target["aria-busy"], "false");
+  assert.equal(target.tabIndex, -1);
+  assert.equal(target.focused, true);
+});
