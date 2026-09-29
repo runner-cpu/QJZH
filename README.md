@@ -51,7 +51,7 @@
 
 ~~~text
 git clone https://github.com/runner-cpu/QJZH.git
-cd QJZH/deploy-gh-pages
+cd QJZH
 python -m http.server 8080
 ~~~
 
