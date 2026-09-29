@@ -31,7 +31,7 @@
     {
       "path": "index.html",
       "purpose": "application shell and visual system",
-      "sha256": "6c89fbe426b6feb541c05a6ee9fd6f6456a5f2ae20b5ec72c3abea56d7b6b588"
+      "sha256": "d3474037e046abae178d5fd766e2ef42df52235227d11b44f735c80cc0494b54"
     },
     {
       "path": "dashboard.js",
@@ -41,7 +41,7 @@
     {
       "path": "dataImport.js",
       "purpose": "local data ingestion and validation",
-      "sha256": "09c7d4ba5aa1b18e177398f371cd5ef223b7520080528dd8440d8a06aeea3c33"
+      "sha256": "d723dd8b8d1e269bc2fc3b44800dfb51421ba96df93a17c05636c83814bcd565"
     },
     {
       "path": "institutionView.js",

@@ -131,6 +131,16 @@
     try { return new TextEncoder().encode(String(value == null ? "" : value)).length; }
     catch (_) { return unescape(encodeURIComponent(String(value == null ? "" : value))).length; }
   }
+  function inspectFile(file) {
+    var candidate = file || {};
+    var name = String(candidate.name == null ? "" : candidate.name).trim();
+    var bytes = Number(candidate.size);
+    if (!name) return { ok: false, code: "fileNameMissing", message: text("qjzh.data.fileNameMissing", "请选择一个有名称的 CSV 文件"), bytes: Number.isFinite(bytes) ? bytes : 0, name: name };
+    if (!Number.isFinite(bytes) || bytes <= 0) return { ok: false, code: "fileEmpty", message: text("qjzh.data.fileEmpty", "文件为空，无法导入"), bytes: Number.isFinite(bytes) ? bytes : 0, name: name };
+    if (candidate.readable === false || candidate.error) return { ok: false, code: "fileUnreadable", message: text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), bytes: bytes, name: name };
+    if (bytes > MAX_CSV.bytes) return { ok: false, code: "fileTooLarge", message: text("qjzh.data.fileTooLarge", "文件超过 1 MiB 大小限制"), bytes: bytes, name: name };
+    return { ok: true, code: "ok", message: text("qjzh.data.fileReady", "文件已通过预检"), bytes: bytes, name: name };
+  }
   function splitRows(text) {
     var input = String(text == null ? "" : text).replace(/^\ufeff/, "");
     var rows = [], row = "", quoted = false;
@@ -193,20 +203,53 @@
       bySite.get(id).push(record);
     });
     var known = read("QJZH_SITES") || [];
+    var operations = [];
     bySite.forEach(function (siteRecords, id) {
       var old = options.replaceSites ? [] : (read("QJZH_RECORDS_" + id) || []);
       var merged = new Map();
       old.concat(siteRecords).forEach(function (record) { merged.set(recordKey(record), record); });
       var ordered = Array.from(merged.values()).sort(function (a, b) { return new Date(a.timestamp || 0) - new Date(b.timestamp || 0); }).slice(-1000);
-      write("QJZH_RECORDS_" + id, ordered);
+      operations.push({ key: "QJZH_RECORDS_" + id, value: ordered });
       if (known.indexOf(id) < 0) known.push(id);
     });
-    write("QJZH_SITES", known);
+    operations.push({ key: "QJZH_SITES", value: known });
+    var target = selectStore();
+    var snapshots = operations.map(function (operation) { return { key: operation.key, value: target.getItem(operation.key) }; });
+    try {
+      operations.forEach(function (operation) {
+        var serialized = JSON.stringify(operation.value);
+        target.setItem(operation.key, serialized);
+        if (target.getItem(operation.key) !== serialized) throw new Error("storage verification failed");
+      });
+    } catch (_) {
+      snapshots.forEach(function (snapshot) {
+        try { if (snapshot.value == null) target.removeItem(snapshot.key); else target.setItem(snapshot.key, snapshot.value); } catch (_) {}
+      });
+      cursor = 0;
+      return { ok: false, code: "storageQuota", rolledBack: true, records: normalized, storage: storageStatus() };
+    }
     cursor = 0;
-    return { records: normalized, storage: storageStatus() };
+    return { ok: true, records: normalized, storage: storageStatus() };
+  }
+  function csvCell(value) {
+    var cell = String(value == null ? "" : value);
+    return /[",\r\n]/.test(cell) ? '"' + cell.replace(/"/g, '""') + '"' : cell;
+  }
+  function exportCsv(options) {
+    options = options || {};
+    try {
+      var records = options.siteId ? api.importedRecords(options.siteId) : api.importedRecords();
+      var lines = [ACCEPTED_FIELDS.map(csvCell).join(",")];
+      records.forEach(function (record) { lines.push(ACCEPTED_FIELDS.map(function (field) { return csvCell(record[field]); }).join(",")); });
+      var filename = String(options.filename || "qjzh-local-data.csv").replace(/[^A-Za-z0-9._-]/g, "_");
+      if (!/\.csv$/i.test(filename)) filename += ".csv";
+      return { ok: true, csv: lines.join("\r\n") + "\r\n", filename: filename, records: records.length, storage: storageStatus() };
+    } catch (_) {
+      return { ok: false, code: "exportFailed", csv: "", filename: "qjzh-local-data.csv", records: 0, storage: storageStatus() };
+    }
   }
   function clearStoreBusiness(target) {
-    if (!target) return;
+    if (!target) return 0;
     var keys = [];
     try {
       for (var i = 0; i < target.length; i += 1) {
@@ -215,12 +258,14 @@
       }
     } catch (_) {}
     keys.forEach(function (key) { try { target.removeItem(key); } catch (_) {} });
+    return keys.length;
   }
   function clearBusinessData() {
-    clearStoreBusiness(root.localStorage);
-    clearStoreBusiness(root.sessionStorage);
-    clearStoreBusiness(memoryStore);
+    var removed = clearStoreBusiness(root.localStorage);
+    removed += clearStoreBusiness(root.sessionStorage);
+    removed += clearStoreBusiness(memoryStore);
     cursor = 0;
+    return removed;
   }
   function qualityFor(result) { return result && result.errors && result.errors.length ? "reject" : result && result.warnings && result.warnings.length ? "warning" : "normal"; }
   function text(key, fallback, values) { return q.translate ? q.translate(key, fallback, values || {}) : fallback.replace(/\{(\w+)\}/g, function (_, name) { return values && values[name] != null ? values[name] : _; }); }
@@ -263,6 +308,8 @@
       return result;
     },
     parseCsv: parseCsv,
+    inspectFile: inspectFile,
+    exportCsv: exportCsv,
     importCsv: function (csvText, options) {
       options = options || {};
       var result = parseCsv(csvText, options);
@@ -282,7 +329,10 @@
     nextRecord: function (siteId) { var list = api.importedRecords(siteId); if (!list.length) return null; var record = list[cursor % list.length]; cursor += 1; return record; },
     useImported: function () { return api.importedRecords().length > 0; },
     resetCursor: function () { cursor = 0; },
-    clearData: function () { clearBusinessData(); resetConfidence(); return { ok: true, storage: storageStatus() }; },
+    clearData: function (options) {
+      if (options && options.confirm !== true) return { ok: false, cancelled: true };
+      var removed = clearBusinessData(); resetConfidence(); return { ok: true, removed: removed, storage: storageStatus() };
+    },
     loadDemo: function (csvText) {
       var result = parseCsv(csvText || api.demoCsv, { provenance: "sample" });
       if (result.records.length) {
@@ -350,9 +400,31 @@
     var importStatus = root.document.getElementById("dataImportStatus");
     var emptyState = root.document.getElementById("dataEmptyState");
     var input = root.document.getElementById("csvInput");
+    var setStatus = function (value, busy) { if (importStatus) { importStatus.textContent = value; importStatus.setAttribute("aria-busy", busy ? "true" : "false"); } };
+    if (input) input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      var preflight = api.inspectFile(file);
+      if (!preflight.ok || !root.FileReader) { setStatus(preflight.message || text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), false); return; }
+      setStatus(text("qjzh.data.importing", "正在读取文件…"), true);
+      var reader = new root.FileReader();
+      reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); renderRecordList(); setStatus(result.errors.length ? text("qjzh.data.partialImport", "部分数据未导入") : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录", { count: result.records.length }), false); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); };
+      reader.onerror = function () { setStatus(text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), false); };
+      reader.onabort = function () { setStatus(text("qjzh.data.importCancelled", "已取消文件导入"), false); };
+      try { reader.readAsText(file, "utf-8"); } catch (_) { setStatus(text("qjzh.data.fileUnreadable", "文件不可读取，请重新选择"), false); }
+    });
     if (input) input.addEventListener("change", function () { var file = input.files && input.files[0]; if (!file || !root.FileReader) return; var reader = new root.FileReader(); reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); renderRecordList(); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = result.errors.length ? text("qjzh.data.partialImport", "部分数据未导入") : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录，主看板将按单站点回放", { count: result.records.length }); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); }; reader.readAsText(file, "utf-8"); });
     var sample = root.document.getElementById("loadSampleData"); if (sample) sample.addEventListener("click", function () { var result = api.loadDemo(); renderRecordList(); var summary = api.replaySummary(); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = text("qjzh.data.sampleLoaded", "示例数据已覆盖导入（{sites}圈舍{count}条）", { sites: summary.siteCount, count: summary.totalCount }); var badge = root.document.getElementById("dataQualityBadge"); if (badge) badge.textContent = text("qjzh.data.quality", "数据质量 {quality} · 置信度 {confidence}", { quality: result.level === "normal" ? "A" : result.level === "warning" ? "B" : "C", confidence: result.level === "normal" ? "高" : result.level === "warning" ? "中" : "低" }); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); });
     if (manualForm) manualForm.setAttribute("data-qjzh-ready", "true");
+    var downloadLocal = root.document.getElementById("downloadLocalData");
+    if (downloadLocal) downloadLocal.addEventListener("click", function () {
+      var result = api.exportCsv();
+      if (result.ok && root.Blob && root.URL && root.URL.createObjectURL && root.document.createElement) {
+        var url = root.URL.createObjectURL(new root.Blob([result.csv], { type: "text/csv;charset=utf-8" }));
+        var anchor = root.document.createElement("a"); anchor.href = url; anchor.download = result.filename; anchor.click();
+        if (root.URL.revokeObjectURL) root.URL.revokeObjectURL(url);
+      }
+      setStatus(result.ok ? text("qjzh.data.exported", "已导出 {count} 条本地记录", { count: result.records }) : text("qjzh.data.exportFailed", "导出失败"), false);
+    });
     if (importStatus) importStatus.setAttribute("aria-live", "polite");
     if (emptyState) emptyState.setAttribute("data-qjzh-empty", "true");
     var clear = root.document.getElementById("clearLocalData"); if (clear) clear.addEventListener("click", function () { api.clearData(); renderRecordList(); if (importStatus) importStatus.textContent = text("qjzh.data.cleared", "本地数据已清除"); });

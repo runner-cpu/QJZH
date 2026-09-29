@@ -165,6 +165,62 @@ test("quota failure pins the session to memory and verifies the write", () => {
   assert.equal(window.QJZH.dataImport.storageStatus().mode, "memory");
 });
 
+test("file inspection rejects empty, unnamed, unreadable, and oversized inputs before reading", () => {
+  const { window } = loadDataImport();
+  const api = window.QJZH.dataImport;
+  assert.equal(api.inspectFile({ name: "data.csv", size: 0 }).ok, false);
+  assert.equal(api.inspectFile({ name: "", size: 10 }).ok, false);
+  assert.equal(api.inspectFile({ name: "data.csv", size: 10, type: "text/csv", readable: false }).ok, false);
+  assert.equal(api.inspectFile({ name: "data.csv", size: api.MAX_CSV.bytes + 1 }).code, "fileTooLarge");
+  const valid = api.inspectFile({ name: "data.csv", size: 10, type: "text/csv" });
+  assert.equal(valid.ok, true);
+  assert.equal(valid.bytes, 10);
+  assert.equal(valid.name, "data.csv");
+});
+
+test("CSV export follows accepted field order and quotes commas, newlines, and quotes", () => {
+  const { window } = loadDataImport();
+  const api = window.QJZH.dataImport;
+  api.save([validRecord({ species: "yak, calf", device_model: "sensor\"x\n2" })]);
+  const result = api.exportCsv({ siteId: "QH-TEST-01" });
+  assert.equal(result.ok, true);
+  assert.equal(result.records, 1);
+  assert.match(result.csv.split("\n")[0], /^timestamp,site_id,altitude_m,temp_c,rh_percent,raw_nh3_ppm,device_model,species/);
+  assert.match(result.csv, /"sensor""x\n2"/);
+  assert.match(result.csv, /"yak, calf"/);
+  assert.match(result.filename, /\.csv$/);
+});
+
+test("batch save rolls back all writes when a storage operation fails", () => {
+  const values = new Map([["QJZH_SITES", JSON.stringify(["OLD"])], ["QJZH_RECORDS_OLD", JSON.stringify([validRecord({ site_id: "OLD" })])]]);
+  const storage = {
+    get length() { return values.size; }, key(index) { return [...values.keys()][index] ?? null; },
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    setItem(key, value) { if (key === "QJZH_SITES") throw new Error("quota"); values.set(key, String(value)); },
+    removeItem(key) { values.delete(key); }
+  };
+  const { window } = loadDataImport({ localStorage: storage, sessionStorage: throwingStorage() });
+  const result = window.QJZH.dataImport.save([validRecord({ site_id: "NEW" })]);
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "storageQuota");
+  assert.equal(result.rolledBack, true);
+  assert.deepEqual(JSON.parse(storage.getItem("QJZH_SITES")), ["OLD"]);
+  assert.equal(storage.getItem("QJZH_RECORDS_NEW"), null);
+});
+
+test("clearData requires explicit confirmation and reports removed count", () => {
+  const { window } = loadDataImport();
+  window.QJZH.dataImport.save([validRecord()]);
+  const cancelled = window.QJZH.dataImport.clearData({ confirm: false });
+  assert.equal(cancelled.ok, false);
+  assert.equal(cancelled.cancelled, true);
+  assert.equal(window.QJZH.dataImport.getRecords().length, 1);
+  const cleared = window.QJZH.dataImport.clearData({ confirm: true });
+  assert.equal(cleared.ok, true);
+  assert.equal(cleared.removed, 2);
+  assert.equal(window.QJZH.dataImport.getRecords().length, 0);
+});
+
 test("clearData removes business keys but preserves preferences", () => {
   const { window } = loadDataImport();
   seed(window.localStorage, {
