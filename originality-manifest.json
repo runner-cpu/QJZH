@@ -31,7 +31,7 @@
     {
       "path": "index.html",
       "purpose": "application shell and visual system",
-      "sha256": "779ab2cf3cffdf535a02b0e75b2318af224ea2d701cf26c9ac62f654f160458b"
+      "sha256": "58e59b717cadcb810b67a3e514af8d47aa4bbe5099ab967bdfeb5993ebe704c7"
     },
     {
       "path": "dashboard.js",

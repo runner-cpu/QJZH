@@ -2972,6 +2972,63 @@
     @media print{header,nav,footer,.qjzh-scene-presets,.qjzh-boundary-banner,.pipeline-strip,button,.view:not([data-view="report"]){display:none!important}html,body{font-size:11pt;line-height:1.55}html[data-language="bo"],html[data-language="bo"] body{font-size:11.5pt;line-height:1.65}.data-table{font-size:9pt}body{padding:0;background:#fff;color:#17232d}.app{max-width:none;margin:0;padding:0}.view[data-view="report"]{display:block!important;animation:none;min-height:0}.qjzh-report-panel{border:0;box-shadow:none;background:#fff}.qjzh-report-preview{display:block!important;page-break-inside:avoid}@page{size:A4;margin:15mm}}
     @media(prefers-reduced-motion:reduce){.view,.qjzh-main-nav .nav-link,.overview-quick{animation:none;transition:none}}
   </style>
+  <style id="qjzh-release-layout">
+    /* Release layout pass: resolve late-cascade conflicts and keep the reading order stable. */
+    @media (min-width: 981px) {
+      .topbar {
+        min-height: 96px;
+        align-items: flex-start;
+        padding-block: 14px;
+      }
+      .topbar > .brand-block { padding-top: 7px; }
+      .status-strip {
+        min-height: 68px;
+        align-content: center;
+      }
+      .status-strip .theme-option,
+      .status-strip .language-switch select { min-height: 36px; }
+      #main-content { min-height: calc(100vh - 285px); }
+    }
+
+    .view h2[tabindex="-1"]:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 5px;
+      box-shadow: 0 0 0 4px rgba(22, 214, 176, 0.12);
+      border-radius: 4px;
+    }
+
+    .sensor-grid {
+      min-width: 0;
+      min-height: 136px;
+      contain: layout;
+    }
+
+    .sensor-card {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .overview-quick-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .overview-quick-grid .overview-quick { grid-column: span 2; }
+    .overview-quick-grid .overview-quick:nth-child(4),
+    .overview-quick-grid .overview-quick:nth-child(5) { grid-column: span 3; }
+
+    @media (max-width: 900px) {
+      .overview-quick-grid { grid-template-columns: 1fr; }
+      .overview-quick-grid .overview-quick,
+      .overview-quick-grid .overview-quick:nth-child(4),
+      .overview-quick-grid .overview-quick:nth-child(5) { grid-column: auto; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar { min-height: 0; }
+      .topbar > .brand-block { padding-top: 0; }
+      .sensor-grid { min-height: 440px; }
+      .sensor-card { min-height: 104px; }
+    }
+  </style>
 </head>
 <body>
     <a class="skip-link" href="#main-content" data-i18n="a11y.skipMain">跳至主要内容</a>
