@@ -21,47 +21,52 @@
     {
       "path": "SECURITY.md",
       "purpose": "security boundary",
-      "sha256": "afd19f521ff3c8f1d6a9bc924b4cd05ee665a3ca0eb64613db5c8a905514ad23"
+      "sha256": "99b0a75840dbe198ceb66622d8f68d9d86d34ba5f731f68ba0f9ae327f31869e"
     },
     {
       "path": "README.md",
       "purpose": "public product documentation",
-      "sha256": "6d3beaa93b0805a9328d274fc3175077289298eeb6411bbc1b1bf0711188bc02"
+      "sha256": "3a9e5c29e6ef8fbe4a93a17b6774aa1f8672981bfe167a01403ccad9025d3ef3"
+    },
+    {
+      "path": "ALGORITHM_DOCUMENTATION.md",
+      "purpose": "algorithm documentation",
+      "sha256": "3b91f3d48eb75eddfc072d25f7c6fbaa6f3e04c6496ed2f3290c7cd915c9caed"
     },
     {
       "path": "index.html",
       "purpose": "application shell and visual system",
-      "sha256": "58e59b717cadcb810b67a3e514af8d47aa4bbe5099ab967bdfeb5993ebe704c7"
+      "sha256": "7bc902ea04c0d4791edee1dfe54b61d02f95a093e5c136b8530cd100860b1cef"
     },
     {
       "path": "dashboard.js",
       "purpose": "dashboard behavior and localized copy",
-      "sha256": "ee1e99e88946332eb190893b6a1cd59fe714b4ded26804a0b68ddf4baf985e57"
+      "sha256": "ab45a6ccedb746d114ba126d9dc9ca112e9cbc484343d06a0e6631cd6098194d"
     },
     {
       "path": "dataImport.js",
       "purpose": "local data ingestion and validation",
-      "sha256": "e37fabea7dd8f99dde9c7ce07c3def56d41cc84681c4b45ab1c6c83ecf884964"
+      "sha256": "c8fa9d8e51e93b3610201bd00eff5ecb7d2f9b4d08ef5eb8ad243ec18e5aff92"
     },
     {
       "path": "institutionView.js",
       "purpose": "multi-site analysis view",
-      "sha256": "07ee93e20b917908cd8f7114fd564bfdc60839cb6c496744492267dc4b49a4a4"
+      "sha256": "03dc90f577b7eb603a613d7a8aca0e4e90ec6a8fdf0ad805e7608ff240c84e4a"
     },
     {
       "path": "reportGenerator.js",
       "purpose": "report aggregation",
-      "sha256": "609c4481e2512512af3874facc6bbcef7dcc75cb446658c7c3ea1124e4cc07c6"
+      "sha256": "21bbe0b98d25f4e9883aba6c33ecc2863419eaf983a2a281c045144890db752c"
     },
     {
       "path": "reportRenderer.js",
       "purpose": "printable report renderer",
-      "sha256": "3c97faee9f1a8c9c957892ad1eaccd708bc5595503aeb67d47753e33ac701313"
+      "sha256": "4b78cd7b6308da40b8544c5c2f8e8b1b149d199543b2225132f9b3fbbaf3bc3c"
     },
     {
       "path": "ui_interactions.js",
       "purpose": "interaction and display behavior",
-      "sha256": "761ba231a62abebb84e379d79a0368e361f9d50f72247cdbbd3b7249259b5e3d"
+      "sha256": "ba2c663852529b65d7784d2f57becc05e91aa8f5091983a73fb68d5f8ba6a7d4"
     },
     {
       "path": "viewRouter.js",
@@ -96,22 +101,47 @@
     {
       "path": "scripts/build-pages.js",
       "purpose": "Pages artifact builder",
-      "sha256": "bdbf1bc6def63a0349a83b00af83a11ea432db6cb44e3ed49712d4b3b2cac06b"
+      "sha256": "584d486519cf6d3b167fd3432d3a13b7937148bb9a12545175f5273f4b47efa4"
+    },
+    {
+      "path": "scripts/pages-allowlist.js",
+      "purpose": "reviewed Pages publication allowlist",
+      "sha256": "34aba9e6b871cc386e4cbf50214c546b2b5eae0d068e6602ac3f875ead7971dd"
+    },
+    {
+      "path": "scripts/smoke-pages.js",
+      "purpose": "post-deployment public smoke checks",
+      "sha256": "6190c3a08c08b5c57c19fb0a462bd5c521af442b4b96e781acbd9e19abd6588f"
+    },
+    {
+      "path": "verify_compensator.js",
+      "purpose": "locked model verification",
+      "sha256": "335e61440d3df6ac3536cd2871ffe71acf216d7b48b96fb0f3a058efb48b483d"
     },
     {
       "path": "verify-deployment.js",
       "purpose": "deployment verification surface",
-      "sha256": "a14b144770053fe9a310a2e37f4066354222e67731059319199af720d751bb5f"
+      "sha256": "041aafa70d8c27346e49fa8830c05791e3807606af7022082ea011cb6872eea8"
     },
     {
       "path": "scripts/verify-originality.js",
       "purpose": "originality verification",
-      "sha256": "469e0801c29674e532fd5342b7362df00ca5a80ba2295f79b8d2cad153d67b20"
+      "sha256": "6c9984c9a70cf1ab06b813917ae2f7bc89f7670e96d110a3b670d9fecc71aaa7"
     },
     {
       "path": "assets/og_cover.png",
       "purpose": "social preview artwork",
       "sha256": "fe12fd610c46bf38ebf3a354bb826f42d905a2b34e92ab0e2c628279490d447e"
+    },
+    {
+      "path": "docs/QUALITY_AUDIT.md",
+      "purpose": "quality and risk audit",
+      "sha256": "932b3d9291eee8afac593834c43a98d9451c1db4554ec131d92919fceb169842"
+    },
+    {
+      "path": ".well-known/security.txt",
+      "purpose": "security disclosure endpoint",
+      "sha256": "6e49eafcc0ad2bf97d530ab68a5906b2b1843997c4c7d8e045d2539685e1a48c"
     }
   ]
 }

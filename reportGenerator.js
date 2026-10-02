@@ -83,6 +83,10 @@
     var outOfDomainCount = q.dataImport && q.dataImport.validate
       ? records.filter(function (record) { return q.dataImport.validate(record).quality !== "A"; }).length
       : 0;
+    var buildInfo = root.BUILD_INFO || {};
+    var loadedModelVersion = root.MODEL_WEIGHTS && root.MODEL_WEIGHTS.version;
+    var modelVersion = loadedModelVersion || buildInfo.modelVersion || "model-not-loaded";
+    var rulesVersion = buildInfo.rulesVersion || "knowledgeBase.js@1.0.0";
     var result = {
       valid: true,
       language: language,
@@ -103,8 +107,12 @@
       rejectedCount: Number(options.rejectedCount || 0),
       outOfDomainCount: outOfDomainCount,
       provenance: provenance,
-      modelVersion: root.MODEL_WEIGHTS && root.MODEL_WEIGHTS.version || "model-not-loaded",
-      ruleVersion: root.BUILD_INFO && root.BUILD_INFO.version ? "rules@" + root.BUILD_INFO.version : "knowledgeBase.js@1.0.0",
+      releaseVersion: buildInfo.releaseVersion || "release-unknown",
+      deploymentVersion: buildInfo.deploymentVersion || buildInfo.version || "deployment-unknown",
+      modelVersion: modelVersion,
+      ruleVersion: rulesVersion,
+      rulesFingerprint: buildInfo.rulesFingerprint || "",
+      buildCommit: buildInfo.commit || "local",
       timezone: TIMEZONE,
       generatedAt: now.toISOString(),
       source: "QJZH 本地记录"

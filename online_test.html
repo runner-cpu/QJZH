@@ -31,8 +31,20 @@
     .summary { min-width: 150px; padding: 14px 16px; border: 1px solid rgba(148,181,204,.28); border-radius: 10px; background: rgba(16,42,59,.9); text-align: right; }
     .summary strong { display: block; color: #00d4aa; font: 900 1.7rem/1 ui-monospace, monospace; }
     .summary span { display: block; margin-top: 6px; color: #93adbf; font-size: .76rem; }
-    .metadata { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; margin-bottom: 18px; overflow: hidden; border: 1px solid rgba(148,181,204,.24); border-radius: 10px; background: rgba(148,181,204,.24); }
-    .metadata div { min-width: 0; padding: 13px 15px; background: #10293a; }
+    .metadata { display: grid; gap: 12px; margin-bottom: 18px; }
+    .metadata-group { display: grid; gap: 1px; overflow: hidden; border: 1px solid rgba(148,181,204,.24); border-radius: 10px; background: rgba(148,181,204,.24); }
+    .metadata-group.runtime { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .metadata-group.identity { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .metadata-group > div { min-width: 0; padding: 13px 15px; background: #10293a; }
+    .metadata-group.runtime > div:nth-child(even) { background: #0e2535; }
+    .metadata-group.identity > div { background: linear-gradient(145deg, rgba(16,41,58,.98), rgba(13,34,49,.98)); }
+    .metadata .release { border-top: 2px solid #16d6b0; box-shadow: inset 3px 0 0 rgba(22,214,176,.42); }
+    .metadata .deployment { border-top: 2px solid #4a9eff; box-shadow: inset 3px 0 0 rgba(74,158,255,.42); }
+    .metadata .model { border-top: 2px solid #ffd93d; box-shadow: inset 3px 0 0 rgba(255,217,61,.42); }
+    .metadata .rules { border-top: 2px solid #b690ff; box-shadow: inset 3px 0 0 rgba(182,144,255,.42); }
+    .metadata-fingerprint { min-width: 0; padding: 11px 15px; border: 1px dashed rgba(182,144,255,.42); border-radius: 8px; background: rgba(13,34,49,.72); }
+    .metadata-fingerprint span { display: block; margin-bottom: 5px; color: #7897ac; font-size: .72rem; }
+    .metadata-fingerprint code { color: #cbbaff; overflow-wrap: anywhere; }
     .metadata span { display: block; margin-bottom: 5px; color: #7897ac; font-size: .72rem; }
     .metadata code { color: #dceaf3; overflow-wrap: anywhere; }
     ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -44,8 +56,8 @@
     li.fail::before { color: #fff; background: #ff4d5e; content: "!"; }
     footer { margin-top: 22px; color: #7897ac; font-size: .82rem; }
     footer a { color: #8cebd8; }
-    @media (max-width: 820px) { .metadata { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 640px) { body { padding: 24px 14px 48px; } header { grid-template-columns: 1fr; align-items: start; } .summary { text-align: left; } .metadata { grid-template-columns: 1fr; } }
+    @media (max-width: 820px) { .metadata-group.runtime { grid-template-columns: repeat(3, minmax(0, 1fr)); } .metadata-group.identity { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 640px) { body { padding: 24px 14px 48px; } header { grid-template-columns: 1fr; align-items: start; } .summary { text-align: left; } .metadata-group.runtime, .metadata-group.identity { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -55,11 +67,18 @@
       <div class="summary" aria-live="polite"><strong id="summaryCount">0 / 0</strong><span id="summaryLabel">正在检查公开产物</span></div>
     </header>
     <section class="metadata" aria-label="构建信息">
-      <div><span>运行环境</span><code id="environment">--</code></div>
-      <div><span>提交版本</span><code id="commit">--</code></div>
-      <div><span>发布版本</span><code id="version">--</code></div>
-      <div><span>模型版本</span><code id="modelVersion">--</code></div>
-      <div><span>构建时间</span><code id="builtAt">--</code></div>
+      <div class="metadata-group runtime" role="group" aria-label="运行与构建">
+        <div><span>运行环境</span><code id="environment">--</code></div>
+        <div><span>提交 SHA</span><code id="commit">--</code></div>
+        <div><span>构建时间</span><code id="builtAt">--</code></div>
+      </div>
+      <div class="metadata-group identity" role="group" aria-label="版本身份">
+        <div class="release"><span>发布版本</span><code id="releaseVersion">--</code></div>
+        <div class="deployment"><span>部署版本</span><code id="version">--</code></div>
+        <div class="model"><span>模型版本</span><code id="modelVersion">--</code></div>
+        <div class="rules"><span>规则版本</span><code id="rulesVersion">--</code></div>
+      </div>
+      <div class="metadata-fingerprint" role="group" aria-label="规则完整性指纹"><span>规则指纹（SHA-256）</span><code id="rulesFingerprint">--</code></div>
     </section>
     <ol id="results"></ol>
     <footer>此页只检查公开静态产物和浏览器运行接口。<a href="./#/overview">返回环境总览</a></footer>
@@ -86,13 +105,17 @@
         updateSummary();
       }
 
-      var build = window.BUILD_INFO || { version: "dev", commit: "local", builtAt: null, environment: "local" };
+      var build = window.BUILD_INFO || { releaseVersion: "20261002", deploymentVersion: "dev", modelVersion: "1.0.0", rulesVersion: "knowledgeBase.js@1.0.0", rulesFingerprint: "sha256:f08ef4a6d02ae435fa8bef03403e85d947d07553cde752f7904734460eaff111", version: "dev", commit: "local", builtAt: null, environment: "local" };
       document.getElementById("environment").textContent = build.environment || "unknown";
       document.getElementById("commit").textContent = build.commit || build.version || "unknown";
-      document.getElementById("version").textContent = build.version || "unknown";
-      document.getElementById("modelVersion").textContent = window.MODEL_WEIGHTS?.version || "unknown";
+      document.getElementById("releaseVersion").textContent = build.releaseVersion || "unknown";
+      document.getElementById("version").textContent = build.deploymentVersion || build.version || "unknown";
+      document.getElementById("modelVersion").textContent = window.MODEL_WEIGHTS?.version || build.modelVersion || "unknown";
+      document.getElementById("rulesVersion").textContent = build.rulesVersion || "unknown";
+      document.getElementById("rulesFingerprint").textContent = build.rulesFingerprint || "unknown";
       document.getElementById("builtAt").textContent = build.builtAt || "本地开发构建";
-      report(Boolean(build.version && build.commit && build.environment), "构建版本、提交与环境字段已加载");
+      report(Boolean(build.releaseVersion && (build.deploymentVersion || build.version) && build.modelVersion && build.rulesVersion && build.commit && build.environment), "发布、部署、模型、规则与提交字段已加载");
+      report(/^sha256:[0-9a-f]{64}$/i.test(build.rulesFingerprint || ""), "规则 SHA-256 指纹格式有效");
       report(build.environment !== "production" || Boolean(build.builtAt), "生产构建包含不可变 UTC 构建时间");
 
       var hasWeights = typeof window.MODEL_WEIGHTS !== "undefined";

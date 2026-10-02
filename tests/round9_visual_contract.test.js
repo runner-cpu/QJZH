@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
 const childProcess = require("node:child_process");
+const vm = require("node:vm");
 
 const ROOT = path.resolve(__dirname, "..");
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
@@ -38,6 +39,15 @@ test("application scripts are external, ordered, and deferred", () => {
   assert.doesNotMatch(html, /<script>[\s\S]{5000,}<\/script>/);
   const tags = [...html.matchAll(/<script[^>]+src="[^"]+"[^>]*>/g)].map((match) => match[0]);
   assert.equal(tags.every((tag) => /\bdefer\b/.test(tag)), true);
+});
+
+test("Chart.js stays pinned with an integrity and cross-origin contract", () => {
+  const html = read("index.html");
+  const chartTag = html.match(/<script\s+defer\s+src="https:\/\/cdn\.jsdelivr\.net\/npm\/chart\.js@[^"]+"[^>]*><\/script>/i)?.[0] || "";
+  assert.match(chartTag, /chart\.js@3\.9\.1/);
+  assert.match(chartTag, /integrity="sha384-[A-Za-z0-9+/=]+"/);
+  assert.match(chartTag, /crossorigin="anonymous"/);
+  assert.match(chartTag, /\bdefer\b/);
 });
 
 test("public discovery metadata and a custom 404 exist", () => {
@@ -84,13 +94,13 @@ test("Pages builder emits only the public runtime allowlist", (t) => {
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
 
-  for (const file of ["index.html", "dashboard.js", "build_info.js", "online_test.html", "assets"]) {
+  for (const file of ["index.html", "dashboard.js", "build_info.js", "online_test.html", "assets", ".well-known/security.txt", "artifact-manifest.json"]) {
     assert.equal(fs.existsSync(path.join(output, file)), true, file + " is included");
   }
   for (const file of ["tests", "execution_log.txt", ".git", "docs/superpowers", "README.md"]) {
     assert.equal(fs.existsSync(path.join(output, file)), false, file + " is excluded");
   }
-  for (const file of ["COPYRIGHT.md", "ORIGINALITY.md", "SECURITY.md", "originality-manifest.json", "docs/USER_GUIDE.md", "docs/DATA_DICTIONARY.md", "docs/RELEASE_CHECKLIST.md"]) {
+  for (const file of ["COPYRIGHT.md", "ORIGINALITY.md", "SECURITY.md", "originality-manifest.json", "docs/USER_GUIDE.md", "docs/DATA_DICTIONARY.md", "docs/RELEASE_CHECKLIST.md", "docs/QUALITY_AUDIT.md"]) {
     assert.equal(fs.existsSync(path.join(output, file)), true, file + " is included");
   }
   const metadata = fs.readFileSync(path.join(output, "build_info.js"), "utf8");
@@ -98,4 +108,67 @@ test("Pages builder emits only the public runtime allowlist", (t) => {
   assert.match(metadata, /version:\s*"build-42"/);
   assert.match(metadata, /builtAt:\s*"\d{4}-\d{2}-\d{2}T/);
   assert.match(metadata, /environment:\s*"production"/);
+  const security = fs.readFileSync(path.join(output, ".well-known/security.txt"), "utf8");
+  assert.match(security, /^Contact:/m);
+  assert.match(security, /^Expires:/m);
+  assert.match(security, /^Preferred-Languages:/m);
+  assert.match(security, /^Canonical:/m);
+  const manifest = JSON.parse(fs.readFileSync(path.join(output, "artifact-manifest.json"), "utf8"));
+  assert.equal(manifest.commit, commit);
+  assert.ok(manifest.files.some((entry) => entry.path === ".well-known/security.txt"));
+  assert.equal(manifest.files.every((entry) => /^[0-9a-f]{64}$/.test(entry.sha256)), true);
+});
+
+test("security.txt is a minimal public disclosure channel", () => {
+  const file = path.join(ROOT, ".well-known", "security.txt");
+  assert.equal(fs.existsSync(file), true);
+  const content = fs.readFileSync(file, "utf8");
+  assert.deepEqual(content.split(/\r?\n/).filter(Boolean).map((line) => line.split(":", 1)[0]), ["Contact", "Expires", "Preferred-Languages", "Canonical"]);
+  assert.doesNotMatch(content, /school|contest|competition|@/i);
+});
+
+test("presentation seed is stable, bounded, and independent of global randomness", () => {
+  const source = read("ui_interactions.js");
+  const dashboard = read("dashboard.js");
+  const document = { title: "", documentElement: { dataset: { language: "zh" } }, addEventListener() {} };
+  const window = { QJZH: {}, addEventListener() {} };
+  vm.runInNewContext(source, { window, document }, { filename: "ui_interactions.js" });
+  assert.equal(typeof window.QJZH.presentationSeed, "function");
+  const first = window.QJZH.presentationSeed("algorithm-demo", "2600|5|60");
+  assert.equal(first, window.QJZH.presentationSeed("algorithm-demo", "2600|5|60"));
+  assert.ok(first >= 0 && first < 1);
+  assert.notEqual(first, window.QJZH.presentationSeed("algorithm-demo", "2600|5|61"));
+  assert.doesNotMatch(source, /Math\.random\s*\(/);
+  assert.doesNotMatch(dashboard, /Math\.random\s*\(/);
+  assert.match(dashboard, /state\.sampleIndex[\s\S]*?channel/);
+});
+
+test("algorithm demo repeats the same presentation values for unchanged controls", () => {
+  const source = read("ui_interactions.js");
+  const values = {
+    demoAltitude: { value: "2600" },
+    demoTemp: { value: "5" },
+    demoRh: { value: "60" },
+    demoRaw: { textContent: "" },
+    demoCorrected: { textContent: "" },
+    demoSimulate: { addEventListener() {} }
+  };
+  const document = {
+    title: "",
+    documentElement: { dataset: { language: "zh" } },
+    addEventListener() {},
+    getElementById(id) { return values[id] || null; }
+  };
+  const window = {
+    QJZH: {},
+    addEventListener() {},
+    simulateHighlandRaw(truePpm) { return truePpm * 1.4; },
+    compensate(_altitude, _temperature, _humidity, raw) { return raw / 1.4; }
+  };
+  vm.runInNewContext(source, { window, document }, { filename: "ui_interactions.js" });
+  assert.equal(typeof window.QJZH.runAlgorithmDemo, "function");
+  window.QJZH.runAlgorithmDemo();
+  const first = [values.demoRaw.textContent, values.demoCorrected.textContent];
+  window.QJZH.runAlgorithmDemo();
+  assert.deepEqual([values.demoRaw.textContent, values.demoCorrected.textContent], first);
 });

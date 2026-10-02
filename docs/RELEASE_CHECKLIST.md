@@ -22,7 +22,8 @@
 2. 校验源码：node verify-deployment.js .。
 3. 校验产物：node verify-deployment.js dist。
 4. 检查 dist 只包含 allowlist，确认没有 tests、backups、output、内部计划或密钥。
-5. 检查 dist/build_info.js 的 commit、builtAt 和 environment 字段。
+5. 对照[全面质量审计](QUALITY_AUDIT.md)复核版本字段、存储降级、可访问性和安全边界；不要只依赖页面标题判断发布是否更新。
+6. 检查 dist/build_info.js 的 commit、builtAt 和 environment 字段。
 
 ## GitHub Actions 与线上 smoke test
 
@@ -33,7 +34,8 @@
 - /build_info.js 的 commit 等于推送提交；
 - /robots.txt、/sitemap.xml、/404.html 返回正确内容；
 - /COPYRIGHT.md、/ORIGINALITY.md、/SECURITY.md 和 docs/ 公开文档可访问；
-- 页面禁词扫描和许可证链接均无异常。
+- /docs/QUALITY_AUDIT.md 应与当前实现和测试契约一致；
+- 页面禁词扫描、许可证链接、`/.well-known/security.txt` 和 `/artifact-manifest.json` 均无异常。
 
 若线上 `/build_info.js` 仍显示 `commit: "local"` 或 `environment: "local"`，说明 Pages source 被切回 legacy 根目录；先修复 Pages source，再重新运行 workflow，不要手工把生成的 `dist/build_info.js` 复制回源码。
 

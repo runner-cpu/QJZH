@@ -140,8 +140,15 @@ scripts/build-pages.js 只复制明确列出的运行时文件和公开文档，
 - 数据字段说明：[docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md)
 - 用户操作手册：[docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 - 发布清单：[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
+- 全面质量审计：[docs/QUALITY_AUDIT.md](docs/QUALITY_AUDIT.md)
 
 项目不使用阻断右键、禁用键盘、破坏屏幕阅读器或恶意反爬等手段。保护措施集中在许可证、署名、公开发布白名单、哈希清单、审计记录和安全响应流程上。
+
+### 版本字段如何阅读
+
+页面和报告会分别显示发布版本、部署版本、模型版本与规则版本：发布版本用于静态资源缓存，部署版本标识一次构建，模型版本对应锁定权重，规则版本对应知识库及其 SHA-256 指纹。`version` 仅为旧集成保留的部署版本别名；需要复核线上内容时，应优先记录 `build_info.js` 中的完整 `commit`、`builtAt` 和 `artifact-manifest.json`。
+
+部署自检页把运行环境、提交和构建时间与四类版本身份分组展示，并单列规则指纹；颜色只用于辅助分组，复核时应以可复制的文本字段和 SHA-256 为准。
 
 ## 反馈与贡献边界
 

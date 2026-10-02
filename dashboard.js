@@ -1,6 +1,65 @@
 /* Qingjing Zhiheng dashboard runtime and resilient chart fallback. */
 "use strict";
 
+// Stable presentation-only randomness makes local charts and demos replayable.
+// This helper is intentionally separate from the locked model assets.
+window.QJZH = window.QJZH || {};
+if (typeof window.QJZH.presentationSeed !== "function") {
+  window.QJZH.presentationSeed = function (key, salt) {
+    const input = `${String(key == null ? "" : key)}\u001f${String(salt == null ? "" : salt)}`;
+    let hash = 2166136261;
+    for (let index = 0; index < input.length; index += 1) {
+      hash ^= input.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0) / 4294967296;
+  };
+}
+const presentationSeed = window.QJZH.presentationSeed;
+
+// Dynamic values can originate in imported CSV records or a translated copy.
+// Keep every HTML/CSS sink behind small, shared allowlists at the top level so
+// both the legacy dashboard path and the local-knowledge path use the same
+// boundary.  These helpers intentionally do not alter the locked algorithms.
+const SAFE_STYLE_COLORS = Object.freeze([
+  "#00D4AA", "#FFD93D", "#FF9F43", "#FF4D5E", "#4A9EFF", "#7A9BB5",
+  "#FF6B6B", "#16D6B0", "#B690FF", "#388E3C", "#1976D2"
+]);
+const SAFE_LEVEL_CLASSES = Object.freeze(["critical", "warning", "alert", "caution", "normal"]);
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>"'=]/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "=": "&#61;"
+  }[character]));
+}
+
+function safeStyleColor(value, fallback = "#7A9BB5") {
+  const candidate = String(value == null ? "" : value);
+  const allowed = SAFE_STYLE_COLORS.find((color) => color.toLowerCase() === candidate.toLowerCase());
+  if (allowed) return allowed;
+  const safeFallback = SAFE_STYLE_COLORS.find((color) => color.toLowerCase() === String(fallback).toLowerCase());
+  return safeFallback || "#7A9BB5";
+}
+
+function safeLevelClass(value) {
+  return SAFE_LEVEL_CLASSES.includes(value) ? value : "normal";
+}
+
+function safePercent(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? clamp(numeric, 0, 100) : fallback;
+}
+
+function safeFixed(value, digits, fallback = "--") {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toFixed(digits) : fallback;
+}
+
 // CDN 不可用时启用轻量 Canvas 回退，保证离线演示仍有曲线、坐标和点位 Tooltip。
 (function installChartFallback() {
   // simulator.js 已提供基础降级图表；这里用多坐标增强版替换它，若 CDN 真正加载则保留 Chart.js。
@@ -583,8 +642,14 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-function randomNoise(scale) {
-  return (Math.random() - 0.5) * scale;
+function randomNoise(scale, channel = "default") {
+  const scene = [
+    state.sampleIndex,
+    state.scenario?.type || "normal",
+    state.scenario?.tick || 0,
+    channel
+  ].join("|");
+  return (presentationSeed("dashboard-noise-v1", scene) - 0.5) * scale;
 }
 
 function formatClock(date = new Date()) {
@@ -615,7 +680,8 @@ function simulateHighlandRaw(truePpm, altitude, temperature, humidity) {
     0.40
   );
   const zeroDrift = 0.1 + 0.06 * lowPressure + 0.035 * Math.max(0, -temperature) / 15;
-  return clamp(truePpm * (1 + nonlinearError) + zeroDrift + randomNoise(0.11), 0, 45);
+  const noiseKey = ["raw", truePpm, altitude, temperature, humidity].join("|");
+  return clamp(truePpm * (1 + nonlinearError) + zeroDrift + randomNoise(0.11, noiseKey), 0, 45);
 }
 
 function interpolateColor(start, end, ratio) {
@@ -633,11 +699,12 @@ function interpolateColor(start, end, ratio) {
 
 // 根据氨气浓度动态生成从绿色到红色的风险颜色。
 function getRiskColor(ammonia) {
-  const ratio = clamp(ammonia / 30, 0, 1);
-  if (ratio < 0.5) {
-    return interpolateColor("#00D4AA", "#FFD93D", ratio / 0.5);
-  }
-  return interpolateColor("#FFD93D", "#FF4D5E", (ratio - 0.5) / 0.5);
+  const value = Number(ammonia);
+  if (!Number.isFinite(value)) return "#7A9BB5";
+  if (value > 20) return "#FF4D5E";
+  if (value > 15) return "#FF9F43";
+  if (value >= 10) return "#FFD93D";
+  return "#00D4AA";
 }
 
 // 场景模拟会在 10-20 个采样点内逐步推向目标值，并短暂稳定，方便演示规则触发。
@@ -655,31 +722,31 @@ function startScenario(type) {
   window.dispatchEvent(new CustomEvent("dashboard:scenario-change", { detail: { type } }));
 }
 
-function scenarioBlendValue(base, target, min, max) {
+function scenarioBlendValue(base, target, min, max, channel = "value") {
   if (state.scenario.type === "normal") return base;
   const total = state.scenario.duration + state.scenario.hold;
   const ramp = state.scenario.duration;
   const tick = state.scenario.tick;
   const ratio = tick <= ramp ? tick / ramp : 1;
   const value = tick <= total ? base + (target - base) * ratio : base;
-  return clamp(value + randomNoise(0.4), min, max);
+  return clamp(value + randomNoise(0.4, `scenario|${channel}`), min, max);
 }
 
 function applyScenario(data) {
   const next = { ...data };
   if (state.scenario.type === "ammonia") {
-    next.ammonia = scenarioBlendValue(data.ammonia, 18.8, 0, 30);
-    next.humidity = scenarioBlendValue(data.humidity, 66, 40, 90);
+    next.ammonia = scenarioBlendValue(data.ammonia, 18.8, 0, 30, "ammonia");
+    next.humidity = scenarioBlendValue(data.humidity, 66, 40, 90, "humidity");
   }
 
   if (state.scenario.type === "cold") {
-    next.temperature = scenarioBlendValue(data.temperature, -3.2, -5, 25);
-    next.ammonia = scenarioBlendValue(data.ammonia, 8.5, 0, 30);
+    next.temperature = scenarioBlendValue(data.temperature, -3.2, -5, 25, "temperature");
+    next.ammonia = scenarioBlendValue(data.ammonia, 8.5, 0, 30, "ammonia");
   }
 
   if (state.scenario.type === "humidAmmonia") {
-    next.humidity = scenarioBlendValue(data.humidity, 84, 40, 90);
-    next.ammonia = scenarioBlendValue(data.ammonia, 13.2, 0, 30);
+    next.humidity = scenarioBlendValue(data.humidity, 84, 40, 90, "humidity");
+    next.ammonia = scenarioBlendValue(data.ammonia, 13.2, 0, 30, "ammonia");
   }
 
   next.rawAmmonia = simulateHighlandRaw(next.ammonia, next.altitude, next.temperature, next.humidity);
@@ -717,22 +784,22 @@ function generateSensorData() {
   const daylight = Math.max(0, Math.sin((t / 28) - Math.PI / 2));
 
   const temperature = clamp(
-    8.5 + 13.8 * Math.sin(t / 25 - 1.35) + 2.3 * Math.sin(t / 8) + randomNoise(1.9),
+    8.5 + 13.8 * Math.sin(t / 25 - 1.35) + 2.3 * Math.sin(t / 8) + randomNoise(1.9, `sensor|${t}|temperature`),
     -5,
     25
   );
   const humidity = clamp(
-    64 + 16 * Math.sin(t / 18 + 1.1) - 6 * Math.sin(t / 7) + randomNoise(5.5),
+    64 + 16 * Math.sin(t / 18 + 1.1) - 6 * Math.sin(t / 7) + randomNoise(5.5, `sensor|${t}|humidity`),
     40,
     90
   );
   const ammonia = clamp(
-    8.6 + 5.8 * Math.sin(t / 14 - 0.4) + 2.2 * Math.sin(t / 5) + spike + ventilationDrop + randomNoise(2.2),
+    8.6 + 5.8 * Math.sin(t / 14 - 0.4) + 2.2 * Math.sin(t / 5) + spike + ventilationDrop + randomNoise(2.2, `sensor|${t}|ammonia`),
     0,
     30
   );
   const rawAmmonia = simulateHighlandRaw(ammonia, altitude, temperature, humidity);
-  const light = clamp(daylight * 930 + 45 * Math.sin(t / 3) + randomNoise(36), 0, 1000);
+  const light = clamp(daylight * 930 + 45 * Math.sin(t / 3) + randomNoise(36, `sensor|${t}|light`), 0, 1000);
 
   state.sampleIndex += 1;
 
@@ -769,7 +836,7 @@ function updateSensorCards(data) {
     const value = data[key];
     const status = getSensorStatus(key, value);
     config.value.textContent = value.toFixed(config.decimals);
-    config.range.style.width = `${percentInRange(value, config.min, config.max)}%`;
+    config.range.style.width = `${safePercent(percentInRange(value, config.min, config.max))}%`;
     config.status.textContent = status.label;
     config.status.className = `badge ${status.className}`;
   });
@@ -870,8 +937,8 @@ function renderDecisionSteps(levelClass, inWindow) {
   const steps = getDecisionSteps(levelClass, inWindow);
   els.decisionAdvice.innerHTML = steps.map((step, index) => `
     <div class="action-step">
-      <span class="step-index">${index + 1}</span>
-      <span><span class="step-status">${step.status}</span>${step.text}</span>
+      <span class="step-index">${escapeHtml(index + 1)}</span>
+      <span><span class="step-status">${escapeHtml(step.status)}</span>${escapeHtml(step.text)}</span>
     </div>
   `).join("");
 }
@@ -901,10 +968,10 @@ function updateActuators(levelClass, inWindow) {
   }
 
   els.fanStatusText.textContent = fan.text;
-  els.fanStatusDot.style.setProperty("--state-color", fan.color);
+  els.fanStatusDot.style.setProperty("--state-color", safeStyleColor(fan.color));
   els.fanIcon.classList.toggle("spin", fan.spin);
   els.heaterStatusText.textContent = heater.text;
-  els.heaterStatusDot.style.setProperty("--state-color", heater.color);
+  els.heaterStatusDot.style.setProperty("--state-color", safeStyleColor(heater.color));
   els.commandText.textContent = command;
   return { fan, heater, command };
 }
@@ -926,7 +993,7 @@ function updateAlarmList(data, result, execution) {
 
   items.push({ color: execution.fan.color, text: tr("alarm.recommendation", `风险：${execution.fan.text}；${execution.command}`, { fan: execution.fan.text, command: execution.command }) });
   els.alarmList.innerHTML = items.map((item) => `
-    <div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${item.color};"></i><span>${item.text}</span></div>
+    <div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${safeStyleColor(item.color)};"></i><span>${escapeHtml(item.text)}</span></div>
   `).join("");
 }
 
@@ -941,7 +1008,7 @@ function updatePipeline(data, result, execution) {
 function updateDecision(data) {
   const result = decideByExpertRules(data);
   const risk = clamp((data.ammonia / 30) * 100, 3, 100);
-  const riskColor = getRiskColor(data.ammonia);
+  const riskColor = safeStyleColor(getRiskColor(data.ammonia), "#7A9BB5");
   const now = new Date();
   const hour = now.getHours() + now.getMinutes() / 60;
   const inWindow = hour >= 12 && hour <= 14;
@@ -951,17 +1018,17 @@ function updateDecision(data) {
   els.decisionTitle.textContent = localizedLevel(result.levelClass, result.title);
   renderDecisionSteps(result.levelClass, inWindow);
   els.decisionTrigger.innerHTML = `
-    <span class="trigger-chip">${tr("trigger.ammonia", "氨气")}：<strong style="--chip-color:${riskColor}">${data.ammonia.toFixed(1)}ppm</strong></span>
-    <span class="trigger-chip">${tr("trigger.humidity", "湿度")}：<strong style="--chip-color:var(--humidity)">${data.humidity.toFixed(0)}%</strong></span>
-    <span class="trigger-chip">${tr("trigger.temperature", "温度")}：<strong style="--chip-color:var(--temperature)">${data.temperature.toFixed(1)}℃</strong></span>
-    <span class="trigger-chip">${tr("trigger.light", "光照")}：<strong style="--chip-color:var(--light)">${data.light.toFixed(0)}Lux</strong></span>
+    <span class="trigger-chip">${escapeHtml(tr("trigger.ammonia", "氨气"))}：<strong style="--chip-color:${riskColor}">${escapeHtml(data.ammonia.toFixed(1))}ppm</strong></span>
+    <span class="trigger-chip">${escapeHtml(tr("trigger.humidity", "湿度"))}：<strong style="--chip-color:var(--humidity)">${escapeHtml(data.humidity.toFixed(0))}%</strong></span>
+    <span class="trigger-chip">${escapeHtml(tr("trigger.temperature", "温度"))}：<strong style="--chip-color:var(--temperature)">${escapeHtml(data.temperature.toFixed(1))}℃</strong></span>
+    <span class="trigger-chip">${escapeHtml(tr("trigger.light", "光照"))}：<strong style="--chip-color:var(--light)">${escapeHtml(data.light.toFixed(0))}Lux</strong></span>
   `;
   renderRuleMatchChain(data, null);
-  els.riskRing.style.setProperty("--risk", `${risk}%`);
+  els.riskRing.style.setProperty("--risk", `${safePercent(risk)}%`);
   els.riskRing.style.setProperty("--ring-color", riskColor);
-  els.riskPointer.style.setProperty("--pointer", `${risk}%`);
+  els.riskPointer.style.setProperty("--pointer", `${safePercent(risk)}%`);
   els.ringValue.textContent = data.ammonia.toFixed(1);
-  els.ventTimeline.style.setProperty("--now", `${(hour / 24) * 100}%`);
+  els.ventTimeline.style.setProperty("--now", `${safePercent((hour / 24) * 100)}%`);
   els.ventStatus.textContent = inWindow ? tr("vent.inside", "当前在窗口内") : tr("vent.outside", "当前不在窗口内");
   els.ventAdvice.textContent = data.ammonia > 15
     ? tr("vent.high", "氨气已超阈值。建议在 12:00-14:00 进行 5-10 分钟短时通风，温度波动控制在 3℃以内。")
@@ -989,10 +1056,10 @@ function renderRuleMatchChain(data, decision) {
   const engineRule = decision && decision.ruleId ? tr("rule.engine", ` · 引擎规则 ${decision.ruleId}`, { ruleId: decision.ruleId }) : "";
   els.decisionEvidence.textContent = tr("rule.basis", `决策依据：命中规则 ${activeRule.index} —— ${activeRule.condition}${engineRule}`, { index: activeRule.index, condition: activeRule.condition, engineRule });
   els.ruleMatchList.innerHTML = rules.map((rule) => `
-    <div class="rule-match-item${rule.index === activeRule.index ? " is-match" : ""}" role="listitem" style="--rule-match-color:${rule.color}">
-      <span class="rule-match-index">${rule.index}</span>
-      <div class="rule-match-copy"><strong>${rule.name}</strong><span>${rule.condition}</span></div>
-      <span class="rule-match-state">${rule.index === activeRule.index ? `✓ ${tr("rule.matched", "命中")}` : `✗ ${tr("rule.unmet", "未满足")}`}</span>
+    <div class="rule-match-item${rule.index === activeRule.index ? " is-match" : ""}" role="listitem" style="--rule-match-color:${safeStyleColor(rule.color)}">
+      <span class="rule-match-index">${escapeHtml(rule.index)}</span>
+      <div class="rule-match-copy"><strong>${escapeHtml(rule.name)}</strong><span>${escapeHtml(rule.condition)}</span></div>
+      <span class="rule-match-state">${escapeHtml(rule.index === activeRule.index ? `✓ ${tr("rule.matched", "命中")}` : `✗ ${tr("rule.unmet", "未满足")}`)}</span>
     </div>
   `).join("");
 }
@@ -1024,17 +1091,21 @@ function updateCalibration(data) {
 
 function renderRecords() {
   if (!els.recordRows) return;
-  els.recordRows.innerHTML = state.records.map((item) => `
-    <tr>
-      <td>${item.time}</td>
-      <td>${item.temperature.toFixed(1)}℃</td>
-      <td>${item.humidity.toFixed(0)}%</td>
-      <td>${item.rawAmmonia.toFixed(1)}</td>
-      <td>${item.ammonia.toFixed(1)}</td>
-      <td>${item.light.toFixed(0)}</td>
-      <td class="level-${item.result.levelClass}">${item.result.icon} ${localizedLevel(item.result.levelClass, item.result.title)}</td>
-    </tr>
-  `).join("");
+  els.recordRows.innerHTML = state.records.map((item) => {
+    const result = item && item.result || {};
+    const levelClass = safeLevelClass(result.levelClass);
+    return `
+      <tr>
+        <td>${escapeHtml(item.time)}</td>
+        <td>${escapeHtml(safeFixed(item && item.temperature, 1))}℃</td>
+        <td>${escapeHtml(safeFixed(item && item.humidity, 0))}%</td>
+        <td>${escapeHtml(safeFixed(item && item.rawAmmonia, 1))}</td>
+        <td>${escapeHtml(safeFixed(item && item.ammonia, 1))}</td>
+        <td>${escapeHtml(safeFixed(item && item.light, 0))}</td>
+        <td class="level-${levelClass}">${escapeHtml(result.icon)} ${escapeHtml(localizedLevel(levelClass, result.title))}</td>
+      </tr>
+    `;
+  }).join("");
 }
 
 function pushRecord(data, result) {
@@ -1060,13 +1131,22 @@ function renderSnapshots() {
     return;
   }
 
-  els.snapshotList.innerHTML = state.snapshots.map((item) => `
-    <div class="snapshot-item" role="listitem">
-      <strong>${item.time}</strong>
-      <span>${tr("snapshot", `NH₃ ${item.ammonia.toFixed(1)}ppm · 温度 ${item.temperature.toFixed(1)}℃ · 湿度 ${item.humidity.toFixed(0)}% · 光照 ${item.light.toFixed(0)}Lux`, { ammonia: item.ammonia.toFixed(1), temperature: item.temperature.toFixed(1), humidity: item.humidity.toFixed(0), light: item.light.toFixed(0) })}</span>
-      <span class="level-${item.result.levelClass}">${item.result.icon} ${localizedLevel(item.result.levelClass, item.result.title)}</span>
-    </div>
-  `).join("");
+  els.snapshotList.innerHTML = state.snapshots.map((item) => {
+    const result = item && item.result || {};
+    const levelClass = safeLevelClass(result.levelClass);
+    const ammonia = safeFixed(item && item.ammonia, 1);
+    const temperature = safeFixed(item && item.temperature, 1);
+    const humidity = safeFixed(item && item.humidity, 0);
+    const light = safeFixed(item && item.light, 0);
+    const summary = tr("snapshot", `NH₃ ${ammonia}ppm · 温度 ${temperature}℃ · 湿度 ${humidity}% · 光照 ${light}Lux`, { ammonia, temperature, humidity, light });
+    return `
+      <div class="snapshot-item" role="listitem">
+        <strong>${escapeHtml(item.time)}</strong>
+        <span>${escapeHtml(summary)}</span>
+        <span class="level-${levelClass}">${escapeHtml(result.icon)} ${escapeHtml(localizedLevel(levelClass, result.title))}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 // Chart.js 自定义插件：在图表区域手动绘制 15ppm 红色虚线阈值。
@@ -1821,8 +1901,8 @@ els.snapshotButton.addEventListener("click", saveSnapshot);
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.src = `${url}?retry=${Date.now()}`;
-      script.onload = resolve;
-      script.onerror = () => reject(new Error(`无法加载 ${url}`));
+      script.addEventListener("load", resolve, { once: true });
+      script.addEventListener("error", () => reject(new Error(`无法加载 ${url}`)), { once: true });
       document.head.appendChild(script);
     });
   }
@@ -1848,30 +1928,22 @@ els.snapshotButton.addEventListener("click", saveSnapshot);
     state.adviceHistory.length = 0;
     state.currentData = null;
     state.currentResult = null;
-    els.recordRows.innerHTML = `<tr><td colspan="7">${tr("simulation.running", "24小时本地模拟启动中")}</td></tr>`;
+    els.recordRows.innerHTML = `<tr><td colspan="7">${escapeHtml(tr("simulation.running", "24小时本地模拟启动中"))}</td></tr>`;
     renderAdviceHistory();
   }
 
   function toLegacyResult(decision) {
-    const urgency = decision.urgencyLevel || (decision.action === "ventilation" ? "warning" : "normal");
-    const levelClass = urgency === "info" ? "caution" : urgency;
+    decision = decision || {};
+    const requestedUrgency = String(decision.urgencyLevel || (decision.action === "ventilation" ? "warning" : "normal"));
+    const urgency = ["critical", "warning", "info", "normal"].includes(requestedUrgency) ? requestedUrgency : "normal";
+    const levelClass = safeLevelClass(urgency === "info" ? "caution" : urgency);
     const icons = { critical: "🔴", warning: "🟠", info: "🔵", normal: "🟢" };
     return {
       levelClass,
       icon: icons[urgency] || "🟢",
-      title: decision.urgencyLabel || (decision.action === "ventilation" ? `通风 ${decision.duration} 分钟` : "保持关闭"),
+      title: String(decision.urgencyLabel || (decision.action === "ventilation" ? `通风 ${safeFixed(decision.duration, 0, 0)} 分钟` : "保持关闭")),
       urgency
     };
-  }
-
-  function escapeHtml(value) {
-    return String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[character]));
   }
 
   // 从已加载的知识库读取规则目录，只负责可视化，不复制或修改规则内容。
@@ -1968,11 +2040,11 @@ els.snapshotButton.addEventListener("click", saveSnapshot);
   function renderAdviceHistory() {
     els.adviceHistoryCount.textContent = `${state.adviceHistory.length} / ${MAX_ADVICE_LOG}`;
     if (state.adviceHistory.length === 0) {
-      els.adviceHistoryLog.innerHTML = `<div class="advice-history-empty">${tr("knowledge.historyEmpty", "重要建议将在模拟推进后记录。")}</div>`;
+      els.adviceHistoryLog.innerHTML = `<div class="advice-history-empty">${escapeHtml(tr("knowledge.historyEmpty", "重要建议将在模拟推进后记录。"))}</div>`;
       return;
     }
     els.adviceHistoryLog.innerHTML = state.adviceHistory.map((item) => `
-      <article class="advice-log-item" role="listitem" style="--log-color:${escapeHtml(item.color)}">
+      <article class="advice-log-item" role="listitem" style="--log-color:${safeStyleColor(item.color, "#1976D2")}">
         <i class="advice-log-accent"></i>
         <time class="advice-log-time">${escapeHtml(item.time)}</time>
         <div class="advice-log-copy"><strong>${escapeHtml(localizedUrgency(item.decision?.urgencyLevel, item.label))}</strong> · ${formatAdvice(adviceForDisplay(item.decision || item))}<br><span>${escapeHtml(tr("knowledge.citation", "依据"))}：${escapeHtml(localizedCitation(item.decision || item))} · ${escapeHtml(item.ruleId)}</span></div>
@@ -2018,9 +2090,10 @@ els.snapshotButton.addEventListener("click", saveSnapshot);
       scenarioHistory.push(data.ammonia);
       scenarioHistory = scenarioHistory.slice(-3);
     }
+    decision = decision || {};
     const result = toLegacyResult(decision);
     const risk = clamp((data.ammonia / 30) * 100, 3, 100);
-    const riskColor = getRiskColor(data.ammonia);
+    const riskColor = safeStyleColor(getRiskColor(data.ammonia));
     const fanOn = decision.action === "ventilation";
 
     state.currentData = data;
@@ -2032,33 +2105,33 @@ els.snapshotButton.addEventListener("click", saveSnapshot);
     els.decisionIcon.textContent = result.icon;
     els.decisionTitle.textContent = localizedLevel(result.levelClass, result.title);
     els.decisionAdvice.innerHTML = `
-      <div class="action-step"><span class="step-index">1</span><span><span class="step-status">${fanOn ? `● ${tr("step.completed", "建议已生成")}` : `▶ ${tr("step.monitoring", "监测中")}`}</span>${formatAdvice(adviceForDisplay(decision))}</span></div>
-      <div class="action-step"><span class="step-index">2</span><span><span class="step-status">${tr("step.trend", "趋势")}</span>${escapeHtml(trendText(decision))}</span></div>
-      <div class="action-step"><span class="step-index">3</span><span><span class="step-status">${tr("step.basis", "依据")}</span>${escapeHtml(localizedCitation(decision))}</span></div>`;
+      <div class="action-step"><span class="step-index">1</span><span><span class="step-status">${escapeHtml(fanOn ? `● ${tr("step.completed", "建议已生成")}` : `▶ ${tr("step.monitoring", "监测中")}`)}</span>${formatAdvice(adviceForDisplay(decision))}</span></div>
+      <div class="action-step"><span class="step-index">2</span><span><span class="step-status">${escapeHtml(tr("step.trend", "趋势"))}</span>${escapeHtml(trendText(decision))}</span></div>
+      <div class="action-step"><span class="step-index">3</span><span><span class="step-status">${escapeHtml(tr("step.basis", "依据"))}</span>${escapeHtml(localizedCitation(decision))}</span></div>`;
     els.decisionTrigger.innerHTML = `
-      <span class="trigger-chip">${tr("trigger.time", "时刻")}：<strong>${data.time}</strong></span>
-      <span class="trigger-chip">${tr("trigger.ammonia", "氨气")}：<strong style="--chip-color:${riskColor}">${data.ammonia.toFixed(1)}ppm</strong></span>
-      <span class="trigger-chip">${tr("trigger.tempDrop", "温降")}：<strong style="--chip-color:var(--temperature)">${data.tempDropRate.toFixed(1)}℃</strong></span>`;
+      <span class="trigger-chip">${escapeHtml(tr("trigger.time", "时刻"))}：<strong>${escapeHtml(data.time)}</strong></span>
+      <span class="trigger-chip">${escapeHtml(tr("trigger.ammonia", "氨气"))}：<strong style="--chip-color:${riskColor}">${escapeHtml(safeFixed(data.ammonia, 1))}ppm</strong></span>
+      <span class="trigger-chip">${escapeHtml(tr("trigger.tempDrop", "温降"))}：<strong style="--chip-color:var(--temperature)">${escapeHtml(safeFixed(data.tempDropRate, 1))}℃</strong></span>`;
     // 以同一组已补偿数据刷新解释链，保留决策引擎实际命中的规则 ID 作为溯源证据。
     renderRuleMatchChain(data, decision);
-    els.riskRing.style.setProperty("--risk", `${risk}%`);
+    els.riskRing.style.setProperty("--risk", `${safePercent(risk)}%`);
     els.riskRing.style.setProperty("--ring-color", riskColor);
-    els.riskPointer.style.setProperty("--pointer", `${risk}%`);
-    els.ringValue.textContent = data.ammonia.toFixed(1);
-    els.ventTimeline.style.setProperty("--now", `${(data.hour / 24) * 100}%`);
+    els.riskPointer.style.setProperty("--pointer", `${safePercent(risk)}%`);
+    els.ringValue.textContent = safeFixed(data.ammonia, 1);
+    els.ventTimeline.style.setProperty("--now", `${safePercent((Number(data.hour) / 24) * 100)}%`);
     els.ventStatus.textContent = decision.inWindow ? tr("vent.inside", "当前在窗口内") : tr("vent.outside", "当前不在窗口内");
     els.ventAdvice.textContent = fanOn
       ? tr("vent.active", `建议 ${decision.duration} 分钟短时通风，持续监测温度降幅。`, { duration: decision.duration })
       : decision.action === "alert_only" ? tr("vent.alertOnly", "仅输出建议，请人工复核。") : tr("vent.standby", "保持巡检，继续监测。");
     els.fanStatusText.textContent = fanOn ? tr("status.watch", "关注") : tr("status.riskPending", "等待判断");
-    els.fanStatusDot.style.setProperty("--state-color", fanOn ? "#00D4AA" : "#7A9BB5");
+    els.fanStatusDot.style.setProperty("--state-color", safeStyleColor(fanOn ? "#00D4AA" : "#7A9BB5"));
     els.fanIcon.classList.toggle("spin", fanOn);
     els.heaterStatusText.textContent = data.temperature < 0 ? tr("status.recommendInsulation", "建议保温") : tr("status.recommendation", "待生成");
-    els.heaterStatusDot.style.setProperty("--state-color", data.temperature < 0 ? "#FF4D5E" : "#7A9BB5");
+    els.heaterStatusDot.style.setProperty("--state-color", safeStyleColor(data.temperature < 0 ? "#FF4D5E" : "#7A9BB5"));
     els.commandText.textContent = fanOn
       ? tr("knowledge.activeVent", `建议：${decision.duration} 分钟短时通风`, { duration: decision.duration })
       : decision.action === "alert_only" ? tr("knowledge.alertOnly", "仅输出建议，请人工复核") : tr("knowledge.standby", "保持巡检，继续监测");
-    els.alarmList.innerHTML = `<div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${fanOn ? "#00D4AA" : "#FF9F43"};"></i><span>${escapeHtml(decision.ruleId)} · ${escapeHtml(localizedCitation(decision))}</span></div>`;
+    els.alarmList.innerHTML = `<div class="alarm-item"><i class="alarm-dot" style="--alarm-color:${safeStyleColor(fanOn ? "#00D4AA" : "#FF9F43")};"></i><span>${escapeHtml(decision.ruleId || "LOCAL_RULE")} · ${escapeHtml(localizedCitation(decision))}</span></div>`;
     const sourceLabel = data.source === "imported" ? tr("qjzh.replay.source", "导入数据 · {site}", { site: data.siteId || "本地站点" }) : tr("simulation.data", "本地模拟数据");
     els.flowCollect.textContent = `${data.time} · ${sourceLabel}`;
     els.flowCompensate.textContent = tr("pipeline.compensate", `${data.pressure.toFixed(1)}kPa · NH₃ ${data.rawAmmonia.toFixed(1)}→${data.ammonia.toFixed(1)}`, { pressure: data.pressure.toFixed(1), raw: data.rawAmmonia.toFixed(1), corrected: data.ammonia.toFixed(1) });
@@ -2066,9 +2139,10 @@ els.snapshotButton.addEventListener("click", saveSnapshot);
     els.flowExecute.textContent = fanOn ? tr("simulation.fanRun", `建议短时通风 / ${decision.duration}分钟`, { duration: decision.duration }) : tr("simulation.standby", "建议待生成");
     els.decisionResult.dataset.action = decision.action;
     els.decisionResult.dataset.urgency = result.urgency;
-    els.decisionResult.style.setProperty("--urgency-color", decision.urgencyColor || "#388E3C");
+    const urgencyColor = safeStyleColor(decision.urgencyColor, "#388E3C");
+    els.decisionResult.style.setProperty("--urgency-color", urgencyColor);
     els.adviceUrgencyBadge.textContent = localizedUrgency(decision.urgencyLevel, result.title);
-    els.adviceUrgencyBadge.style.background = decision.urgencyColor || "#388E3C";
+    els.adviceUrgencyBadge.style.background = urgencyColor;
     els.expertAdviceText.innerHTML = formatAdvice(adviceForDisplay(decision));
     els.adviceTrendStatus.innerHTML = `<i class="trend-status-indicator"></i><span>${escapeHtml(trendText(decision))}</span>`;
     els.adviceCitation.textContent = `${tr("knowledge.citation", "依据")}：${localizedCitation(decision)}`;

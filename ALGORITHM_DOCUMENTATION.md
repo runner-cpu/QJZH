@@ -193,4 +193,4 @@ knowledgeBase.js  ──> decisionEngine.js     ──> index.html（预警/建�
 | `knowledgeBase.js` | `f08ef4a6d02ae435fa8bef03403e85d947d07553cde752f7904734460eaff111` |
 | `decisionEngine.js` | `9876a11c835548b9aa165f713d5413ab6b83373bc3d2f12ae0662e584777a9af` |
 
-训练指标来源：`D:\Programming\Objects\QJZH\qingjing-zhiheng-dashboard\training_metrics.json`。每次运行本生成器时，上表和本文件日期都会重算；将本文件与相关代码一起纳入 Git 版本控制即可获得可审计的历史。
+训练指标来自受控的离线指标输入，不随 Pages 产物发布，也不在公开文档中记录本机路径。每次运行本生成器时，上表和本文件日期都会重算；将本文件与相关代码一起纳入 Git 版本控制即可获得可审计的历史。

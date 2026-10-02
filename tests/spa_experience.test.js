@@ -111,6 +111,8 @@ test('page title follows initial and changed language, including an initially em
   const document = { title: '', documentElement: { dataset: { language: 'en' } }, addEventListener() {} };
   const window = { QJZH: {}, addEventListener(type, callback) { events[type] = callback; } };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../ui_interactions.js'), 'utf8'), { window, document });
+  assert.equal(typeof window.QJZH.presentationSeed, 'function');
+  assert.equal(window.QJZH.presentationSeed('spa', 'stable'), window.QJZH.presentationSeed('spa', 'stable'));
   assert.equal(document.title, 'Qingjing Zhiheng · Plateau Barn Environment Data Service');
   document.documentElement.dataset.language = 'bo';
   events['dashboard:language-change']();

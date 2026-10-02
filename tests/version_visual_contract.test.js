@@ -47,11 +47,22 @@ test("application and diagnostics pages use one explicit release query plus the 
 
 test("diagnostics distinguishes deployment and model versions", () => {
   const html = read("online_test.html");
+  assert.match(html, /id="releaseVersion"/);
   assert.match(html, /id="version"/);
   assert.match(html, /id="modelVersion"/);
-  assert.match(html, /getElementById\("version"\)[\s\S]*?build.version/);
+  assert.match(html, /id="rulesVersion"/);
+  assert.match(html, /id="rulesFingerprint"/);
+  assert.match(html, /getElementById\("releaseVersion"\)[\s\S]*?build.releaseVersion/);
+  assert.match(html, /getElementById\("version"\)[\s\S]*?build.deploymentVersion[\s\S]*?build.version/);
   assert.match(html, /getElementById\("modelVersion"\)[\s\S]*?MODEL_WEIGHTS/);
-  assert.match(html, /metadata[^{]*\{[\s\S]*?repeat\(5/);
+  assert.match(html, /getElementById\("rulesVersion"\)[\s\S]*?build.rulesVersion/);
+  assert.match(html, /getElementById\("rulesFingerprint"\)[\s\S]*?build.rulesFingerprint/);
+  assert.match(html, /sha256:[0-9a-f]{64}/i);
+  assert.match(html, /metadata-group\.runtime[^{}]*\{[\s\S]*?repeat\(3/);
+  assert.match(html, /metadata-group\.identity[^{}]*\{[\s\S]*?repeat\(4/);
+  assert.match(html, /metadata \.release[\s\S]*?metadata \.deployment[\s\S]*?metadata \.model[\s\S]*?metadata \.rules/);
+  assert.match(html, /metadata-group[^>]*role="group"/);
+  assert.doesNotMatch(html, /metadata[^{}]*\{[\s\S]*?repeat\(5/);
 });
 
 test("overview quick links keep equal-width rhythm and touch-safe reduced-motion rules", () => {

@@ -387,7 +387,7 @@
   ].join("\n");
   q.validateSensorRecord = check;
   q.storage = q.storage || { mode: function () { return api.storage(); }, get: read, set: write, clear: api.clearData };
-  function escapeHtml(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]; }); }
+  function escapeHtml(value) { return String(value == null ? "" : value).replace(/[&<>"'=]/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "=": "&#61;" }[character]; }); }
   function renderRecordList() {
     var body = root.document && root.document.getElementById("dataRecordRows");
     if (!body) return;

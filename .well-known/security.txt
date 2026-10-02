@@ -1,0 +1,4 @@
+Contact: https://runner-cpu.github.io/QJZH/SECURITY.md
+Expires: 2027-09-29T00:00:00Z
+Preferred-Languages: zh, en, bo
+Canonical: https://runner-cpu.github.io/QJZH/.well-known/security.txt

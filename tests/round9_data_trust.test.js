@@ -347,6 +347,66 @@ test("blocked print popup returns reusable HTML", () => {
   assert.equal(result.window, null);
 });
 
+test("report output keeps imported source, labels, and provenance inert", () => {
+  const { window } = loadScript("reportRenderer.js", { open() { return null; } });
+  const payload = '<img src=x onerror="alert(1)">\"\'&';
+  const result = window.QJZH.reportRenderer.render({
+    ...minimalReport(),
+    noRecords: false,
+    source: payload,
+    sampleCount: 1,
+    siteCount: 1,
+    provenance: { [payload]: 1 },
+    trendSeries: [{ timestamp: "2026-09-01T08:00:00+08:00", label: payload, value: 12 }]
+  });
+
+  assert.doesNotMatch(result.html, /<img\b|<script\b|onerror\s*=|onclick\s*=/i);
+  assert.match(result.html, /&lt;img/);
+  assert.match(result.html, /&quot;|&#39;/);
+});
+
+test("report chart colors come from a fixed palette even when policy data is hostile", () => {
+  const { window } = loadScript("reportRenderer.js", {
+    open() { return null; },
+    QJZH: {
+      riskPolicy: {
+        classifyNh3() { return { label: "<img src=x>", color: "red; background:url(javascript:alert(1))" }; }
+      }
+    }
+  });
+  const result = window.QJZH.reportRenderer.render({
+    ...minimalReport(),
+    noRecords: false,
+    trendSeries: [{ timestamp: "2026-09-01T08:00:00+08:00", value: 12 }],
+    riskDistribution: { "姝ｅ父": 1 }
+  });
+
+  assert.doesNotMatch(result.html, /javascript:|url\(|red;|<img\b/i);
+  assert.match(result.html, /background:(?:#159b7d|#d6a93d|#f08c46|#d94f5c)/i);
+});
+
+test("dashboard display sinks do not interpolate imported fields as raw markup", () => {
+  const dashboard = read("dashboard.js");
+  const interactions = read("ui_interactions.js");
+  assert.doesNotMatch(dashboard, /<td>\$\{item\.time\}<\/td>/);
+  assert.doesNotMatch(dashboard, /<strong>\$\{item\.time\}<\/strong>/);
+  assert.doesNotMatch(dashboard, /<span>\$\{item\.name\}<\/span>/);
+  assert.doesNotMatch(interactions, /style=\"--alarm-color:\" \+ levelColor/);
+  assert.match(dashboard, /escapeHtml\(item\.time\)/);
+});
+
+test("dashboard security helpers are available before both rendering paths", () => {
+  const dashboard = read("dashboard.js");
+  const helperIndex = dashboard.indexOf("function safeStyleColor(");
+  const alarmIndex = dashboard.indexOf("function updateAlarmList(");
+  const knowledgeIndex = dashboard.indexOf("function updateKnowledgeUI(");
+  assert.ok(helperIndex >= 0, "safeStyleColor helper is declared");
+  assert.ok(helperIndex < alarmIndex, "legacy path sees the shared helper");
+  assert.ok(helperIndex < knowledgeIndex, "knowledge path sees the shared helper");
+  assert.match(dashboard, /function safeLevelClass\(value\)/);
+  assert.match(dashboard, /function safeFixed\(value, digits/);
+});
+
 test("institution reports use record dates and label undated snapshots", () => {
   const { window } = loadScript("reportRenderer.js", { open() { return null; } });
   const dated = window.QJZH.reportRenderer.renderInstitution([

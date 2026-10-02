@@ -29,7 +29,7 @@
     en: { "犊牦牛": "Yak calves", "奶牛": "Dairy cattle", "牦牛": "Yak", "肉牛": "Beef cattle" },
     bo: { "犊牦牛": "གཡག་ཕྲུག", "奶牛": "འོ་མའི་བ་གླང", "牦牛": "གཡག", "肉牛": "ཤ་ཕྱུགས" }
   };
-  function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; }); }
+  function esc(v) { return String(v == null ? "" : v).replace(/[&<>"'=]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;", "=": "&#61;" }[c]; }); }
   function read(key) {
     if (q.storage && typeof q.storage.get === "function") return q.storage.get(key);
     try { return JSON.parse(root.localStorage.getItem(key) || "null"); } catch (_) { return null; }

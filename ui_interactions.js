@@ -5,6 +5,20 @@
 (function () {
   "use strict";
   window.QJZH = window.QJZH || {};
+  // Stable presentation-only randomness keeps repeated demos reproducible without
+  // touching the compensation model or any decision-engine inputs. FNV-1a is
+  // deliberately small, synchronous, and available in browsers without crypto.
+  if (typeof window.QJZH.presentationSeed !== "function") {
+    window.QJZH.presentationSeed = function (key, salt) {
+      var input = String(key == null ? "" : key) + "\u001f" + String(salt == null ? "" : salt);
+      var hash = 2166136261;
+      for (var index = 0; index < input.length; index += 1) {
+        hash ^= input.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0) / 4294967296;
+    };
+  }
   function updateDocumentTitle() {
     var titles = {
       zh: "青境智衡 · 高原圈舍环境数据服务系统",
@@ -19,7 +33,16 @@
     window.QJZH.refreshDynamicLanguage?.();
     renderRecommendationPanel();
   });
-  function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character]; }); }
+  function esc(value) { return String(value == null ? "" : value).replace(/[&<>"'=]/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;", "=": "&#61;" }[character]; }); }
+  var SAFE_COLORS = Object.freeze({ normal: "#00d4aa", watch: "#ffd93d", todo: "#ff9f43", emergency: "#ff4d5e" });
+  function safeColor(value, fallback) {
+    var candidate = String(value || "").toLowerCase();
+    var allowed = Object.keys(SAFE_COLORS).map(function (key) { return SAFE_COLORS[key]; });
+    var matched = allowed.indexOf(candidate) >= 0 ? candidate : null;
+    var safeFallback = allowed.indexOf(String(fallback || "").toLowerCase()) >= 0 ? String(fallback).toLowerCase() : SAFE_COLORS.normal;
+    return matched || safeFallback;
+  }
+  function safeStateClass(value) { return ["normal", "warning", "reject", "ok", "error", "empty"].indexOf(String(value || "")) >= 0 ? String(value) : "error"; }
   function translate(key, fallback, values) { return window.QJZH.translate ? window.QJZH.translate(key, fallback, values || {}) : fallback; }
   window.QJZH.calibrate = function (input) {
     input = input || {};
@@ -46,7 +69,8 @@
     var recommendation = window.QJZH.advise({ calibrated_nh3_ppm: corrected });
     var text = window.QJZH.text || function (key) { return key; };
     var levelKey = { 正常: "normal", 关注: "watch", 待办: "todo", 紧急: "emergency" }[recommendation.risk_level] || "normal";
-    var levelColor = recommendation.risk_level === "紧急" ? "#ff4d5e" : recommendation.risk_level === "待办" ? "#ff9f43" : recommendation.risk_level === "关注" ? "#ffd93d" : "#00d4aa";
+    var levelColor = recommendation.risk_level === "紧急" ? SAFE_COLORS.emergency : recommendation.risk_level === "待办" ? SAFE_COLORS.todo : recommendation.risk_level === "关注" ? SAFE_COLORS.watch : SAFE_COLORS.normal;
+    levelColor = safeColor(levelColor, SAFE_COLORS.normal);
     var names = panel.querySelectorAll(".actuator-name");
     var descs = panel.querySelectorAll(".actuator-desc");
     var status = panel.querySelectorAll(".state-badge span:last-child");
@@ -69,7 +93,17 @@
     setText(command, translate("recommendation.command", "建议：{advice}（窗口 {window}）", { advice: expectedAdvice, window: recommendation.ventilation_window }));
     var alarms = document.getElementById("alarmList");
     var alarmText = translate("recommendation.trace", "建议溯源：{rule} · {standard}", { rule: recommendation.rule_id, standard: recommendation.standard });
-    if (alarms && alarms.textContent.trim() !== alarmText) alarms.innerHTML = "<div class=\"alarm-item\"><i class=\"alarm-dot\" style=\"--alarm-color:" + levelColor + ";\"></i><span>" + esc(alarmText) + "</span></div>";
+    if (alarms && alarms.textContent.trim() !== alarmText && typeof document.createElement === "function") {
+      var alarmItem = document.createElement("div");
+      alarmItem.className = "alarm-item";
+      var alarmDot = document.createElement("i");
+      alarmDot.className = "alarm-dot";
+      alarmDot.style.setProperty("--alarm-color", levelColor);
+      var alarmCopy = document.createElement("span");
+      alarmCopy.textContent = alarmText;
+      alarmItem.append(alarmDot, alarmCopy);
+      alarms.replaceChildren(alarmItem);
+    }
     var vent = document.getElementById("ventAdvice");
     setText(vent, translate("recommendation.noHardware", "{advice}。系统不向风机或其他硬件下发控制指令。", { advice: expectedAdvice }));
     var flow = document.getElementById("flowExecute");
@@ -88,12 +122,14 @@
     const altitude = Number(document.getElementById("demoAltitude").value);
     const temperature = Number(document.getElementById("demoTemp").value);
     const humidity = Number(document.getElementById("demoRh").value);
-    const simulatedTruePpm = 3 + Math.random() * 24;
+    const sceneKey = [altitude, temperature, humidity].map((value) => Number.isFinite(value) ? value : 0).join("|");
+    const simulatedTruePpm = 3 + window.QJZH.presentationSeed("algorithm-demo", sceneKey) * 24;
     const rawPpm = window.simulateHighlandRaw(simulatedTruePpm, altitude, temperature, humidity);
     const correctedPpm = window.compensate(altitude, temperature, humidity, rawPpm);
     document.getElementById("demoRaw").textContent = `${rawPpm.toFixed(2)} ppm`;
     document.getElementById("demoCorrected").textContent = `${correctedPpm.toFixed(2)} ppm`;
   }
+  window.QJZH.runAlgorithmDemo = runAlgorithmDemo;
 
   document.addEventListener("DOMContentLoaded", function () {
     renderRecommendationPanel();
@@ -111,7 +147,7 @@
     ["demoAltitude", "demoTemp", "demoRh"].forEach(function (id) {
       document.getElementById(id).addEventListener("input", updateDemoLabels);
     });
-    document.getElementById("demoSimulate").addEventListener("click", runAlgorithmDemo);
+    document.getElementById("demoSimulate").addEventListener("click", window.QJZH.runAlgorithmDemo);
     updateDemoLabels();
 
     var banner = document.getElementById("boundaryBanner");
@@ -126,7 +162,7 @@
       var result = window.QJZH?.dataImport?.validateManual(record);
       var status = document.getElementById("dataImportStatus");
       var badge = document.getElementById("dataQualityBadge");
-      if (status) { status.className = "qjzh-data-state qjzh-state-" + (result?.level || "error"); status.textContent = result?.issues?.length ? result.issues.join("；") : translate("qjzh.data.manualSaved", "数据已接入并保存"); }
+      if (status) { status.className = "qjzh-data-state qjzh-state-" + safeStateClass(result?.level); status.textContent = result?.issues?.length ? result.issues.join("；") : translate("qjzh.data.manualSaved", "数据已接入并保存"); }
       if (badge && result) badge.textContent = translate("qjzh.data.quality", "数据质量 {quality} · 置信度 {confidence}", { quality: result.quality, confidence: result.confidence });
       window.QJZH?.dataImport?.updateConfidence?.(result);
       if (result?.valid) window.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: { records: [record], errors: [], warnings: [] } }));

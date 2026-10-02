@@ -22,9 +22,14 @@ function read(fileName) {
 
 const index = read("index.html");
 const dashboard = read("dashboard.js");
-const weightsTag = '<script defer src="model_weights.js?v=1.0.0"></script>';
-const engineTag = '<script defer src="compensator_engine.js?v=1.0.0"></script>';
-const simulatorTag = '<script defer src="simulator.js?v=1.0.0"></script>';
+const releaseVersion = index.match(/<meta\s+name="qjzh-release-version"\s+content="([^"]+)"/i)?.[1] || "";
+const modelVersion = read("model_weights.js").match(/\bversion\s*:\s*["']([^"']+)["']/)?.[1] || "";
+assert(/^\d{8}$/.test(releaseVersion), "index.html must declare a YYYYMMDD release version.");
+assert(/^\d+\.\d+\.\d+$/.test(modelVersion), "model_weights.js must declare a semantic version.");
+const scriptTag = (fileName, version) => '<script defer src="' + fileName + '?v=' + version + '"></script>';
+const weightsTag = scriptTag("model_weights.js", modelVersion);
+const engineTag = scriptTag("compensator_engine.js", modelVersion);
+const simulatorTag = scriptTag("simulator.js", releaseVersion);
 const weightsIndex = index.indexOf(weightsTag);
 const engineIndex = index.indexOf(engineTag);
 const simulatorIndex = index.indexOf(simulatorTag);

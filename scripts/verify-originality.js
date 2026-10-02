@@ -12,6 +12,7 @@ const PROTECTED_FILES = [
   ["ORIGINALITY.md", "provenance statement"],
   ["SECURITY.md", "security boundary"],
   ["README.md", "public product documentation"],
+  ["ALGORITHM_DOCUMENTATION.md", "algorithm documentation"],
   ["index.html", "application shell and visual system"],
   ["dashboard.js", "dashboard behavior and localized copy"],
   ["dataImport.js", "local data ingestion and validation"],
@@ -26,9 +27,14 @@ const PROTECTED_FILES = [
   ["model_weights.js", "locked model weights"],
   ["simulator.js", "locked demonstration simulator"],
   ["scripts/build-pages.js", "Pages artifact builder"],
+  ["scripts/pages-allowlist.js", "reviewed Pages publication allowlist"],
+  ["scripts/smoke-pages.js", "post-deployment public smoke checks"],
+  ["verify_compensator.js", "locked model verification"],
   ["verify-deployment.js", "deployment verification surface"],
   ["scripts/verify-originality.js", "originality verification"],
-  ["assets/og_cover.png", "social preview artwork"]
+  ["assets/og_cover.png", "social preview artwork"],
+  ["docs/QUALITY_AUDIT.md", "quality and risk audit"],
+  [".well-known/security.txt", "security disclosure endpoint"]
 ];
 
 function hashFile(relative) {

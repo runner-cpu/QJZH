@@ -9,7 +9,7 @@
       metric: "指标", result: "结果", compliance: "项目舒适区占比（NH₃ < 10 ppm）", ammonia: "平均 / 最高氨气",
       temperature: "温度范围", advice: "建议次数", risk: "风险分布", source: "数据来源",
       generated: "生成时间", opened: "报告已生成，正在打开打印窗口。", print: "打印 / 另存 PDF",
-      samples: "样本 / 站点", provenance: "来源构成", versions: "模型 / 规则版本", timezone: "统计时区", quality: "范围外 / 拒绝记录",
+      samples: "样本 / 站点", provenance: "来源构成", versions: "发布 / 部署 / 模型 / 规则版本", timezone: "统计时区", quality: "范围外 / 拒绝记录",
       popupBlocked: "浏览器阻止了打印窗口，已在当前页面显示完整预览。", retry: "再次打开打印窗口", previewTitle: "环境报告预览", snapshot: "机构演示快照（记录无时间戳）",
       normal: "正常", watch: "关注", todo: "待办", urgent: "紧急", local: "QJZH 本地记录",
       institution: "机构模拟圈舍", trend: "氨气趋势", trendAria: "最近十二个采样点的校准氨气趋势图",
@@ -23,7 +23,7 @@
       metric: "Metric", result: "Result", compliance: "Project comfort-zone share (NH₃ < 10 ppm)", ammonia: "Average / peak ammonia",
       temperature: "Temperature range", advice: "Recommendations", risk: "Risk distribution", source: "Data source",
       generated: "Generated", opened: "Report generated. Opening the print window.", print: "Print / Save as PDF",
-      samples: "Samples / sites", provenance: "Source mix", versions: "Model / rule versions", timezone: "Reporting timezone", quality: "Out-of-domain / rejected",
+      samples: "Samples / sites", provenance: "Source mix", versions: "Release / deployment / model / rule versions", timezone: "Reporting timezone", quality: "Out-of-domain / rejected",
       popupBlocked: "The browser blocked the print window. A complete preview is shown on this page.", retry: "Open print window again", previewTitle: "Environment report preview", snapshot: "Institution demo snapshot (records have no timestamps)",
       normal: "Normal", watch: "Watch", todo: "To-do", urgent: "Urgent", local: "QJZH local records",
       institution: "Institution demo barns", trend: "NH₃ trend", trendAria: "Calibrated ammonia trend for the latest twelve samples",
@@ -37,7 +37,7 @@
       metric: "ཚད་གཞི", result: "འབྲས་བུ", compliance: "ལས་གཞིའི་བདེ་འཇགས་ཁུལ་གྱི་བསྡུར་ཚད (NH₃ < 10 ppm)", ammonia: "ཆ་སྙོམས / མཐོ་ཤོས་ཨམ་མོ་ནི་ཡ",
       temperature: "དྲོད་ཚད་ཁྱབ་ཁོངས", advice: "བསམ་འཆར་གྲངས", risk: "ཉེན་ཁའི་ཁྱབ་ཚུལ", source: "གཞི་གྲངས་ཁུངས",
       generated: "བཟོས་པའི་དུས་ཚོད", opened: "སྙན་ཞུ་བཟོས་ཟིན། པར་འདེབས་སྒེའུ་ཁུང་ཁ་ཕྱེ་བཞིན།", print: "པར་འདེབས / PDF ཉར",
-      samples: "དཔེ་ཚད / ས་ཚིགས", provenance: "ཁུངས་ཀྱི་བསྡུས་ཚད", versions: "མ་དཔེ / སྒྲིག་གཞིའི་པར་གཞི", timezone: "བསྡོམས་རྩིས་དུས་ཁུལ", quality: "སྤྱོད་ཁོངས་ཕྱི / དང་ལེན་མ་བྱས",
+      samples: "དཔེ་ཚད / ས་ཚིགས", provenance: "ཁུངས་ཀྱི་བསྡུས་ཚད", versions: "གསར་སྤེལ / བཀོད་འཇོག / མ་དཔེ / སྒྲིག་གཞིའི་པར་གཞི", timezone: "བསྡོམས་རྩིས་དུས་ཁུལ", quality: "སྤྱོད་ཁོངས་ཕྱི / དང་ལེན་མ་བྱས",
       popupBlocked: "བཤར་ཆས་ཀྱིས་པར་འདེབས་སྒེའུ་ཁུང་བཀག ཤོག་ངོས་འདིར་སྙན་ཞུ་ཆ་ཚང་སྟོན།", retry: "པར་འདེབས་སྒེའུ་ཁུང་ཡང་བསྐྱར་ཁ་ཕྱེ", previewTitle: "ཁོར་ཡུག་སྙན་ཞུའི་སྔོན་ལྟ", snapshot: "སྒྲིག་འཛུགས་དཔེ་སྟོན་མྱུར་བཀོད (དུས་ཚོད་མེད)",
       normal: "རྒྱུན་ལྡན", watch: "དོ་སྣང", todo: "བྱ་དགོས", urgent: "ཛ་དྲག", local: "QJZH ས་གནས་ཟིན་ཐོ",
       institution: "སྒྲིག་འཛུགས་དཔེ་སྟོན་ཕྱུགས་ཁང", trend: "NH₃ འཕེལ་ཕྱོགས", trendAria: "ཉེ་བའི་དཔེ་ཚད་ 12 ཀྱི་ཁ་གསབ་ཨམ་མོ་ནི་ཡ་འཕེལ་ཕྱོགས",
@@ -48,8 +48,8 @@
   };
 
   function esc(value) {
-    return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+    return String(value == null ? "" : value).replace(/[&<>"'=]/g, function (character) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "=": "&#61;" }[character];
     });
   }
 
@@ -77,12 +77,18 @@
   }
 
   function riskFor(value) {
-    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(value).label;
-    return Number(value) > 15 ? "紧急" : Number(value) >= 10 ? "关注" : "正常";
+    var fallback = Number(value) > 15 ? "紧急" : Number(value) >= 10 ? "关注" : "正常";
+    if (q.riskPolicy && q.riskPolicy.classifyNh3) {
+      var policy = q.riskPolicy.classifyNh3(value) || {};
+      var label = String(policy.label || "");
+      if (["正常", "关注", "待办", "紧急"].indexOf(label) >= 0) return label;
+    }
+    return fallback;
   }
 
   function toneFor(value) {
-    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(value).color;
+    // Keep CSS values closed over a reviewed palette. Policy labels/colors are
+    // descriptive data and must never become a style string in report HTML.
     return Number(value) > 15 ? "#d94f5c" : Number(value) >= 10 ? "#d6a93d" : "#159b7d";
   }
 
@@ -141,6 +147,12 @@
   function buildMetricTable(data, copy) {
     var distribution = data.riskDistribution || {};
     if (data.noRecords) return "<p class='empty'>" + esc(copy.empty) + "</p>";
+    var versionSummary = [
+      data.releaseVersion,
+      data.deploymentVersion,
+      data.modelVersion,
+      data.ruleVersion
+    ].filter(function (value) { return value != null && String(value).trim() !== ""; }).join(" · ");
     return "<table><thead><tr><th>" + esc(copy.metric) + "</th><th>" + esc(copy.result) + "</th></tr></thead><tbody>" +
       "<tr><td>" + esc(copy.compliance) + "</td><td><strong>" + (Number(data.comfortRate != null ? data.comfortRate : data.complianceRate || 0) * 100).toFixed(1) + "%</strong></td></tr>" +
       "<tr><td>" + esc(copy.ammonia) + "</td><td><strong>" + Number(data.averageNh3 || 0).toFixed(1) + " / " + Number(data.maxNh3 || 0).toFixed(1) + " ppm</strong></td></tr>" +
@@ -148,7 +160,7 @@
       "<tr><td>" + esc(copy.advice) + "</td><td>" + esc(data.adviceCount || 0) + "</td></tr>" +
       "<tr><td>" + esc(copy.samples) + "</td><td>" + esc(data.sampleCount == null ? "-" : data.sampleCount) + " / " + esc(data.siteCount == null ? "-" : data.siteCount) + "</td></tr>" +
       "<tr><td>" + esc(copy.provenance) + "</td><td>" + esc(provenanceLabel(data.provenance)) + "</td></tr>" +
-      "<tr><td>" + esc(copy.versions) + "</td><td>" + esc(data.modelVersion || "-") + " / " + esc(data.ruleVersion || "-") + "</td></tr>" +
+      "<tr><td>" + esc(copy.versions) + "</td><td>" + esc(versionSummary || "-") + "</td></tr>" +
       "<tr><td>" + esc(copy.timezone) + "</td><td>" + esc(data.timezone || "-") + "</td></tr>" +
       "<tr><td>" + esc(copy.quality) + "</td><td>" + esc(data.outOfDomainCount || 0) + " / " + esc(data.rejectedCount || 0) + "</td></tr>" +
       "<tr><td>" + esc(copy.risk) + "</td><td>" + Object.keys(distribution).map(function (key) { return esc(riskLabel(key, copy)) + ": " + esc(distribution[key]); }).join(" · ") + "</td></tr>" +
@@ -162,7 +174,7 @@
     var metrics = "<div class='metrics'><section class='metric-card report-section'>" + buildMetricTable(data, copy) + "</section>" + buildRiskChart(data, copy) + "</div>";
     var body = metrics + buildTrendChart(data, copy);
     var snapshotChip = data.snapshot ? "<span class='meta-chip'>" + esc(copy.snapshot) + "</span>" : "";
-    return "<!doctype html><html lang='" + esc(lang === "zh" ? "zh-CN" : lang) + "'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>" + esc(copy.title) + "</title><style>" + styles + "</style></head><body><main class='report'><header class='report-header'><span class='eyebrow'>" + esc(copy.eyebrow) + "</span><h1>" + esc(copy.heading) + "</h1><div class='report-meta'><span class='meta-chip'>" + esc(copy.range) + " · " + esc(data.startDate || "-") + " " + esc(copy.to) + " " + esc(data.endDate || "-") + "</span><span class='meta-chip'>" + esc(copy.source) + " · " + esc(sourceLabel(data.source, copy)) + "</span>" + snapshotChip + "</div></header><div class='watermark'>" + esc(copy.watermark) + "</div><div class='report-body'>" + body + "<footer class='report-footer'><p class='source'>" + esc(copy.generated) + " · " + esc(data.generatedAt || "-") + "</p><button class='print-button' onclick='window.print()'>" + esc(copy.print) + "</button></footer></div></main></body></html>";
+    return "<!doctype html><html lang='" + esc(lang === "zh" ? "zh-CN" : lang) + "'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>" + esc(copy.title) + "</title><style>" + styles + "</style></head><body><main class='report'><header class='report-header'><span class='eyebrow'>" + esc(copy.eyebrow) + "</span><h1>" + esc(copy.heading) + "</h1><div class='report-meta'><span class='meta-chip'>" + esc(copy.range) + " · " + esc(data.startDate || "-") + " " + esc(copy.to) + " " + esc(data.endDate || "-") + "</span><span class='meta-chip'>" + esc(copy.source) + " · " + esc(sourceLabel(data.source, copy)) + "</span>" + snapshotChip + "</div></header><div class='watermark'>" + esc(copy.watermark) + "</div><div class='report-body'>" + body + "<footer class='report-footer'><p class='source'>" + esc(copy.generated) + " · " + esc(data.generatedAt || "-") + "</p><button type='button' class='print-button' data-action='print'>" + esc(copy.print) + "</button></footer></div></main></body></html>";
   }
 
   function render(data) {
@@ -172,6 +184,8 @@
       reportWindow.document.write(html);
       reportWindow.document.close();
       reportWindow.focus();
+      var printButton = reportWindow.document.querySelector && reportWindow.document.querySelector("[data-action='print']");
+      if (printButton && printButton.addEventListener) printButton.addEventListener("click", function () { try { reportWindow.print(); } catch (_) {} });
       root.setTimeout(function () { try { reportWindow.print(); } catch (_) {} }, 120);
       return { opened: true, html: html, window: reportWindow };
     }
@@ -208,8 +222,12 @@
       rejectedCount: 0,
       outOfDomainCount: 0,
       provenance: snapshot ? { "institution-snapshot": rows.length } : { "institution-records": rows.length },
-      modelVersion: root.MODEL_WEIGHTS && root.MODEL_WEIGHTS.version || "model-not-loaded",
-      ruleVersion: root.BUILD_INFO && root.BUILD_INFO.version ? "rules@" + root.BUILD_INFO.version : "knowledgeBase.js@1.0.0",
+      releaseVersion: root.BUILD_INFO && root.BUILD_INFO.releaseVersion || "release-unknown",
+      deploymentVersion: root.BUILD_INFO && (root.BUILD_INFO.deploymentVersion || root.BUILD_INFO.version) || "deployment-unknown",
+      modelVersion: root.MODEL_WEIGHTS && root.MODEL_WEIGHTS.version || root.BUILD_INFO && root.BUILD_INFO.modelVersion || "model-not-loaded",
+      ruleVersion: root.BUILD_INFO && root.BUILD_INFO.rulesVersion || "knowledgeBase.js@1.0.0",
+      rulesFingerprint: root.BUILD_INFO && root.BUILD_INFO.rulesFingerprint || "",
+      buildCommit: root.BUILD_INFO && root.BUILD_INFO.commit || "local",
       timezone: "Asia/Shanghai",
       seriesMode: "institution",
       trendSeries: rows.slice(-12).map(function (row) { return { timestamp: row.timestamp || "", label: row.name || row.site_id || "-", value: Number(row.calibrated_nh3_ppm || 0) }; }),
