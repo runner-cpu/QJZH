@@ -314,8 +314,16 @@
     importCsv: function (csvText, options) {
       options = options || {};
       var result = parseCsv(csvText, options);
-      if (result.records.length) result.storage = save(result.records, options).storage;
-      else result.storage = storageStatus();
+      if (result.records.length) {
+        var saved = save(result.records, options);
+        result.ok = saved.ok;
+        result.storage = saved.storage;
+        if (saved.code) result.code = saved.code;
+        if (saved.rolledBack) result.rolledBack = true;
+      } else {
+        result.ok = result.errors.length === 0;
+        result.storage = storageStatus();
+      }
       result.level = qualityFor(result);
       return result;
     },
@@ -338,8 +346,15 @@
       var result = parseCsv(csvText || api.demoCsv, { provenance: "sample" });
       if (result.records.length) {
         clearBusinessData();
-        result.storage = save(result.records, { replaceSites: true }).storage;
-      } else result.storage = storageStatus();
+        var saved = save(result.records, { replaceSites: true });
+        result.ok = saved.ok;
+        result.storage = saved.storage;
+        if (saved.code) result.code = saved.code;
+        if (saved.rolledBack) result.rolledBack = true;
+      } else {
+        result.ok = result.errors.length === 0;
+        result.storage = storageStatus();
+      }
       result.level = qualityFor(result);
       result.replaced = result.records.length > 0;
       updateConfidence(result);
@@ -409,21 +424,40 @@
       if (!root.FileReader) { setStatus(text("qjzh.data.readError", "当前浏览器不支持文件读取，请重试"), false); return; }
       setStatus(text("qjzh.data.importing", "正在读取文件…"), true);
       var reader = new root.FileReader();
-      reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); renderRecordList(); setStatus(result.errors.length ? text("qjzh.data.partialImport", "部分数据未导入") : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录", { count: result.records.length }), false); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); };
-      reader.onload = function () { var result = api.importCsv(reader.result); updateConfidence(result); renderRecordList(); var message = result.ok === false ? text("qjzh.storage.rollback", "存储失败，已恢复原有数据") : (result.errors.length ? text("qjzh.data.partialImport", "部分数据未导入") : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录", { count: result.records.length })); setStatus(message, false); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); };
+      reader.onload = function () {
+        var result = api.importCsv(reader.result);
+        updateConfidence(result);
+        renderRecordList();
+        var message = result.ok === false
+          ? text("qjzh.storage.rollback", "存储失败，已恢复原有数据")
+          : (result.errors.length
+            ? text("qjzh.data.partialImport", "部分数据未导入")
+            : text("qjzh.data.imported", "已导入并去重合并 {count} 条记录", { count: result.records.length }));
+        setStatus(message, false);
+        if (result.ok !== false) root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result }));
+      };
       reader.onerror = function () { setStatus(text("qjzh.data.readError", "文件读取失败，请重试"), false); };
       reader.onabort = function () { setStatus(text("qjzh.data.readCancelled", "已取消文件读取"), false); };
       try { reader.readAsText(file, "utf-8"); } catch (_) { setStatus(text("qjzh.data.readError", "文件读取失败，请重试"), false); }
     });
     var clearGuard = root.document.getElementById("clearLocalData");
-    if (clearGuard) clearGuard.addEventListener("click", function (event) {
-      if (event && event.stopImmediatePropagation) event.stopImmediatePropagation();
+    if (clearGuard) clearGuard.addEventListener("click", function () {
       var confirmed = root.confirm ? root.confirm(text("qjzh.data.confirmClear", "确认清除本地数据？")) : false;
       var result = confirmed ? api.clearData({ confirm: true }) : { ok: false, cancelled: true };
       if (result.ok) renderRecordList();
       setStatus(result.ok ? text("qjzh.data.cleared", "本地数据已清除") : text("qjzh.data.clearCancelled", "已取消清除"), false);
     });
-    var sample = root.document.getElementById("loadSampleData"); if (sample) sample.addEventListener("click", function () { var result = api.loadDemo(); renderRecordList(); var summary = api.replaySummary(); var status = root.document.getElementById("dataImportStatus"); if (status) status.textContent = text("qjzh.data.sampleLoaded", "示例数据已覆盖导入（{sites}圈舍{count}条）", { sites: summary.siteCount, count: summary.totalCount }); var badge = root.document.getElementById("dataQualityBadge"); if (badge) badge.textContent = text("qjzh.data.quality", "数据质量 {quality} · 置信度 {confidence}", { quality: result.level === "normal" ? "A" : result.level === "warning" ? "B" : "C", confidence: result.level === "normal" ? "高" : result.level === "warning" ? "中" : "低" }); root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result })); });
+    var sample = root.document.getElementById("loadSampleData"); if (sample) sample.addEventListener("click", function () {
+      var result = api.loadDemo();
+      renderRecordList();
+      var summary = api.replaySummary();
+      var message = result.ok === false
+        ? text("qjzh.storage.rollback", "存储失败，已恢复原有数据")
+        : text("qjzh.data.sampleLoaded", "示例数据已覆盖导入（{sites}圈舍{count}条）", { sites: summary.siteCount, count: summary.totalCount });
+      setStatus(message, false);
+      var badge = root.document.getElementById("dataQualityBadge"); if (badge) badge.textContent = text("qjzh.data.quality", "数据质量 {quality} · 置信度 {confidence}", { quality: result.level === "normal" ? "A" : result.level === "warning" ? "B" : "C", confidence: result.level === "normal" ? "高" : result.level === "warning" ? "中" : "低" });
+      if (result.ok !== false) root.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: result }));
+    });
     if (manualForm) manualForm.setAttribute("data-qjzh-ready", "true");
     var downloadLocal = root.document.getElementById("downloadLocalData");
     if (downloadLocal) downloadLocal.addEventListener("click", function () {
@@ -435,9 +469,8 @@
       }
       setStatus(result.ok ? text("qjzh.data.exported", "已导出 {count} 条本地记录", { count: result.records }) : text("qjzh.data.exportError", "导出失败"), false);
     });
-    if (importStatus) importStatus.setAttribute("aria-live", "polite");
+    if (importStatus) { importStatus.setAttribute("aria-live", "polite"); importStatus.setAttribute("aria-atomic", "true"); importStatus.setAttribute("aria-busy", "false"); }
     if (emptyState) emptyState.setAttribute("data-qjzh-empty", "true");
-    var clear = root.document.getElementById("clearLocalData"); if (clear) clear.addEventListener("click", function () { api.clearData(); renderRecordList(); if (importStatus) importStatus.textContent = text("qjzh.data.cleared", "本地数据已清除"); });
     var download = root.document.getElementById("downloadCsvTemplate"); if (download) download.addEventListener("click", function () { if (q.csvTemplate) q.csvTemplate.download(); });
     renderRecordList();
   }

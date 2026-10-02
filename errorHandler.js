@@ -18,7 +18,9 @@
     var translate = typeof options.translate === "function" ? options.translate : function (key, fallback) { return fallback; };
     var stateKeys = { empty: "qjzh.status.empty", loading: "qjzh.status.loading", error: "qjzh.status.error", warning: "qjzh.status.warning" };
     var stateFallbacks = { empty: "No data connected", loading: "Loading data…", error: "Data loading failed", warning: "Data needs attention" };
-    var renderedMessage = value.message || translate(stateKeys[value.state] || "qjzh.status.empty", stateFallbacks[value.state] || "Status");
+    var fallbackMessage = value.message || stateFallbacks[value.state] || "Status";
+    var translatedMessage = translate(stateKeys[value.state] || "qjzh.status.empty", fallbackMessage);
+    var renderedMessage = translatedMessage == null || translatedMessage === "" ? fallbackMessage : translatedMessage;
     element.textContent = "";
     element.className = (options.className || "qjzh-data-state") + " qjzh-state-" + value.state;
     element.setAttribute("role", "status");

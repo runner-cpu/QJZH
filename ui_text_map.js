@@ -19,7 +19,11 @@
     "qjzh.storage.rollback": { zh: "存储失败，已恢复原有数据", en: "Storage failed; previous data was restored", bo: "ཉར་ཚགས་ཕམ། སྔོན་གྱི་གཞི་གྲངས་སླར་གསོ་བྱས།" },
     "qjzh.storage.sessionWarning": { zh: "数据仅保留在当前浏览器会话", en: "Data will remain only for this browser session", bo: "གཞི་གྲངས་ད་ལྟའི་བལྟ་མཛོད་ནང་ཁོ་ནར་ཉར།" },
     "qjzh.storage.memoryWarning": { zh: "存储不可用，数据仅保留在当前页面", en: "Storage is unavailable; data remains only in this page", bo: "ཉར་ཚགས་མི་སྤྱོད་པས་ཤོག་ངོས་ཁོ་ནར་ཉར།" },
-    "qjzh.report.retry": { zh: "重试", en: "Retry", bo: "ཡང་བསྐྱར་ཚོད་ལྟ།" }
+    "qjzh.report.retry": { zh: "重试", en: "Retry", bo: "ཡང་བསྐྱར་ཚོད་ལྟ།" },
+    "qjzh.status.empty": { zh: "尚未接入数据，请上传 CSV 或手动录入", en: "No data connected; upload a CSV or enter data manually", bo: "གཞི་གྲངས་མ་སྦྲེལ། CSV ཡར་སྤྲོད་དམ་ལག་འབྲེལ་ཐོ་འགོད་བྱོས།" },
+    "qjzh.status.loading": { zh: "正在加载数据…", en: "Loading data…", bo: "གཞི་གྲངས་འཇུག་བཞིན་པ།" },
+    "qjzh.status.error": { zh: "数据加载失败", en: "Data loading failed", bo: "གཞི་གྲངས་འཇུག་མ་ཐུབ།" },
+    "qjzh.status.warning": { zh: "数据存在警告", en: "Data needs attention", bo: "གཞི་གྲངས་ལ་ཉེན་བརྡ་ཡོད།" }
   });
   function text(key, language) {
     const item = map[key] || map.normal;

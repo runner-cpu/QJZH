@@ -85,3 +85,42 @@ test("errorHandler marks loading busy and returns focus to terminal summary", ()
   assert.equal(target.tabIndex, -1);
   assert.equal(target.focused, true);
 });
+
+test("errorHandler always invokes translate and uses its localized value", () => {
+  const document = {
+    querySelector() { return null; },
+    createElement(tag) { return { tagName: tag, children: [], setAttribute(k, v) { this[k] = v; }, appendChild(child) { this.children.push(child); }, focus() {} }; }
+  };
+  const window = { QJZH: {}, document };
+  const vm = require("node:vm");
+  vm.runInNewContext(read("errorHandler.js"), { window, document });
+  const target = { children: [], setAttribute(k, v) { this[k] = v; }, appendChild(child) { this.children.push(child); }, textContent: "" };
+  let calls = 0;
+  const translate = (key, fallback) => {
+    calls += 1;
+    assert.equal(key, "qjzh.status.error");
+    assert.equal(fallback, "caller message");
+    return "localized error";
+  };
+  window.QJZH.errorHandler.render(target, window.QJZH.errorHandler.make("error", "caller message"), { translate });
+  assert.equal(calls, 1);
+  assert.equal(target.children[0].textContent, "localized error");
+});
+
+test("data import binding has one clear handler and one reader completion path", () => {
+  const source = read("dataImport.js");
+  assert.equal((source.match(/reader\.onload\s*=/g) || []).length, 1);
+  assert.equal((source.match(/getElementById\(\"clearLocalData\"\)/g) || []).length, 1);
+  assert.doesNotMatch(source, /stopImmediatePropagation/);
+});
+
+test("status map contains localized empty/loading/error/warning entries", () => {
+  const map = read("ui_text_map.js");
+  for (const key of ["qjzh.status.empty", "qjzh.status.loading", "qjzh.status.error", "qjzh.status.warning"]) {
+    const line = map.split(/\r?\n/).find((value) => value.includes('"' + key + '"'));
+    assert.ok(line, key);
+    assert.match(line, /zh:\s*"[^"]+"/);
+    assert.match(line, /en:\s*"[^"]+"/);
+    assert.match(line, /bo:\s*"[^"]+"/);
+  }
+});
