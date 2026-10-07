@@ -1,6 +1,6 @@
 # 质量审计与工程边界
 
-> 审计基线：2026-10-02。本文记录公开静态分析工具的工程加固结果、验证方法和仍然存在的使用边界。内容只描述产品、数据和发布流程，不包含未授权的背景信息。
+> 审计基线：2026-10-07。本文记录公开静态分析工具的工程加固结果、验证方法和仍然存在的使用边界。内容只描述产品、数据和发布流程，不包含未授权的背景信息。
 
 ## 1. 审计范围与结论
 
@@ -12,7 +12,7 @@
 | 存储可靠性 | 批量写入快照、失败回滚、存储模式显式提示、清除确认 | \`dataImport.js\`、存储回归测试 | 浏览器配额和隐私模式由浏览器决定，不能当作备份 |
 | 动态内容安全 | 文本节点优先、集中 HTML 转义、颜色/状态 allowlist、无 inline 事件处理器 | \`tests/round9_visual_contract.test.js\`、\`SECURITY.md\` | 新增动态 UI 必须沿用现有安全边界 |
 | 可访问性 | 唯一 \`main\`、跳转主内容、可见标签、键盘焦点回收、\`aria-live\`/\`aria-busy\`、减弱动画 | \`tests/round9_accessibility.test.js\`、\`tests/spa_experience.test.js\` | 不同浏览器和辅助技术组合仍应由真实使用者复核 |
-| 视觉与交互 | 快捷入口分组、色调轮换、44px 触控高度、响应式降级、减少动态效果 | \`tests/version_visual_contract.test.js\` | 颜色不是唯一语义，图表同时提供文字摘要 |
+| 视觉与交互 | 快捷入口分组、统一深色层级、44px 触控高度、响应式降级、减少动态效果 | \`tests/version_visual_contract.test.js\` | 颜色不是唯一语义，图表同时提供文字摘要 |
 | 版本与可追溯性 | 发布/部署/模型/规则四类版本分离，规则 SHA-256、提交 SHA、UTC 构建时间 | \`build_info.js\`、\`online_test.html\`、\`verify-deployment.js\` | 本地开发构建的部署版本为 \`dev\`，不能当作线上发布凭据 |
 | 依赖与供应链 | Chart.js 固定版本与 SRI，Actions 固定提交哈希，静态无运行时账户 | \`tests/spa_experience.test.js\`、workflow | 外部 CDN 不可用时只能使用文本/Canvas 降级展示 |
 | Pages 发布 | allowlist artifact、禁止内部目录/符号链接、逐文件 SHA-256 清单、部署后 smoke | \`scripts/build-pages.js\`、\`verify-deployment.js\`、\`scripts/smoke-pages.js\` | 线上缓存更新存在短暂传播窗口，应以构建 SHA 为准 |
@@ -31,6 +31,16 @@
 同时保留 \`version\` 作为旧集成的兼容别名，但它只等于 \`deploymentVersion\`，不再代表模型或规则。\`commit\`、\`builtAt\` 和 \`environment\` 用于追踪实际发布物。报告、自检页和 \`artifact-manifest.json\` 都应能沿这条链路回到源提交。
 
 修改页面资源后，必须同步页面 meta、资源查询参数、构建元数据契约和测试；不能只改一个版本字符串。发布前优先比较 \`build_info.commit\` 与目标提交的完整 SHA，而不是依据浏览器缓存中的标题或时间。
+本轮发布版本已统一更新为 \`20261007\`：两张页面的 meta、本地 \`build_info.js\` 和普通静态资源查询参数保持一致；锁定模型资源继续使用独立的 \`1.0.0\` 查询键，不随界面发布版本漂移。
+
+自检页的版本信息按复核问题分成四个可见层级：
+
+1. **构建来源**：运行环境、提交 SHA 和 UTC 构建时间，用来确认页面来自哪里。
+2. **发布与部署**：发布版本负责静态资源缓存键，部署版本负责标识一次 CI 构建实例。
+3. **执行契约**：模型版本对应锁定权重接口，规则版本对应知识库规则集。
+4. **规则完整性证据**：规则 SHA-256 指纹单独展示，明确它是内容证据而不是第五种版本号。
+
+这组字段使用文本说明和可复制值建立语义，颜色只作弱辅助；移动端会按同一顺序堆叠，避免连续的高饱和色卡把不同身份误读为同一种版本。
 
 ## 3. 视觉层级与模块节奏
 
@@ -77,6 +87,8 @@ CSV 进入 \`FileReader\` 前会检查名称、可读性、空文件、字节数
 ## 8. CI/CD、artifact 与运维复核
 
 GitHub Actions 在 UTC 环境运行测试和构建。\`scripts/build-pages.js\` 只复制审计过的公开文件和文档，显式排除测试、内部计划、临时输出、备份和符号链接；构建后生成 \`.nojekyll\` 与排序的 \`artifact-manifest.json\`，逐文件记录字节数和 SHA-256。\`verify-deployment.js\` 在上传前核对路径、文件、摘要、版本契约、脚本顺序、SRI 和公开文案。只有验证成功的 artifact 才能进入 Pages 部署。
+
+本轮同时移除了公开源码中的内部方案草稿和执行日志，并在 \`.gitignore\` 中屏蔽对应路径；它们不属于产品文档，也不进入 Pages artifact。公开说明只保留可复核的产品边界、工程控制和使用限制。
 
 部署后 \`scripts/smoke-pages.js\` 以固定 URL 清单检查主页、自检页、版权、原创性、安全、数据字典、构建元数据、robots、sitemap、security.txt 和 manifest，并可按指数退避重试。若传入预期提交 SHA，它还会拒绝线上 \`build_info.commit\` 不匹配的页面。
 

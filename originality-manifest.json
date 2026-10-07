@@ -26,7 +26,7 @@
     {
       "path": "README.md",
       "purpose": "public product documentation",
-      "sha256": "3a9e5c29e6ef8fbe4a93a17b6774aa1f8672981bfe167a01403ccad9025d3ef3"
+      "sha256": "055ac52d0628fb6b6455b7c6983ebb454860b90cdc4a304ef96796879c52d9bf"
     },
     {
       "path": "ALGORITHM_DOCUMENTATION.md",
@@ -36,7 +36,7 @@
     {
       "path": "index.html",
       "purpose": "application shell and visual system",
-      "sha256": "7bc902ea04c0d4791edee1dfe54b61d02f95a093e5c136b8530cd100860b1cef"
+      "sha256": "0683efb6a7b427a6e4613bb08b4809bd24a7fbe8eee6a5cead573032a2a4bd58"
     },
     {
       "path": "dashboard.js",
@@ -136,7 +136,7 @@
     {
       "path": "docs/QUALITY_AUDIT.md",
       "purpose": "quality and risk audit",
-      "sha256": "932b3d9291eee8afac593834c43a98d9451c1db4554ec131d92919fceb169842"
+      "sha256": "de29103ad7f4678af621bf7e5cb00e554c9b03468de38ba0380d73cb1913bbb2"
     },
     {
       "path": ".well-known/security.txt",

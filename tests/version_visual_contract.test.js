@@ -65,6 +65,27 @@ test("diagnostics distinguishes deployment and model versions", () => {
   assert.doesNotMatch(html, /metadata[^{}]*\{[\s\S]*?repeat\(5/);
 });
 
+test("diagnostics presents version identity as readable semantic groups", () => {
+  const html = read("online_test.html");
+  assert.match(html, /class="metadata-heading"[^>]*id="metadata-runtime-title"/);
+  assert.match(html, /class="metadata-heading"[^>]*id="metadata-identity-title"/);
+  assert.match(html, /class="metadata-band release-band"/);
+  assert.match(html, /class="metadata-band contract-band"/);
+  assert.match(html, /发布与部署/);
+  assert.match(html, /执行契约/);
+  assert.match(html, /data-version-role="release"/);
+  assert.match(html, /data-version-role="deployment"/);
+  assert.match(html, /data-version-role="model"/);
+  assert.match(html, /data-version-role="rules"/);
+  assert.match(html, /class="metadata-fingerprint-heading"/);
+  assert.match(html, /内容证据，不是另一种版本号/);
+  assert.match(html, /静态资源缓存键/);
+  assert.match(html, /一次 CI 构建实例/);
+  assert.match(html, /锁定权重接口/);
+  assert.match(html, /知识库规则集/);
+  assert.doesNotMatch(html, /border-top:\s*2px\s+solid\s+#(?:4a9eff|ffd93d|b690ff)/i);
+});
+
 test("overview quick links keep equal-width rhythm and touch-safe reduced-motion rules", () => {
   const html = read("index.html");
   const releaseStyles = html.match(/<style id="qjzh-release-layout">([\s\S]*?)<\/style>/)?.[1] || "";

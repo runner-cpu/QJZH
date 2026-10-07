@@ -5,7 +5,7 @@
     // Keep release, deployment, model, and rules identities separate. The
     // Pages builder replaces this file with immutable values for the deployed
     // artifact; these local values make reports and diagnostics explicit too.
-    releaseVersion: "20261002",
+    releaseVersion: "20261007",
     deploymentVersion: "dev",
     modelVersion: "1.0.0",
     rulesVersion: "knowledgeBase.js@1.0.0",
