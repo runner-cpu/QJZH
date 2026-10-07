@@ -24,6 +24,8 @@
 4. 检查 dist 只包含 allowlist，确认没有 tests、backups、output、内部计划或密钥。
 5. 对照[全面质量审计](QUALITY_AUDIT.md)复核版本字段、存储降级、可访问性和安全边界；不要只依赖页面标题判断发布是否更新。
 6. 检查 dist/build_info.js 的 commit、builtAt 和 environment 字段。
+7. 运行真实浏览器检查：npm ci --ignore-scripts；npx playwright install chromium；node scripts/browser-check.mjs --root dist。CI 会自动安装 Chromium 系统依赖。
+8. 查看 output/browser-audit/browser-evidence.json：108 组语言/主题/屏宽/视图组合无溢出，WCAG A/AA 扫描无违规，完整操作流程通过。截图和证据只作为 Actions 附件，不加入 Pages。
 
 ## GitHub Actions 与线上 smoke test
 

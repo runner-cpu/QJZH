@@ -48,13 +48,30 @@ jobs:
 
       - name: Parse every JavaScript file
         shell: bash
-        run: find . -type f -name '*.js' -not -path './.git/*' -not -path './dist/*' -print0 | xargs -0 -n1 node --check
+        run: find . -type f -name '*.js' -not -path './.git/*' -not -path './dist/*' -not -path './node_modules/*' -not -path './output/*' -print0 | xargs -0 -n1 node --check
 
       - name: Build allowlisted Pages artifact
         run: node scripts/build-pages.js --out dist
 
       - name: Verify built Pages artifact
         run: node verify-deployment.js dist
+
+      - name: Install locked browser-check dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install Chromium for browser checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify browser workflows, layouts and accessibility
+        run: node scripts/browser-check.mjs --root dist
+
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qjzh-browser-evidence-${{ github.sha }}
+          path: output/browser-audit
+          if-no-files-found: ignore
 
       - name: Verify public text and artifact boundaries
         run: |

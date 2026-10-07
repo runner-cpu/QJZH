@@ -26,13 +26,19 @@ const releaseVersion = index.match(/<meta\s+name="qjzh-release-version"\s+conten
 const modelVersion = read("model_weights.js").match(/\bversion\s*:\s*["']([^"']+)["']/)?.[1] || "";
 assert(/^\d{8}$/.test(releaseVersion), "index.html must declare a YYYYMMDD release version.");
 assert(/^\d+\.\d+\.\d+$/.test(modelVersion), "model_weights.js must declare a semantic version.");
-const scriptTag = (fileName, version) => '<script defer src="' + fileName + '?v=' + version + '"></script>';
+const scriptTag = (fileName, version) => {
+  const match = [...index.matchAll(/<script defer src="([^"]+)"><\/script>/g)].find((entry) => {
+    const [file, query] = entry[1].replaceAll("&amp;", "&").split("?", 2);
+    return file === fileName && new URLSearchParams(query).get("v") === version;
+  });
+  return match ? match[0] : "";
+};
 const weightsTag = scriptTag("model_weights.js", modelVersion);
 const engineTag = scriptTag("compensator_engine.js", modelVersion);
 const simulatorTag = scriptTag("simulator.js", releaseVersion);
-const weightsIndex = index.indexOf(weightsTag);
-const engineIndex = index.indexOf(engineTag);
-const simulatorIndex = index.indexOf(simulatorTag);
+const weightsIndex = weightsTag ? index.indexOf(weightsTag) : -1;
+const engineIndex = engineTag ? index.indexOf(engineTag) : -1;
+const simulatorIndex = simulatorTag ? index.indexOf(simulatorTag) : -1;
 
 assert(index.includes("COMPENSATOR-LOCK"), "Missing COMPENSATOR-LOCK marker in index.html.");
 assert(weightsIndex >= 0, "Missing versioned model_weights.js tag.");

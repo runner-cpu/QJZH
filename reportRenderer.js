@@ -232,7 +232,7 @@
       seriesMode: "institution",
       trendSeries: rows.slice(-12).map(function (row) { return { timestamp: row.timestamp || "", label: row.name || row.site_id || "-", value: Number(row.calibrated_nh3_ppm || 0) }; }),
       generatedAt: now.toISOString(),
-      source: snapshot ? "机构演示快照" : "机构模拟圈舍"
+      source: snapshot ? "机构演示快照" : "QJZH 本地记录"
     });
   }
 
@@ -244,6 +244,40 @@
     var preview = root.document.getElementById("reportPreview");
     var frame = root.document.getElementById("reportPreviewFrame");
     var retry = root.document.getElementById("retryReportPrint");
+    var startInput = root.document.getElementById("reportStartDate");
+    var endInput = root.document.getElementById("reportEndDate");
+    var datesEdited = false;
+    var reportState = "initial";
+    [startInput, endInput].forEach(function (input) { if (input) input.addEventListener("input", function () { datesEdited = true; }); });
+    function suggestDates() {
+      if (datesEdited || !startInput || !endInput) return;
+      var records = q.dataImport && q.dataImport.getRecords ? q.dataImport.getRecords() : [];
+      var times = records.map(function (record) { return new Date(record.timestamp).getTime(); }).filter(Number.isFinite);
+      var end = times.length ? Math.max.apply(Math, times) : Date.now();
+      startInput.value = localDate(new Date(times.length ? Math.min.apply(Math, times) : end - 89 * 86400000));
+      endInput.value = localDate(new Date(end));
+    }
+    function hidePreview() {
+      lastReportData = null;
+      if (preview) preview.hidden = true;
+      if (retry) retry.hidden = true;
+      if (frame) frame.srcdoc = "";
+    }
+    function setReportStatus(message, state, focus) {
+      var status = root.document.getElementById("reportStatus");
+      if (!status) return;
+      status.removeAttribute("data-i18n");
+      status.className = "qjzh-data-state qjzh-state-" + state;
+      status.textContent = message;
+      status.setAttribute("aria-busy", "false");
+      if (focus && status.focus) status.focus({ preventScroll: true });
+    }
+    suggestDates();
+    ["qjzh:data-imported", "qjzh:data-synced"].forEach(function (event) { root.addEventListener(event, function () {
+      hidePreview(); suggestDates();
+      reportState = "changed";
+      setReportStatus(q.translate ? q.translate("qjzh.report.dataChanged", "数据已更新，请重新生成报告。") : "数据已更新，请重新生成报告。", "empty", false);
+    }); });
     function showPreview(result, lang) {
       var copy = COPY[lang] || COPY.zh;
       if (frame) { frame.title = copy.previewTitle; frame.srcdoc = result.html; }
@@ -254,9 +288,8 @@
       if (!lastReportData) return;
       var lang = language(lastReportData);
       var result = render(lastReportData);
-      var status = root.document.getElementById("reportStatus");
-      if (result.opened && status) { status.className = "qjzh-data-state qjzh-state-empty"; status.textContent = COPY[lang].opened; }
-      else if (!result.opened) showPreview(result, lang);
+      showPreview(result, lang);
+      setReportStatus(result.opened ? COPY[lang].opened : COPY[lang].popupBlocked, result.opened ? "empty" : "warning", true);
     });
     button.addEventListener("click", function () {
       var lang = root.document.documentElement.dataset.language || "zh";
@@ -267,16 +300,29 @@
       });
       var status = root.document.getElementById("reportStatus");
       if (!data.valid) {
-        if (status) { status.className = "qjzh-data-state qjzh-state-error"; status.textContent = data.message || COPY[lang].empty; }
+        reportState = "invalid";
+        hidePreview(); setReportStatus(data.message || COPY[lang].empty, "error", true);
         return;
       }
       lastReportData = data;
+      reportState = "generated";
       var result = render(data);
-      if (status) {
-        status.className = "qjzh-data-state qjzh-state-" + (data.noRecords || !result.opened ? "warning" : "empty");
-        status.textContent = data.noRecords ? COPY[lang].empty : result.opened ? COPY[lang].opened : COPY[lang].popupBlocked;
+      showPreview(result, lang);
+      setReportStatus(data.noRecords ? COPY[lang].empty : result.opened ? COPY[lang].opened : COPY[lang].popupBlocked, data.noRecords || !result.opened ? "warning" : "empty", true);
+    });
+    root.addEventListener("dashboard:language-change", function () {
+      var lang = language();
+      if (!lastReportData) {
+        if (reportState === "changed") setReportStatus(q.translate("qjzh.report.dataChanged", "数据已更新，请重新生成报告。"), "empty", false);
+        if (reportState === "invalid") {
+          var invalid = q.reportGenerator.generate({ startDate: startInput.value, endDate: endInput.value, language: lang });
+          if (!invalid.valid) setReportStatus(invalid.message, "error", false);
+        }
+        return;
       }
-      if (!result.opened) showPreview(result, lang);
+      lastReportData.language = lang;
+      showPreview({ html: buildHtml(lastReportData) }, lang);
+      setReportStatus(lastReportData.noRecords ? COPY[lang].empty : COPY[lang].previewTitle, lastReportData.noRecords ? "warning" : "empty", false);
     });
   });
 })(window);

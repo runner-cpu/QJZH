@@ -16,6 +16,11 @@ const PROTECTED_FILES = [
   ["index.html", "application shell and visual system"],
   ["dashboard.js", "dashboard behavior and localized copy"],
   ["dataImport.js", "local data ingestion and validation"],
+  ["ui_text_map.js", "localized validation and status messages"],
+  ["demoReset.js", "business-data reset boundary"],
+  ["riskPolicy.js", "shared risk threshold policy"],
+  ["errorHandler.js", "accessible status helpers"],
+  ["csvTemplate.js", "public CSV template contract"],
   ["institutionView.js", "multi-site analysis view"],
   ["reportGenerator.js", "report aggregation"],
   ["reportRenderer.js", "printable report renderer"],
@@ -29,11 +34,16 @@ const PROTECTED_FILES = [
   ["scripts/build-pages.js", "Pages artifact builder"],
   ["scripts/pages-allowlist.js", "reviewed Pages publication allowlist"],
   ["scripts/smoke-pages.js", "post-deployment public smoke checks"],
+  ["scripts/browser-check.mjs", "browser workflows and accessibility release gate"],
+  ["package-lock.json", "locked development verification dependencies"],
   ["verify_compensator.js", "locked model verification"],
   ["verify-deployment.js", "deployment verification surface"],
   ["scripts/verify-originality.js", "originality verification"],
   ["assets/og_cover.png", "social preview artwork"],
   ["docs/QUALITY_AUDIT.md", "quality and risk audit"],
+  ["docs/USER_GUIDE.md", "reviewed user workflows"],
+  ["docs/DATA_DICTIONARY.md", "input and storage contracts"],
+  ["docs/RELEASE_CHECKLIST.md", "release verification procedures"],
   [".well-known/security.txt", "security disclosure endpoint"]
 ];
 
@@ -41,8 +51,8 @@ function hashFile(relative) {
   const content = fs.readFileSync(path.join(ROOT, relative));
   // Git may check out text files with CRLF on Windows and LF on Linux/macOS.
   // Normalize line endings before hashing so the evidence is repository-stable.
-  const normalized = content.toString("utf8").replace(/\r\n?/g, "\n");
-  return crypto.createHash("sha256").update(normalized, "utf8").digest("hex");
+  const normalized = /\.(png|jpe?g|webp|gif|woff2?|ico)$/i.test(relative) ? content : content.toString("utf8").replace(/\r\n?/g, "\n");
+  return crypto.createHash("sha256").update(normalized).digest("hex");
 }
 
 function safeRelative(relative) {

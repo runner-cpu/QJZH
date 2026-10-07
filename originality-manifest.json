@@ -26,7 +26,7 @@
     {
       "path": "README.md",
       "purpose": "public product documentation",
-      "sha256": "055ac52d0628fb6b6455b7c6983ebb454860b90cdc4a304ef96796879c52d9bf"
+      "sha256": "4957520b2b2ea68b3d41a4c8ee8434232381914cde72f015b01214bd4f866487"
     },
     {
       "path": "ALGORITHM_DOCUMENTATION.md",
@@ -36,22 +36,47 @@
     {
       "path": "index.html",
       "purpose": "application shell and visual system",
-      "sha256": "0683efb6a7b427a6e4613bb08b4809bd24a7fbe8eee6a5cead573032a2a4bd58"
+      "sha256": "c645216f7eaadd33cab8e6b0385756ea9f27733aa90e4024399853db8448f745"
     },
     {
       "path": "dashboard.js",
       "purpose": "dashboard behavior and localized copy",
-      "sha256": "ab45a6ccedb746d114ba126d9dc9ca112e9cbc484343d06a0e6631cd6098194d"
+      "sha256": "57619206ff97c7bfa90bce1c58926240d2f0f2ef149e5b5d4af22217899c1638"
     },
     {
       "path": "dataImport.js",
       "purpose": "local data ingestion and validation",
-      "sha256": "c8fa9d8e51e93b3610201bd00eff5ecb7d2f9b4d08ef5eb8ad243ec18e5aff92"
+      "sha256": "fd17f172add5f3e40e6e61725e0aa7ec82c7f220b20eb4fa85e0bb4ce525f33f"
+    },
+    {
+      "path": "ui_text_map.js",
+      "purpose": "localized validation and status messages",
+      "sha256": "9887384392aff9a650ede9e05813864806335ade2e8f9ea85b950f057a964266"
+    },
+    {
+      "path": "demoReset.js",
+      "purpose": "business-data reset boundary",
+      "sha256": "4ffcfff3180791b3ac8be139cee4507d47c2fce121e9f0271d5fe83805ef6b35"
+    },
+    {
+      "path": "riskPolicy.js",
+      "purpose": "shared risk threshold policy",
+      "sha256": "112d4e6a14f2eaa01b60dc3004ebb260bef30773b0d2cb3c46ae4c66aa90100c"
+    },
+    {
+      "path": "errorHandler.js",
+      "purpose": "accessible status helpers",
+      "sha256": "9c4111826ad41d6cf3011f6204aeb0b8a0bdaddcbdc14ff110a80aa2913b592d"
+    },
+    {
+      "path": "csvTemplate.js",
+      "purpose": "public CSV template contract",
+      "sha256": "c93d8cef814d396a60680124922f4bc43844ba731eac4325a815d78108fb326f"
     },
     {
       "path": "institutionView.js",
       "purpose": "multi-site analysis view",
-      "sha256": "03dc90f577b7eb603a613d7a8aca0e4e90ec6a8fdf0ad805e7608ff240c84e4a"
+      "sha256": "f42aab5a5395d83fe08872c7e1056ba62948358fa2e067def70198995b7bbc95"
     },
     {
       "path": "reportGenerator.js",
@@ -61,12 +86,12 @@
     {
       "path": "reportRenderer.js",
       "purpose": "printable report renderer",
-      "sha256": "4b78cd7b6308da40b8544c5c2f8e8b1b149d199543b2225132f9b3fbbaf3bc3c"
+      "sha256": "90178f3ea2e82effdb6227754d8cacc2a419926dcc46a3ba2a39dacea632020c"
     },
     {
       "path": "ui_interactions.js",
       "purpose": "interaction and display behavior",
-      "sha256": "ba2c663852529b65d7784d2f57becc05e91aa8f5091983a73fb68d5f8ba6a7d4"
+      "sha256": "1e79a10f0358f6744f257e7cfff8d684a74860f1ef7f27af3c0552666fd18a0a"
     },
     {
       "path": "viewRouter.js",
@@ -114,9 +139,19 @@
       "sha256": "6190c3a08c08b5c57c19fb0a462bd5c521af442b4b96e781acbd9e19abd6588f"
     },
     {
+      "path": "scripts/browser-check.mjs",
+      "purpose": "browser workflows and accessibility release gate",
+      "sha256": "88cf5d1998d0fe8caa1642d837aefc443ed0b3452e174e7af6b285c686c4246e"
+    },
+    {
+      "path": "package-lock.json",
+      "purpose": "locked development verification dependencies",
+      "sha256": "500a1e7c85a2b25aadb87343fabc6aa46f54c4c4652842bd18e24cc239e298ca"
+    },
+    {
       "path": "verify_compensator.js",
       "purpose": "locked model verification",
-      "sha256": "335e61440d3df6ac3536cd2871ffe71acf216d7b48b96fb0f3a058efb48b483d"
+      "sha256": "94967ce28637464b9a2ad45c36a7f8670fa8b3e4f9ec2f53cc40f8349c2f050a"
     },
     {
       "path": "verify-deployment.js",
@@ -126,17 +161,32 @@
     {
       "path": "scripts/verify-originality.js",
       "purpose": "originality verification",
-      "sha256": "6c9984c9a70cf1ab06b813917ae2f7bc89f7670e96d110a3b670d9fecc71aaa7"
+      "sha256": "7e851f935967c0a3fb8addeb9c1ad5f9dbde51ff745fa41705662e773cbf12df"
     },
     {
       "path": "assets/og_cover.png",
       "purpose": "social preview artwork",
-      "sha256": "fe12fd610c46bf38ebf3a354bb826f42d905a2b34e92ab0e2c628279490d447e"
+      "sha256": "449c7c6f6777686d6637c22a33a4bf168f1dfcb9906197171e50fc785fa21415"
     },
     {
       "path": "docs/QUALITY_AUDIT.md",
       "purpose": "quality and risk audit",
-      "sha256": "de29103ad7f4678af621bf7e5cb00e554c9b03468de38ba0380d73cb1913bbb2"
+      "sha256": "d918f19e6b73b0e26263050e1511be2be9adf74b0bed5ab1f7f38c9f5b78308a"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "purpose": "reviewed user workflows",
+      "sha256": "a384cc4048679f5822c167800d1f6128a050bc7975e05fb832aac98f09f6675d"
+    },
+    {
+      "path": "docs/DATA_DICTIONARY.md",
+      "purpose": "input and storage contracts",
+      "sha256": "f3c536443abe87c608a4c232009f5888e2f59e68c726c1ee503b4f4b5c45afe9"
+    },
+    {
+      "path": "docs/RELEASE_CHECKLIST.md",
+      "purpose": "release verification procedures",
+      "sha256": "ac3141224d3f74b3406159393dcc676c7b70d5b6c1546d57243000a4433debe6"
     },
     {
       "path": ".well-known/security.txt",

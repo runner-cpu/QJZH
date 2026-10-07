@@ -70,10 +70,19 @@
   function getRows(mode) {
     var imported = read("QJZH_INSTITUTIONS");
     var demoCopy = demo.map(deriveRow);
-    var importedCopy = Array.isArray(imported) ? imported.map(deriveRow) : [];
+    var importedCopy = q.dataImport && q.dataImport.getRecords ? aggregateRecords(q.dataImport.getRecords()) : Array.isArray(imported) ? imported.map(deriveRow) : [];
     if (mode === "demo") return demoCopy;
     if (mode === "imported") return importedCopy;
     return importedCopy.length ? importedCopy : demoCopy;
+  }
+  function aggregateRecords(records) {
+    var sites = new Map();
+    records.forEach(function (record) {
+      var previous = sites.get(record.site_id);
+      var latest = !previous || new Date(record.timestamp) >= new Date(previous.timestamp) ? record : previous;
+      sites.set(record.site_id, Object.assign({}, latest, { name: record.site_id, sample_count: (previous ? previous.sample_count : 0) + 1 }));
+    });
+    return Array.from(sites.values()).map(deriveRow);
   }
   function filterRows(rows, query) {
     var term = String(query || "").trim().toLocaleLowerCase();
@@ -114,7 +123,7 @@
         ? "Analysis view: species " + species + " · " + sampleCount + " samples · grouped for regional comparison"
         : role === "cooperative"
           ? "Cooperative barns: " + rows.length + " sites · " + warnings + " need attention · export a cooperative report"
-          : "Regional summary: compliance " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · alerts " + warnings + " · average NH3 " + average + " ppm";
+          : "Regional summary: low-risk sites " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · sites needing attention " + warnings + " · average NH3 " + average + " ppm";
       else if (language() === "bo") summary.textContent = role === "analyst"
         ? "ས་ཁུལ་དཔྱད་ཞིབ། ཕྱུགས་རིགས " + species + " · དཔེ་ཚད " + sampleCount
         : role === "cooperative"
@@ -124,7 +133,7 @@
         ? "区域分析：畜种 " + species + " · 样本 " + sampleCount + " 条 · 用于不同站点的数据比较"
         : role === "cooperative"
           ? "合作社多圈舍：共 " + rows.length + " 个站点 · " + warnings + " 个需关注 · 建议导出合作社环境报告"
-          : "区域汇总：达标率 " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · 预警 " + warnings + " 次 · 平均氨气 " + average + " ppm";
+          : "区域汇总：低风险站点占比 " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · 需关注站点 " + warnings + " 个 · 平均氨气 " + average + " ppm";
     }
     if (detail) {
       if (language() === "en") detail.textContent = role === "analyst" ? "Regional-analysis role: prioritize species distribution and sample counts for comparison." : role === "cooperative" ? "Cooperative role: multi-barn list first, with cooperative report export." : "Livestock-station role: regional summary first, sorted by ammonia risk.";
@@ -142,20 +151,6 @@
     return rows;
   }
   function importLocal() {
-    var records = q.dataImport && q.dataImport.getRecords ? q.dataImport.getRecords() : [];
-    if (!records.length) return render();
-    var rows = records.reduce(function (all, r) {
-      var found = all.find(function (x) { return x.site_id === r.site_id; });
-      if (!found) { found = Object.assign({}, r, { name: r.site_id, sample_count: 0 }); all.push(found); }
-      found.timestamp = r.timestamp;
-      found.raw_nh3_ppm = r.raw_nh3_ppm;
-      found.sample_count = Number(found.sample_count || 0) + 1;
-      found.calibrated_nh3_ppm = root.compensate ? root.compensate(Number(r.altitude_m), Number(r.temp_c), Number(r.rh_percent), Number(r.raw_nh3_ppm)) : Number(r.raw_nh3_ppm);
-      found.risk_level = risk(found.calibrated_nh3_ppm);
-      return all;
-    }, []);
-    if (q.storage && typeof q.storage.set === "function") q.storage.set("QJZH_INSTITUTIONS", rows);
-    else try { root.localStorage.setItem("QJZH_INSTITUTIONS", JSON.stringify(rows)); } catch (_) {}
     return render();
   }
   function exportReport() {
@@ -164,7 +159,7 @@
     if (q.reportRenderer && q.reportRenderer.renderInstitution) return q.reportRenderer.renderInstitution(reportRows, language());
     return rows;
   }
-  q.institutionView = { demo: demo, getRows: getRows, filterRows: filterRows, localizedFields: localizedFields, render: render, importLocal: importLocal, exportReport: exportReport, esc: esc };
+  q.institutionView = { demo: demo, getRows: getRows, aggregateRecords: aggregateRecords, filterRows: filterRows, localizedFields: localizedFields, render: render, importLocal: importLocal, exportReport: exportReport, esc: esc };
   root.addEventListener("DOMContentLoaded", function () {
     render();
     root.document.getElementById("institutionImport")?.addEventListener("click", importLocal);
@@ -172,5 +167,7 @@
     root.document.getElementById("institutionRole")?.addEventListener("change", render);
     root.document.getElementById("institutionFilter")?.addEventListener("input", render);
     root.addEventListener("dashboard:language-change", render);
+    root.addEventListener("qjzh:data-imported", render);
+    root.addEventListener("qjzh:data-synced", render);
   });
 })(window);

@@ -47,7 +47,7 @@ function element(id) {
 }
 
 function importDocument() {
-  const ids = ["manualDataForm", "dataImportStatus", "dataEmptyState", "csvInput", "clearLocalData", "loadSampleData", "downloadLocalData", "downloadCsvTemplate", "dataRecordRows", "confidenceBadge", "dataQualityBadge"];
+  const ids = ["manualDataForm", "dataImportStatus", "dataEmptyState", "csvInput", "confirmCsvImport", "cancelCsvImport", "clearLocalData", "loadSampleData", "downloadLocalData", "downloadCsvTemplate", "dataRecordRows", "confidenceBadge", "dataQualityBadge"];
   const elements = Object.fromEntries(ids.map((id) => [id, element(id)]));
   return { readyState: "complete", elements, getElementById(id) { return elements[id] || null; }, addEventListener() {}, createElement(tag) { return element(tag); } };
 }
@@ -122,6 +122,8 @@ test("storage failure does not announce a successful file import", () => {
   window.addEventListener("qjzh:data-imported", () => { importedEvents += 1; });
   document.elements.csvInput.files = [{ name: "records.csv", size: 100 }];
   document.elements.csvInput.dispatch("change");
+  assert.equal(window.QJZH.dataImport.getRecords().length, 0);
+  document.elements.confirmCsvImport.dispatch("click");
   assert.equal(importedEvents, 0);
   assert.match(document.elements.dataImportStatus.textContent, /存储失败|Storage failed/);
   assert.equal(document.elements.dataImportStatus.getAttribute("aria-busy"), "false");

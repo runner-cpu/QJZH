@@ -160,7 +160,7 @@ test("validation, manual-entry status, and confidence labels follow the active l
   assert.equal(invalid.confidence, "low");
   assert.equal(window.QJZH.dataImport.parseCsv("").errors[0].message, "CSV is empty");
   const interactions = read("ui_interactions.js");
-  assert.match(interactions, /translate\("qjzh\.data\.manualSaved"/);
+  assert.match(interactions, /setStatus\("qjzh\.data\.manualSaved"/);
   assert.doesNotMatch(interactions, /badge\.textContent = "数据质量 /);
 });
 

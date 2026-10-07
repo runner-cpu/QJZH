@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Bind the independently loaded highland compensation model to the demo panel.
  * @returns {void}
  */
@@ -157,19 +157,20 @@
       event.preventDefault();
       var record = Object.fromEntries(new FormData(form).entries());
       record.timestamp = new Date().toISOString();
+      record.device_model = record.device_model.trim() || "manual_entry";
       record.altitude_m = Number(record.altitude_m); record.temp_c = Number(record.temp_c);
       record.rh_percent = Number(record.rh_percent); record.raw_nh3_ppm = Number(record.raw_nh3_ppm);
       var result = window.QJZH?.dataImport?.validateManual(record);
       var status = document.getElementById("dataImportStatus");
       var badge = document.getElementById("dataQualityBadge");
-      if (status) { status.className = "qjzh-data-state qjzh-state-" + safeStateClass(result?.level); status.textContent = result?.issues?.length ? result.issues.join("；") : translate("qjzh.data.manualSaved", "数据已接入并保存"); }
+      if (result?.valid && result.ok === false) window.QJZH.dataImport.failureStatus(result);
+      else if (result?.valid && result.ok) window.QJZH.dataImport.setStatus("qjzh.data.manualSaved", "数据已接入并保存");
+      else window.QJZH.dataImport.setStatus("qjzh.data.manualRejected", "未保存：{reason}", { reason: result?.issues?.join("；") || "" }, "error");
       if (badge && result) badge.textContent = translate("qjzh.data.quality", "数据质量 {quality} · 置信度 {confidence}", { quality: result.quality, confidence: result.confidence });
-      window.QJZH?.dataImport?.updateConfidence?.(result);
-      if (result?.valid) window.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: { records: [record], errors: [], warnings: [] } }));
+      if (result?.ok) { window.QJZH.dataImport.updateConfidence(result); window.QJZH.dataImport.renderRecordList(); window.dispatchEvent(new CustomEvent("qjzh:data-imported", { detail: { records: [result.record], errors: [], warnings: [] } })); }
     });
     document.getElementById("loadDemoSimulation")?.addEventListener("click", function () {
       document.getElementById("loadSampleData")?.click();
-      document.getElementById("dataImportStatus").textContent = translate("qjzh.data.demoReplay", "青海冬季示例已导入，主看板将按单站点时间回放");
     });
     document.querySelectorAll("[data-scene]").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -180,7 +181,6 @@
         if (scene === "retail") {
           window.location.hash = "#/overview";
           document.getElementById("loadSampleData")?.click();
-          if (status) { status.className = "qjzh-data-state qjzh-state-warning"; status.textContent = translate("qjzh.scene.retailStatus", "散户场景：QH-HD-001 单站点回放，校准后生成午间短时通风建议"); }
         }
         if (scene === "institution") {
           window.location.hash = "#/institution";
@@ -206,6 +206,10 @@
       var expanded = presets.classList.toggle("expanded");
       this.setAttribute("aria-expanded", String(expanded));
     });
-    document.getElementById("resetDemoData")?.addEventListener("click", function () { window.QJZH.viewRouter?.stopTour(); window.location.hash = "#/overview"; window.QJZH?.demoReset?.reset?.(); });
+    document.getElementById("resetDemoData")?.addEventListener("click", function () {
+      var hasUserData = window.QJZH.dataImport.getRecords().some(function (record) { return record.provenance !== "sample"; });
+      if (hasUserData && !window.confirm(translate("qjzh.data.confirmClear", "确认清除本地数据？"))) return;
+      window.QJZH.viewRouter?.stopTour(); window.location.hash = "#/overview"; window.QJZH?.demoReset?.reset?.();
+    });
   });
 })();
