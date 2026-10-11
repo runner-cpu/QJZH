@@ -4,13 +4,36 @@
   var q = root.QJZH = root.QJZH || {};
   var TIMEZONE = "Asia/Shanghai";
 
+  function numeric(value) {
+    if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
+    if (typeof value !== "string" || value.trim() === "" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value.trim())) return NaN;
+    var parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+
   function calibrated(record) {
-    if (root.compensate) return Number(root.compensate(Number(record.altitude_m), Number(record.temp_c), Number(record.rh_percent), Number(record.raw_nh3_ppm)));
-    return Number(record.raw_nh3_ppm || 0);
+    record = record || {};
+    var inputs = [record.altitude_m, record.temp_c, record.rh_percent, record.raw_nh3_ppm].map(numeric);
+    if (!inputs.every(Number.isFinite)) return NaN;
+    if (typeof root.compensate === "function") {
+      try {
+        var corrected = Number(root.compensate(inputs[0], inputs[1], inputs[2], inputs[3]));
+        return Number.isFinite(corrected) ? corrected : NaN;
+      } catch (_) {
+        // A broken/missing model must make the point unassessed, not crash report generation.
+        return NaN;
+      }
+    }
+    return inputs[3];
   }
 
   function riskFor(value) {
-    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(value).label;
+    if (q.riskPolicy && typeof q.riskPolicy.classifyNh3 === "function") {
+      try {
+        var policy = q.riskPolicy.classifyNh3(value);
+        if (policy && policy.label) return policy.label;
+      } catch (_) {}
+    }
     return Number(value) > 15 ? "紧急" : Number(value) >= 10 ? "关注" : "正常";
   }
 
@@ -58,21 +81,38 @@
     var start = new Date(startDate + "T00:00:00.000+08:00");
     if (start.getTime() > end.getTime()) return invalidRange(language);
 
-    var allRecords = q.dataImport && q.dataImport.getRecords ? q.dataImport.getRecords() : [];
+    var allRecords = [];
+    try {
+      var candidateRecords = q.dataImport && q.dataImport.getRecords ? q.dataImport.getRecords() : [];
+      allRecords = Array.isArray(candidateRecords) ? candidateRecords : [];
+    } catch (_) {
+      // Reporting should remain available when a legacy storage adapter is broken.
+      allRecords = [];
+    }
     var siteIds = Array.isArray(options.siteIds) ? options.siteIds : null;
     var records = allRecords.filter(function (record) {
+      if (!record || typeof record !== "object") return false;
       var time = new Date(record.timestamp || 0).getTime();
       return Number.isFinite(time) && time >= start.getTime() && time <= end.getTime() && (!siteIds || siteIds.indexOf(record.site_id) >= 0);
     });
-    var values = records.map(calibrated).filter(Number.isFinite);
+    var calibratedValues = records.map(calibrated);
+    var calibrationByRecord = new Map();
+    records.forEach(function (record, index) { calibrationByRecord.set(record, calibratedValues[index]); });
+    var values = calibratedValues.filter(Number.isFinite);
+    var calibrationErrorCount = calibratedValues.length - values.length;
     var sum = values.reduce(function (total, value) { return total + value; }, 0);
     var distribution = { 正常: 0, 关注: 0, 待办: 0, 紧急: 0 };
-    values.forEach(function (value) { distribution[riskFor(value)] += 1; });
-    var temperatures = records.map(function (record) { return Number(record.temp_c); }).filter(Number.isFinite);
+    var unclassifiedCount = 0;
+    values.forEach(function (value) {
+      var label = riskFor(value);
+      if (Object.prototype.hasOwnProperty.call(distribution, label)) distribution[label] += 1;
+      else unclassifiedCount += 1;
+    });
+    var temperatures = records.map(function (record) { return numeric(record.temp_c); }).filter(Number.isFinite);
     var trendSeries = records.slice().sort(function (a, b) {
       return new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime();
     }).slice(-12).map(function (record) {
-      return { timestamp: record.timestamp || "", value: calibrated(record) };
+      return { timestamp: record.timestamp || "", value: calibrationByRecord.get(record) };
     }).filter(function (point) { return Number.isFinite(point.value); });
     var provenance = records.reduce(function (counts, record) {
       var source = String(record.provenance || "legacy-local");
@@ -81,7 +121,9 @@
     }, {});
     var comfortCount = values.filter(function (value) { return value < 10; }).length;
     var outOfDomainCount = q.dataImport && q.dataImport.validate
-      ? records.filter(function (record) { return q.dataImport.validate(record).quality !== "A"; }).length
+      ? records.filter(function (record) {
+        try { return q.dataImport.validate(record).quality !== "A"; } catch (_) { return true; }
+      }).length
       : 0;
     var buildInfo = root.BUILD_INFO || {};
     var loadedModelVersion = root.MODEL_WEIGHTS && root.MODEL_WEIGHTS.version;
@@ -101,11 +143,13 @@
       temperatureRange: temperatures.length ? { min: Math.min.apply(Math, temperatures), max: Math.max.apply(Math, temperatures) } : { min: null, max: null },
       adviceCount: values.filter(function (value) { return value >= 10; }).length,
       riskDistribution: distribution,
+      unclassifiedCount: unclassifiedCount,
       trendSeries: trendSeries,
       siteCount: new Set(records.map(function (record) { return record.site_id; }).filter(Boolean)).size,
       sampleCount: records.length,
       rejectedCount: Number(options.rejectedCount || 0),
       outOfDomainCount: outOfDomainCount,
+      calibrationErrorCount: calibrationErrorCount,
       provenance: provenance,
       releaseVersion: buildInfo.releaseVersion || "release-unknown",
       deploymentVersion: buildInfo.deploymentVersion || buildInfo.version || "deployment-unknown",

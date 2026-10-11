@@ -36,7 +36,7 @@
     {
       "path": "index.html",
       "purpose": "application shell and visual system",
-      "sha256": "c645216f7eaadd33cab8e6b0385756ea9f27733aa90e4024399853db8448f745"
+      "sha256": "98ee0ff03eff7ee7c8bb4c2fbeb2dd1b260d3e53670b9f749bda3f354b82a1cc"
     },
     {
       "path": "dashboard.js",
@@ -76,17 +76,17 @@
     {
       "path": "institutionView.js",
       "purpose": "multi-site analysis view",
-      "sha256": "f42aab5a5395d83fe08872c7e1056ba62948358fa2e067def70198995b7bbc95"
+      "sha256": "2e9a2d92cfde9493a6ec7f6783a0a998aa4d5eeab8adf11b06678d958d91eb31"
     },
     {
       "path": "reportGenerator.js",
       "purpose": "report aggregation",
-      "sha256": "21bbe0b98d25f4e9883aba6c33ecc2863419eaf983a2a281c045144890db752c"
+      "sha256": "c83f2b3d802e3fdaa20cbae8f870b251282ec4b630ef5a12fddab48b80c785f3"
     },
     {
       "path": "reportRenderer.js",
       "purpose": "printable report renderer",
-      "sha256": "90178f3ea2e82effdb6227754d8cacc2a419926dcc46a3ba2a39dacea632020c"
+      "sha256": "3ea5b7e4f646ac244a535a399b44b3c444cfbb8ad76fc50329d84c7ca388b2de"
     },
     {
       "path": "ui_interactions.js",
@@ -171,7 +171,7 @@
     {
       "path": "docs/QUALITY_AUDIT.md",
       "purpose": "quality and risk audit",
-      "sha256": "d918f19e6b73b0e26263050e1511be2be9adf74b0bed5ab1f7f38c9f5b78308a"
+      "sha256": "a5872de336446022189e8ba60f7a90201f25abc65c2dfe3ebc9ff4ae59fb2c73"
     },
     {
       "path": "docs/USER_GUIDE.md",

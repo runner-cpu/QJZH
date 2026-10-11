@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="qjzh-release-version" content="20261007">
+  <meta name="qjzh-release-version" content="20261011">
   <meta name="qjzh-model-version" content="1.0.0">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#081925">
@@ -13,13 +13,13 @@
   <script defer src="model_weights.js?v=1.0.0"></script>
   <script defer src="compensator_engine.js?v=1.0.0"></script>
   <!-- Release assets use qjzh-release-version; model assets use qjzh-model-version. Keep both pages in sync. -->
-  <script defer src="build_info.js?v=20261007&amp;rev=2"></script>
-  <script defer src="ui_text_map.js?v=20261007&amp;rev=2"></script>
-  <script defer src="errorHandler.js?v=20261007&amp;rev=2"></script>
-  <script defer src="csvTemplate.js?v=20261007&amp;rev=2"></script>
-  <script defer src="dataImport.js?v=20261007&amp;rev=2"></script>
-  <script defer src="riskPolicy.js?v=20261007&amp;rev=2"></script>
-  <script defer src="reportRenderer.js?v=20261007&amp;rev=2"></script>
+  <script defer src="build_info.js?v=20261011&amp;rev=2"></script>
+  <script defer src="ui_text_map.js?v=20261011&amp;rev=2"></script>
+  <script defer src="errorHandler.js?v=20261011&amp;rev=2"></script>
+  <script defer src="csvTemplate.js?v=20261011&amp;rev=2"></script>
+  <script defer src="dataImport.js?v=20261011&amp;rev=2"></script>
+  <script defer src="riskPolicy.js?v=20261011&amp;rev=2"></script>
+  <script defer src="reportRenderer.js?v=20261011&amp;rev=2"></script>
   <style>
     :root {
       color-scheme: dark;
@@ -152,7 +152,7 @@
         updateSummary();
       }
 
-      var build = window.BUILD_INFO || { releaseVersion: "20261007", deploymentVersion: "dev", modelVersion: "1.0.0", rulesVersion: "knowledgeBase.js@1.0.0", rulesFingerprint: "sha256:f08ef4a6d02ae435fa8bef03403e85d947d07553cde752f7904734460eaff111", version: "dev", commit: "local", builtAt: null, environment: "local" };
+      var build = window.BUILD_INFO || { releaseVersion: "20261011", deploymentVersion: "dev", modelVersion: "1.0.0", rulesVersion: "knowledgeBase.js@1.0.0", rulesFingerprint: "sha256:f08ef4a6d02ae435fa8bef03403e85d947d07553cde752f7904734460eaff111", version: "dev", commit: "local", builtAt: null, environment: "local" };
       document.getElementById("environment").textContent = build.environment || "unknown";
       document.getElementById("commit").textContent = build.commit || build.version || "unknown";
       document.getElementById("releaseVersion").textContent = build.releaseVersion || "unknown";

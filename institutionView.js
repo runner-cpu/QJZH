@@ -31,10 +31,18 @@
   };
   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"'=]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;", "=": "&#61;" }[c]; }); }
   function read(key) {
-    if (q.storage && typeof q.storage.get === "function") return q.storage.get(key);
-    try { return JSON.parse(root.localStorage.getItem(key) || "null"); } catch (_) { return null; }
+    try {
+      if (q.storage && typeof q.storage.get === "function") return q.storage.get(key);
+      return JSON.parse(root.localStorage.getItem(key) || "null");
+    } catch (_) { return null; }
   }
   function language() { return root.document?.documentElement?.dataset?.language || "zh"; }
+  function numeric(value) {
+    if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
+    if (typeof value !== "string" || value.trim() === "" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value.trim())) return NaN;
+    var parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
   function localizedFields(row, selectedLanguage) {
     var lang = selectedLanguage || language();
     return {
@@ -49,38 +57,65 @@
   }
   function riskLabel(value) {
     var labels = language() === "en"
-      ? { "正常": "Normal", "关注": "Watch", "待办": "To-do", "紧急": "Urgent" }
+      ? { "正常": "Normal", "关注": "Watch", "待办": "To-do", "紧急": "Urgent", "未评估": "Unassessed" }
       : language() === "bo"
-        ? { "正常": "རྒྱུན་ལྡན", "关注": "དོ་སྣང", "待办": "བྱ་དགོས", "紧急": "ཛ་དྲག" }
+        ? { "正常": "རྒྱུན་ལྡན", "关注": "དོ་སྣང", "待办": "བྱ་དགོས", "紧急": "ཛ་དྲག", "未评估": "དཔྱད་མེད" }
         : {};
     return labels[value] || value;
   }
   function risk(nh3) {
-    if (q.riskPolicy && q.riskPolicy.classifyNh3) return q.riskPolicy.classifyNh3(nh3).label;
-    return Number(nh3) > 15 ? "紧急" : Number(nh3) >= 10 ? "关注" : "正常";
+    var value = numeric(nh3);
+    try {
+      if (q.riskPolicy && typeof q.riskPolicy.classifyNh3 === "function") {
+        var policy = q.riskPolicy.classifyNh3(value);
+        if (policy && policy.label) return policy.label;
+      }
+    } catch (_) {}
+    if (!Number.isFinite(value)) return "未评估";
+    return value > 15 ? "紧急" : value >= 10 ? "关注" : "正常";
   }
   function deriveRow(input) {
-    var row = Object.assign({}, input);
-    if (row.raw_nh3_ppm != null && root.compensate) {
-      row.calibrated_nh3_ppm = Number(root.compensate(Number(row.altitude_m), Number(row.temp_c), Number(row.rh_percent), Number(row.raw_nh3_ppm)));
+    var row = input && typeof input === "object" ? Object.assign({}, input) : {};
+    var rawInputs = [row.altitude_m, row.temp_c, row.rh_percent, row.raw_nh3_ppm].map(numeric);
+    if (rawInputs.every(Number.isFinite) && typeof root.compensate === "function") {
+      try {
+        var calibrated = Number(root.compensate(rawInputs[0], rawInputs[1], rawInputs[2], rawInputs[3]));
+        if (Number.isFinite(calibrated)) row.calibrated_nh3_ppm = calibrated;
+        else row.calibration_status = "unavailable";
+      } catch (_) {
+        row.calibration_status = "unavailable";
+      }
+    } else if (row.calibrated_nh3_ppm != null) {
+      var legacyCalibrated = numeric(row.calibrated_nh3_ppm);
+      if (Number.isFinite(legacyCalibrated)) row.calibrated_nh3_ppm = legacyCalibrated;
+      else row.calibration_status = "unavailable";
     }
-    row.risk_level = risk(Number(row.calibrated_nh3_ppm));
+    row.risk_level = risk(row.calibrated_nh3_ppm);
     return row;
   }
   function getRows(mode) {
     var imported = read("QJZH_INSTITUTIONS");
     var demoCopy = demo.map(deriveRow);
-    var importedCopy = q.dataImport && q.dataImport.getRecords ? aggregateRecords(q.dataImport.getRecords()) : Array.isArray(imported) ? imported.map(deriveRow) : [];
+    var importedCopy = [];
+    if (q.dataImport && typeof q.dataImport.getRecords === "function") {
+      try { importedCopy = aggregateRecords(q.dataImport.getRecords()); } catch (_) { importedCopy = []; }
+    } else if (Array.isArray(imported)) importedCopy = imported.filter(function (row) { return row && typeof row === "object"; }).map(deriveRow);
     if (mode === "demo") return demoCopy;
     if (mode === "imported") return importedCopy;
     return importedCopy.length ? importedCopy : demoCopy;
   }
   function aggregateRecords(records) {
     var sites = new Map();
-    records.forEach(function (record) {
-      var previous = sites.get(record.site_id);
-      var latest = !previous || new Date(record.timestamp) >= new Date(previous.timestamp) ? record : previous;
-      sites.set(record.site_id, Object.assign({}, latest, { name: record.site_id, sample_count: (previous ? previous.sample_count : 0) + 1 }));
+    (Array.isArray(records) ? records : []).forEach(function (record) {
+      if (!record || typeof record !== "object") return;
+      var siteId = String(record.site_id == null ? "" : record.site_id).trim();
+      if (record.timestamp == null || String(record.timestamp).trim() === "") return;
+      var timestamp = new Date(record.timestamp).getTime();
+      if (!siteId || !Number.isFinite(timestamp)) return;
+      var previous = sites.get(siteId);
+      var previousTime = previous ? new Date(previous.timestamp || 0).getTime() : NaN;
+      var latest = !previous || timestamp >= previousTime ? record : previous;
+      sites.set(siteId, Object.assign({}, latest, { site_id: siteId, name: siteId, sample_count: (previous ? previous.sample_count : 0) + 1 }));
     });
     return Array.from(sites.values()).map(deriveRow);
   }
@@ -106,34 +141,48 @@
     var role = roleNode ? roleNode.value : "station";
     if (roleNode) Array.from(roleNode.options).forEach(function (option) { option.textContent = roleLabels()[option.value] || option.textContent; });
     rows = filterRows(rows, filter && filter.value);
-    rows.sort(function (a, b) { return Number(b.calibrated_nh3_ppm || 0) - Number(a.calibrated_nh3_ppm || 0); });
+    rows.sort(function (a, b) {
+      var aValue = numeric(a.calibrated_nh3_ppm), bValue = numeric(b.calibrated_nh3_ppm);
+      return (Number.isFinite(bValue) ? bValue : -Infinity) - (Number.isFinite(aValue) ? aValue : -Infinity);
+    });
     if (body) body.innerHTML = rows.map(function (r) {
       var snapshot = language() === "en" ? "Demo snapshot" : language() === "bo" ? "དཔེ་སྟོན་མྱུར་བཀོད" : "演示快照";
       var display = localizedFields(r);
-      return "<tr><td>" + esc(display.name) + "</td><td>" + esc(Number(r.altitude_m || 0)) + " m</td><td>" + esc(display.species) + "</td><td>" + esc(Number(r.calibrated_nh3_ppm || 0).toFixed(1)) + " ppm</td><td>" + esc(riskLabel(r.risk_level || risk(r.calibrated_nh3_ppm))) + "</td><td>" + esc(r.timestamp || snapshot) + "</td></tr>";
+      var altitude = numeric(r.altitude_m);
+      var altitudeText = Number.isFinite(altitude) ? altitude + " m" : "—";
+      var calibrated = numeric(r.calibrated_nh3_ppm);
+      var calibratedText = Number.isFinite(calibrated) ? calibrated.toFixed(1) + " ppm" : riskLabel("未评估");
+      return "<tr><td>" + esc(display.name) + "</td><td>" + esc(altitudeText) + "</td><td>" + esc(display.species) + "</td><td>" + esc(calibratedText) + "</td><td>" + esc(riskLabel(r.risk_level || risk(r.calibrated_nh3_ppm))) + "</td><td>" + esc(r.timestamp || snapshot) + "</td></tr>";
     }).join("");
-    var compliant = rows.filter(function (r) { return Number(r.calibrated_nh3_ppm) < 10; }).length;
-    var warnings = rows.filter(function (r) { return Number(r.calibrated_nh3_ppm) >= 10; }).length;
-    var average = rows.length ? (rows.reduce(function (s, r) { return s + Number(r.calibrated_nh3_ppm || 0); }, 0) / rows.length).toFixed(1) : "0.0";
+    var calibratedValues = rows.map(function (r) { return numeric(r.calibrated_nh3_ppm); }).filter(Number.isFinite);
+    var compliant = calibratedValues.filter(function (value) { return value < 10; }).length;
+    var warnings = calibratedValues.filter(function (value) { return value >= 10; }).length;
+    var unassessed = rows.length - calibratedValues.length;
+    var average = calibratedValues.length ? (calibratedValues.reduce(function (s, value) { return s + value; }, 0) / calibratedValues.length).toFixed(1) : "—";
+    var coverage = calibratedValues.length ? Math.round(compliant / calibratedValues.length * 100) : 0;
+    var unassessedText = language() === "en" ? " · " + unassessed + " unassessed" : language() === "bo" ? " · དཔྱད་མེད " + unassessed : " · 未评估 " + unassessed + " 个";
     var species = Array.from(new Set(rows.map(function (r) { return localizedFields(r).species || "未标注"; }))).join(language() === "en" ? ", " : "、");
-    var sampleCount = rows.reduce(function (sum, r) { return sum + Number(r.sample_count || 1); }, 0);
+    var sampleCount = rows.reduce(function (sum, r) {
+      var count = Number(r.sample_count);
+      return sum + (Number.isFinite(count) && count > 0 ? Math.floor(count) : 1);
+    }, 0);
     if (summary) {
       summary.className = "qjzh-data-state qjzh-state";
       if (language() === "en") summary.textContent = role === "analyst"
         ? "Analysis view: species " + species + " · " + sampleCount + " samples · grouped for regional comparison"
         : role === "cooperative"
           ? "Cooperative barns: " + rows.length + " sites · " + warnings + " need attention · export a cooperative report"
-          : "Regional summary: low-risk sites " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · sites needing attention " + warnings + " · average NH3 " + average + " ppm";
+          : "Regional summary: low-risk sites " + coverage + "% · sites needing attention " + warnings + " · average NH3 " + average + " ppm" + unassessedText;
       else if (language() === "bo") summary.textContent = role === "analyst"
         ? "ས་ཁུལ་དཔྱད་ཞིབ། ཕྱུགས་རིགས " + species + " · དཔེ་ཚད " + sampleCount
         : role === "cooperative"
           ? "མཉམ་ལས་ཁང་ཕྱུགས་ཁང " + rows.length + " · དོ་སྣང " + warnings
-          : "ས་ཁུལ་སྙིང་བསྡུས། ཚད་ལོངས " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · NH3 " + average + " ppm";
+          : "ས་ཁུལ་སྙིང་བསྡུས། ཚད་ལོངས " + coverage + "% · NH3 " + average + " ppm" + unassessedText;
       else summary.textContent = role === "analyst"
         ? "区域分析：畜种 " + species + " · 样本 " + sampleCount + " 条 · 用于不同站点的数据比较"
         : role === "cooperative"
           ? "合作社多圈舍：共 " + rows.length + " 个站点 · " + warnings + " 个需关注 · 建议导出合作社环境报告"
-          : "区域汇总：低风险站点占比 " + (rows.length ? Math.round(compliant / rows.length * 100) : 0) + "% · 需关注站点 " + warnings + " 个 · 平均氨气 " + average + " ppm";
+          : "区域汇总：低风险站点占比 " + coverage + "% · 需关注站点 " + warnings + " 个 · 平均氨气 " + average + " ppm" + unassessedText;
     }
     if (detail) {
       if (language() === "en") detail.textContent = role === "analyst" ? "Regional-analysis role: prioritize species distribution and sample counts for comparison." : role === "cooperative" ? "Cooperative role: multi-barn list first, with cooperative report export." : "Livestock-station role: regional summary first, sorted by ammonia risk.";

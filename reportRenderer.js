@@ -9,7 +9,7 @@
       metric: "指标", result: "结果", compliance: "项目舒适区占比（NH₃ < 10 ppm）", ammonia: "平均 / 最高氨气",
       temperature: "温度范围", advice: "建议次数", risk: "风险分布", source: "数据来源",
       generated: "生成时间", opened: "报告已生成，正在打开打印窗口。", print: "打印 / 另存 PDF",
-      samples: "样本 / 站点", provenance: "来源构成", versions: "发布 / 部署 / 模型 / 规则版本", timezone: "统计时区", quality: "范围外 / 拒绝记录",
+      samples: "样本 / 站点", provenance: "来源构成", versions: "发布 / 部署 / 模型 / 规则版本", timezone: "统计时区", quality: "范围外 / 拒绝记录", calibration: "校准失败",
       popupBlocked: "浏览器阻止了打印窗口，已在当前页面显示完整预览。", retry: "再次打开打印窗口", previewTitle: "环境报告预览", snapshot: "机构演示快照（记录无时间戳）",
       normal: "正常", watch: "关注", todo: "待办", urgent: "紧急", local: "QJZH 本地记录",
       institution: "机构模拟圈舍", trend: "氨气趋势", trendAria: "最近十二个采样点的校准氨气趋势图",
@@ -23,7 +23,7 @@
       metric: "Metric", result: "Result", compliance: "Project comfort-zone share (NH₃ < 10 ppm)", ammonia: "Average / peak ammonia",
       temperature: "Temperature range", advice: "Recommendations", risk: "Risk distribution", source: "Data source",
       generated: "Generated", opened: "Report generated. Opening the print window.", print: "Print / Save as PDF",
-      samples: "Samples / sites", provenance: "Source mix", versions: "Release / deployment / model / rule versions", timezone: "Reporting timezone", quality: "Out-of-domain / rejected",
+      samples: "Samples / sites", provenance: "Source mix", versions: "Release / deployment / model / rule versions", timezone: "Reporting timezone", quality: "Out-of-domain / rejected", calibration: "Calibration failures",
       popupBlocked: "The browser blocked the print window. A complete preview is shown on this page.", retry: "Open print window again", previewTitle: "Environment report preview", snapshot: "Institution demo snapshot (records have no timestamps)",
       normal: "Normal", watch: "Watch", todo: "To-do", urgent: "Urgent", local: "QJZH local records",
       institution: "Institution demo barns", trend: "NH₃ trend", trendAria: "Calibrated ammonia trend for the latest twelve samples",
@@ -37,7 +37,7 @@
       metric: "ཚད་གཞི", result: "འབྲས་བུ", compliance: "ལས་གཞིའི་བདེ་འཇགས་ཁུལ་གྱི་བསྡུར་ཚད (NH₃ < 10 ppm)", ammonia: "ཆ་སྙོམས / མཐོ་ཤོས་ཨམ་མོ་ནི་ཡ",
       temperature: "དྲོད་ཚད་ཁྱབ་ཁོངས", advice: "བསམ་འཆར་གྲངས", risk: "ཉེན་ཁའི་ཁྱབ་ཚུལ", source: "གཞི་གྲངས་ཁུངས",
       generated: "བཟོས་པའི་དུས་ཚོད", opened: "སྙན་ཞུ་བཟོས་ཟིན། པར་འདེབས་སྒེའུ་ཁུང་ཁ་ཕྱེ་བཞིན།", print: "པར་འདེབས / PDF ཉར",
-      samples: "དཔེ་ཚད / ས་ཚིགས", provenance: "ཁུངས་ཀྱི་བསྡུས་ཚད", versions: "གསར་སྤེལ / བཀོད་འཇོག / མ་དཔེ / སྒྲིག་གཞིའི་པར་གཞི", timezone: "བསྡོམས་རྩིས་དུས་ཁུལ", quality: "སྤྱོད་ཁོངས་ཕྱི / དང་ལེན་མ་བྱས",
+      samples: "དཔེ་ཚད / ས་ཚིགས", provenance: "ཁུངས་ཀྱི་བསྡུས་ཚད", versions: "གསར་སྤེལ / བཀོད་འཇོག / མ་དཔེ / སྒྲིག་གཞིའི་པར་གཞི", timezone: "བསྡོམས་རྩིས་དུས་ཁུལ", quality: "སྤྱོད་ཁོངས་ཕྱི / དང་ལེན་མ་བྱས", calibration: "ཁ་གསབ་ཕམ་པ",
       popupBlocked: "བཤར་ཆས་ཀྱིས་པར་འདེབས་སྒེའུ་ཁུང་བཀག ཤོག་ངོས་འདིར་སྙན་ཞུ་ཆ་ཚང་སྟོན།", retry: "པར་འདེབས་སྒེའུ་ཁུང་ཡང་བསྐྱར་ཁ་ཕྱེ", previewTitle: "ཁོར་ཡུག་སྙན་ཞུའི་སྔོན་ལྟ", snapshot: "སྒྲིག་འཛུགས་དཔེ་སྟོན་མྱུར་བཀོད (དུས་ཚོད་མེད)",
       normal: "རྒྱུན་ལྡན", watch: "དོ་སྣང", todo: "བྱ་དགོས", urgent: "ཛ་དྲག", local: "QJZH ས་གནས་ཟིན་ཐོ",
       institution: "སྒྲིག་འཛུགས་དཔེ་སྟོན་ཕྱུགས་ཁང", trend: "NH₃ འཕེལ་ཕྱོགས", trendAria: "ཉེ་བའི་དཔེ་ཚད་ 12 ཀྱི་ཁ་གསབ་ཨམ་མོ་ནི་ཡ་འཕེལ་ཕྱོགས",
@@ -63,6 +63,18 @@
     if (source === "机构模拟圈舍") return copy.institution;
     if (source === "机构演示快照") return copy.snapshot;
     return source;
+  }
+
+  function finiteNumber(value) {
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    if (typeof value !== "string" || value.trim() === "" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value.trim())) return null;
+    var number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function formatPpm(value) {
+    var number = finiteNumber(value);
+    return number == null ? "-" : number.toFixed(1);
   }
 
   function provenanceLabel(provenance) {
@@ -153,16 +165,18 @@
       data.modelVersion,
       data.ruleVersion
     ].filter(function (value) { return value != null && String(value).trim() !== ""; }).join(" · ");
+    var average = formatPpm(data.averageNh3);
+    var maximum = formatPpm(data.maxNh3);
     return "<table><thead><tr><th>" + esc(copy.metric) + "</th><th>" + esc(copy.result) + "</th></tr></thead><tbody>" +
       "<tr><td>" + esc(copy.compliance) + "</td><td><strong>" + (Number(data.comfortRate != null ? data.comfortRate : data.complianceRate || 0) * 100).toFixed(1) + "%</strong></td></tr>" +
-      "<tr><td>" + esc(copy.ammonia) + "</td><td><strong>" + Number(data.averageNh3 || 0).toFixed(1) + " / " + Number(data.maxNh3 || 0).toFixed(1) + " ppm</strong></td></tr>" +
+      "<tr><td>" + esc(copy.ammonia) + "</td><td><strong>" + esc(average) + " / " + esc(maximum) + " ppm</strong></td></tr>" +
       "<tr><td>" + esc(copy.temperature) + "</td><td>" + (data.temperatureRange && data.temperatureRange.min != null ? esc(data.temperatureRange.min) + "–" + esc(data.temperatureRange.max) + " ℃" : "-") + "</td></tr>" +
       "<tr><td>" + esc(copy.advice) + "</td><td>" + esc(data.adviceCount || 0) + "</td></tr>" +
       "<tr><td>" + esc(copy.samples) + "</td><td>" + esc(data.sampleCount == null ? "-" : data.sampleCount) + " / " + esc(data.siteCount == null ? "-" : data.siteCount) + "</td></tr>" +
       "<tr><td>" + esc(copy.provenance) + "</td><td>" + esc(provenanceLabel(data.provenance)) + "</td></tr>" +
       "<tr><td>" + esc(copy.versions) + "</td><td>" + esc(versionSummary || "-") + "</td></tr>" +
       "<tr><td>" + esc(copy.timezone) + "</td><td>" + esc(data.timezone || "-") + "</td></tr>" +
-      "<tr><td>" + esc(copy.quality) + "</td><td>" + esc(data.outOfDomainCount || 0) + " / " + esc(data.rejectedCount || 0) + "</td></tr>" +
+      "<tr><td>" + esc(copy.quality) + "</td><td>" + esc(data.outOfDomainCount || 0) + " / " + esc(data.rejectedCount || 0) + " · " + esc(copy.calibration) + " " + esc(data.calibrationErrorCount || 0) + "</td></tr>" +
       "<tr><td>" + esc(copy.risk) + "</td><td>" + Object.keys(distribution).map(function (key) { return esc(riskLabel(key, copy)) + ": " + esc(distribution[key]); }).join(" · ") + "</td></tr>" +
       "</tbody></table>";
   }
@@ -193,34 +207,37 @@
   }
 
   function renderInstitution(rows, selectedLanguage) {
-    rows = Array.isArray(rows) ? rows : [];
-    var values = rows.map(function (row) { return Number(row.calibrated_nh3_ppm || 0); });
+    rows = (Array.isArray(rows) ? rows : []).filter(function (row) { return row && typeof row === "object"; });
+    var values = rows.map(function (row) { return finiteNumber(row && row.calibrated_nh3_ppm); }).filter(function (value) { return value != null; });
     var distribution = { 正常: 0, 关注: 0, 待办: 0, 紧急: 0 };
     values.forEach(function (value) { distribution[riskFor(value)] += 1; });
-    var temperatures = rows.map(function (row) { return Number(row.temp_c); }).filter(function (value) { return isFinite(value); });
+    var temperatures = rows.map(function (row) { return finiteNumber(row.temp_c); }).filter(function (value) { return value != null; });
     var now = new Date();
     var timestamps = rows.map(function (row) { return new Date(row.timestamp || "").getTime(); }).filter(Number.isFinite);
     var snapshot = timestamps.length === 0;
     var startDate = snapshot ? localDate(now) : localDate(new Date(Math.min.apply(Math, timestamps)));
     var endDate = snapshot ? localDate(now) : localDate(new Date(Math.max.apply(Math, timestamps)));
-    var comfortRate = values.filter(function (value) { return value < 10; }).length / (rows.length || 1);
+    var comfortRate = values.filter(function (value) { return value < 10; }).length / (values.length || 1);
     return render({
       language: selectedLanguage || language(),
       startDate: startDate,
       endDate: endDate,
       snapshot: snapshot,
-      noRecords: !rows.length,
+      noRecords: !values.length,
       comfortRate: comfortRate,
       complianceRate: comfortRate,
-      averageNh3: values.reduce(function (sum, value) { return sum + value; }, 0) / (rows.length || 1),
-      maxNh3: values.reduce(function (max, value) { return Math.max(max, value); }, 0),
+      averageNh3: values.length ? values.reduce(function (sum, value) { return sum + value; }, 0) / values.length : null,
+      maxNh3: values.length ? values.reduce(function (max, value) { return Math.max(max, value); }, -Infinity) : null,
       temperatureRange: temperatures.length ? { min: Math.min.apply(Math, temperatures), max: Math.max.apply(Math, temperatures) } : { min: null, max: null },
       adviceCount: values.filter(function (value) { return value >= 10; }).length,
       riskDistribution: distribution,
-      sampleCount: rows.reduce(function (sum, row) { return sum + Number(row.sample_count || 1); }, 0),
+      sampleCount: rows.reduce(function (sum, row) {
+        var count = finiteNumber(row.sample_count);
+        return sum + (count != null && count > 0 ? Math.floor(count) : 1);
+      }, 0),
       siteCount: rows.length,
       rejectedCount: 0,
-      outOfDomainCount: 0,
+      outOfDomainCount: rows.length - values.length,
       provenance: snapshot ? { "institution-snapshot": rows.length } : { "institution-records": rows.length },
       releaseVersion: root.BUILD_INFO && root.BUILD_INFO.releaseVersion || "release-unknown",
       deploymentVersion: root.BUILD_INFO && (root.BUILD_INFO.deploymentVersion || root.BUILD_INFO.version) || "deployment-unknown",
@@ -230,7 +247,7 @@
       buildCommit: root.BUILD_INFO && root.BUILD_INFO.commit || "local",
       timezone: "Asia/Shanghai",
       seriesMode: "institution",
-      trendSeries: rows.slice(-12).map(function (row) { return { timestamp: row.timestamp || "", label: row.name || row.site_id || "-", value: Number(row.calibrated_nh3_ppm || 0) }; }),
+      trendSeries: rows.slice(-12).map(function (row) { return { timestamp: row.timestamp || "", label: row.name || row.site_id || "-", value: finiteNumber(row.calibrated_nh3_ppm) }; }).filter(function (point) { return point.value != null; }),
       generatedAt: now.toISOString(),
       source: snapshot ? "机构演示快照" : "QJZH 本地记录"
     });

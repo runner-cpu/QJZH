@@ -281,6 +281,44 @@ test("reports ignore imported calibrated values", () => {
   assert.equal(report.riskDistribution["紧急"], 1);
 });
 
+test("reports keep working when calibration fails and never treat missing raw data as zero", () => {
+  const records = [validRecord(), validRecord({
+    timestamp: "2026-09-27T09:00:00+08:00",
+    raw_nh3_ppm: null
+  })];
+  const { window } = loadReportStack({ records, compensate() { throw new Error("model unavailable"); } });
+
+  const report = window.QJZH.reportGenerator.generate({
+    startDate: "2026-09-27",
+    endDate: "2026-09-27"
+  });
+
+  assert.equal(report.valid, true);
+  assert.equal(report.sampleCount, 2);
+  assert.equal(report.calibrationErrorCount, 2);
+  assert.equal(report.averageNh3, 0);
+  assert.deepEqual(report.trendSeries, []);
+});
+
+test("institution aggregation ignores malformed rows and reports unavailable calibration", () => {
+  const records = [
+    null,
+    { site_id: "NO-TIME", raw_nh3_ppm: 5 },
+    validRecord({ site_id: "SAFE-01" })
+  ];
+  const { window } = loadScript("institutionView.js", {
+    compensate() { throw new Error("model unavailable"); },
+    QJZH: { dataImport: { getRecords() { return records; } } }
+  });
+
+  const rows = window.QJZH.institutionView.getRows("imported");
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].site_id, "SAFE-01");
+  assert.equal(rows[0].sample_count, 1);
+  assert.equal(rows[0].calibration_status, "unavailable");
+  assert.equal(rows[0].risk_level, "未评估");
+});
+
 test("institution rows recalculate imported derived values", () => {
   const imported = [validRecord({ calibrated_nh3_ppm: 0, risk_level: "正常" })];
   const localStorage = createStorage({ QJZH_INSTITUTIONS: JSON.stringify(imported) });
@@ -420,6 +458,17 @@ test("institution reports use record dates and label undated snapshots", () => {
   assert.match(dated.html, /2026-01-01/);
   assert.match(dated.html, /2026-01-03/);
   assert.match(snapshot.html, /demo snapshot/i);
+});
+
+test("institution reports do not convert missing calibrated values into zero ppm", () => {
+  const { window } = loadScript("reportRenderer.js", { open() { return null; } });
+  const result = window.QJZH.reportRenderer.renderInstitution([
+    null,
+    { site_id: "BROKEN", name: "Broken row", calibrated_nh3_ppm: "not-a-number" }
+  ], "en");
+
+  assert.match(result.html, /No trend data available/);
+  assert.doesNotMatch(result.html, /0\.0 \/ 0\.0 ppm/);
 });
 
 module.exports = { createStorage, loadScript, loadDataImport, loadReportStack, minimalReport, sampleRecords, validRecord, seed, throwingStorage };
